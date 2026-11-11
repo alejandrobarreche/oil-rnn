@@ -6,6 +6,7 @@ import pytest
 import torch
 
 from oil_rnn.config import load_config
+from oil_rnn.metrics import compute_metrics
 from oil_rnn.model import Predictor, RNNRegressor, pinball_loss, save_model, train_model
 
 
@@ -89,3 +90,11 @@ def test_min_epochs_y_registro(tmp_path, monkeypatch):
     out = Predictor.load(tmp_path).predict_frame(df.iloc[80:])
     assert out["y_quantiles"].shape[1] == 3
     assert (out["y_lo"] <= out["y_pred"]).all() and (out["y_pred"] <= out["y_hi"]).all()
+
+    # Referencia del intervalo: cuantiles de train del rendimiento aplicados al último precio.
+    prep = fitted["preprocessor"]
+    expected = out["y_baseline"][:, None] * np.exp(np.quantile(prep.train_targets, [0.1, 0.5, 0.9]))
+    np.testing.assert_allclose(out["y_ref_quantiles"], expected, rtol=1e-5)
+    m = compute_metrics("regression", out, prefix="val_")
+    keys = {"val_coverage", "val_baseline_coverage", "val_pinball_skill", "val_direction_accuracy"}
+    assert keys <= m.keys()

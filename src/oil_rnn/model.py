@@ -227,18 +227,26 @@ class Predictor:
         return self.net(torch.as_tensor(X, dtype=torch.float32)).numpy()
 
     def predict_frame(self, df: pd.DataFrame) -> dict:
-        """y_pred es la mediana si el modelo da cuantiles; y_lo / y_hi, el menor y el mayor."""
-        w = self.preprocessor.windows(df)
+        """y_pred es la mediana si el modelo da cuantiles; y_lo / y_hi, el menor y el mayor.
+        Añade las referencias triviales: persistencia (y_baseline), cuantiles históricos de
+        train (y_ref_quantiles) y la dirección más frecuente en train (up_share >= 0,5: sube)."""
+        prep = self.preprocessor
+        w = prep.windows(df)
         out = {k: w[k] for k in ("time", "y_true") if k in w}
-        pred = self.preprocessor.inverse_target(self.forward(w["X"]), w["y_last"])
+        pred = prep.inverse_target(self.forward(w["X"]), w["y_last"])
         quantiles = self.card.get("quantiles")
+        train_targets = getattr(prep, "train_targets", None)  # no existe en modelos antiguos
         if quantiles:
             out["y_pred"] = pred[:, quantiles.index(0.5)]
             out["y_lo"], out["y_hi"] = pred[:, 0], pred[:, -1]
-            out["y_quantiles"] = pred
+            out["y_quantiles"], out["quantiles"] = pred, quantiles
+            if train_targets is not None:
+                out["y_ref_quantiles"] = prep.reference_quantiles(quantiles, w["y_last"])
         else:
             out["y_pred"] = pred
         out["y_baseline"] = w["y_last"]  # persistencia
+        if train_targets is not None and prep.target_mode != "level":
+            out["up_share"] = float((train_targets > 0).mean())
         return out
 
 

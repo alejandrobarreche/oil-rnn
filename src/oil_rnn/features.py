@@ -97,7 +97,17 @@ class Preprocessor:
         y = self._model_target(df[self.target].to_numpy(np.float64))
         y = y[~np.isnan(y)]
         self.y_mean, self.y_scale = float(y.mean()), float(_safe_scale(np.array([y.std()]))[0])
+        # Lo que aprende la red en train (sin escalar): de aquí salen las referencias triviales
+        # del intervalo (cuantiles históricos) y de la dirección (la más frecuente en train).
+        self.train_targets = y.astype(np.float32)
         return self
+
+    def reference_quantiles(self, quantiles: list[float], last_value: np.ndarray) -> np.ndarray:
+        """Intervalo de referencia: los cuantiles de train de lo que aprende la red, aplicados al
+        último valor conocido. Devuelve (n, q) en unidades del target."""
+        qs = np.quantile(self.train_targets.astype(np.float64), quantiles)
+        scaled = np.tile((qs - self.y_mean) / self.y_scale, (len(last_value), 1))
+        return self.inverse_target(scaled, last_value)
 
     def _model_target(self, level: np.ndarray) -> np.ndarray:
         """Lo que aprende la red en cada fila: el valor o su cambio a `horizon` pasos."""

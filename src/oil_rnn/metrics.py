@@ -14,15 +14,31 @@ from sklearn import metrics as skm  # noqa: E402
 
 def _regression(y_true, y_pred) -> dict[str, float]:
     return {
+        "mse": skm.mean_squared_error(y_true, y_pred),
         "rmse": skm.root_mean_squared_error(y_true, y_pred),
         "mae": skm.mean_absolute_error(y_true, y_pred),
         "r2": skm.r2_score(y_true, y_pred),
     }
 
 
+def _interval(y_true, q_pred, quantiles) -> dict[str, float]:
+    """Cobertura (fracción de valores reales dentro de [menor, mayor cuantil]), anchura media
+    del intervalo y pérdida pinball media sobre todos los cuantiles, en unidades del target."""
+    lo, hi = q_pred[:, 0], q_pred[:, -1]
+    q = np.asarray(quantiles, dtype=np.float64)
+    e = np.asarray(y_true, np.float64)[:, None] - q_pred
+    return {
+        "coverage": np.mean((lo <= y_true) & (y_true <= hi)),
+        "interval_width": np.mean(hi - lo),
+        "pinball": np.mean(np.maximum(q * e, (q - 1) * e)),
+    }
+
+
 def compute_metrics(task: str, out: dict, prefix: str = "") -> dict[str, float]:
     """Métricas del modelo y de la referencia trivial (y_baseline): clase mayoritaria de train,
-    media de train o, en series temporales, persistencia (el último valor conocido)."""
+    media de train o, en series temporales, persistencia (el último valor conocido).
+    Con cuantiles añade cobertura, anchura y pinball, y las de su referencia (y_ref_quantiles:
+    cuantiles históricos de train). skill_vs_baseline y pinball_skill <= 0: no mejora."""
     y_true, y_pred = out["y_true"], out["y_pred"]
     base = out.get("y_baseline")
     if task == "classification":
@@ -46,10 +62,24 @@ def compute_metrics(task: str, out: dict, prefix: str = "") -> dict[str, float]:
             # skill <= 0: el modelo no mejora a la referencia trivial
             ref = _regression(y_true, base)
             m |= {
+                "baseline_mse": ref["mse"],
                 "baseline_rmse": ref["rmse"],
                 "baseline_mae": ref["mae"],
                 "skill_vs_baseline": 1 - m["rmse"] / ref["rmse"],
             }
+            # Dirección respecto al último valor conocido. La persistencia no predice dirección:
+            # su referencia es predecir siempre la dirección más frecuente en train.
+            m["direction_accuracy"] = np.mean((y_pred > base) == (y_true > base))
+            if out.get("up_share") is not None:
+                up = out["up_share"] >= 0.5
+                m["baseline_direction_accuracy"] = np.mean((y_true > base) == up)
+        if "y_quantiles" in out:
+            m |= _interval(y_true, out["y_quantiles"], out["quantiles"])
+            m["coverage_nominal"] = out["quantiles"][-1] - out["quantiles"][0]
+            if "y_ref_quantiles" in out:
+                ref = _interval(y_true, out["y_ref_quantiles"], out["quantiles"])
+                m |= {f"baseline_{k}": v for k, v in ref.items()}
+                m["pinball_skill"] = 1 - m["pinball"] / ref["pinball"]
     return {f"{prefix}{k}": float(v) for k, v in m.items()}
 
 
