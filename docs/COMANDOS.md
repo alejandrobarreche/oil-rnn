@@ -94,3 +94,25 @@ git commit -m "chore(runs): prueba de humo de la fase 2 (h=5)"
 git pull --rebase
 git push
 ```
+
+---
+
+**🖥️ Windows GPU · 11/11/2026 · ⏳**
+`make prepare` falla: Windows (Control de aplicaciones / Smart App Control) bloquea la DLL `_parquet` de `pyarrow` instalada por pip. Se sustituye por la compilación de conda-forge, que es otro binario. En «Anaconda Prompt»:
+
+```bash
+conda activate oil-rnn
+pip uninstall -y pyarrow
+conda install -y -c conda-forge "pyarrow>=17"
+python -c "import pyarrow.parquet; print('parquet OK')"
+make prepare
+python -c "import json; print(json.load(open('data/splits.json'))['source']['sha256'])"
+```
+
+Si `import pyarrow.parquet` vuelve a dar «Una directiva de Control de aplicaciones bloqueó este archivo», no desactives Smart App Control (en Windows 11 no se puede volver a activar sin reinstalar): pásale a Claude la salida de este comando de PowerShell y se cambia el formato de los splits en el código.
+
+```powershell
+Get-MpComputerStatus | Select-Object SmartAppControlState
+```
+
+Progreso (11/11): `pip uninstall` y `conda install` hechos (pyarrow 26.0.1 de conda-forge). Falta desde `import pyarrow.parquet`.
