@@ -65,6 +65,14 @@ def missing_report(parts: dict[str, pd.DataFrame]) -> dict[str, dict[str, int]]:
     return report
 
 
+def feature_columns(df: pd.DataFrame, features: str | list[str], time_column: str) -> list[str]:
+    """Columnas de entrada: la lista de data.features o, con «all», todas las numéricas."""
+    if features == "all":
+        numeric = df.select_dtypes(include="number").columns
+        return [c for c in numeric if c not in (time_column, CONTEXT_COLUMN)]
+    return list(features)
+
+
 def _split(df: pd.DataFrame, cfg: dict) -> tuple[dict[str, pd.DataFrame], dict]:
     dcfg = cfg["data"]
     target, time_col = dcfg["target"], dcfg["time_column"]
@@ -84,6 +92,17 @@ def _split(df: pd.DataFrame, cfg: dict) -> tuple[dict[str, pd.DataFrame], dict]:
     df = df.dropna(subset=[target]).reset_index(drop=True)
     info["rows_dropped_no_target"] = rows - len(df)
 
+    # Recorte del comienzo: ffill no puede rellenar antes del primer dato de cada serie, así que
+    # los datos empiezan en la primera fila con todas las features. Se hace antes de dividir.
+    features = feature_columns(df, dcfg["features"], time_col)
+    complete = df[features].notna().all(axis=1)
+    if not complete.any():
+        raise ValueError(f"Ninguna fila tiene todas las features {features}")
+    first = int(complete.to_numpy().argmax())
+    df = df.iloc[first:].reset_index(drop=True)
+    info["rows_dropped_incomplete_start"] = first
+    info["first_complete_date"] = str(df[time_col].iloc[0])
+
     n = len(df)
     n_test = int(round(n * float(dcfg["test_size"])))
     n_val = int(round(n * float(dcfg["val_size"])))
@@ -98,7 +117,9 @@ def _split(df: pd.DataFrame, cfg: dict) -> tuple[dict[str, pd.DataFrame], dict]:
 
 def prepare_data(cfg: dict) -> dict:
     """Divide el archivo de data/raw/ en train/val/test y escribe data/splits.json."""
-    require(cfg, "data.target", "data.time_column", "data.val_size", "data.test_size")
+    require(
+        cfg, "data.target", "data.features", "data.time_column", "data.val_size", "data.test_size"
+    )
     dcfg = cfg["data"]
     path = raw_path(cfg)
     if not path.exists():
@@ -106,7 +127,8 @@ def prepare_data(cfg: dict) -> dict:
             f"No existe {relative(path)}: ejecuta `make data` o cópialo a mano."
         )
     df = read_table(path, dcfg.get("na_values"))
-    _check_columns(df, [dcfg["target"], dcfg["time_column"]], path)
+    features = feature_columns(df, dcfg["features"], dcfg["time_column"])
+    _check_columns(df, [dcfg["target"], dcfg["time_column"], *features], path)
     parts, info = _split(df, cfg)
 
     manifest = {

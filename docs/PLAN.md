@@ -36,8 +36,9 @@ Decisiones ya tomadas por el usuario:
 | `data.horizon` | 5, 21, 63, 252: un modelo por horizonte (`--set data.horizon=N`) | Estrategia directa; el enunciado pide parámetros y tiempo por red y horizonte |
 | `data.target_mode` | `log_return` (nuevo): log(P[t]/P[t−h]) | El precio va de ~20 a ~140 $; el cambio relativo es comparable entre épocas |
 | `data.window` | 60 de partida; 60 frente a 120 se decide en validación | Ejemplo del enunciado |
-| `data.val_size` / `test_size` | 0,15 / 0,15 (test ≈ últimos 4 años) | Test necesita contener horizontes de 252 días |
-| `data.features` | Fase 1 | Depende del EDA |
+| `data.val_size` / `test_size` | 0,15 / 0,15 (test ≈ últimos 3,8 años) | Test necesita 3–4 pronósticos independientes a 252 días |
+| `data.source.end` | `2026-11-11` (fecha de la descarga) | Congela el dataset: los splits no se mueven entre runs |
+| `data.features` | Todas salvo `brent_fut_*`; los datos empiezan en la primera fila completa (~ago. 2000) | `brent_fut` solo existe desde 2007 (sin fuente gratuita anterior) y su cierre repite el spot. Experimento opcional: con datos desde 2007, con y sin `brent_fut_*` |
 
 ## Fase 1 · Datos y EDA, solo train (días 1–2)
 
@@ -103,7 +104,7 @@ La prepara el usuario. El proyecto solo aporta las cifras y figuras de las fases
 
 ## Orden de recorte si falta tiempo
 
-1. Diebold-Mariano. 2. Ventana 120. 3. Reentrenamiento periódico (queda manual). 4. Capítulos 4–5 de la página explicativa pasan a figuras estáticas. Nunca se recorta: comparativa completa, evaluación final en test y Sonda con los horizontes del enunciado.
+1. Experimento con `brent_fut_*`. 2. Diebold-Mariano. 3. Ventana 120. 4. Reentrenamiento periódico (queda manual). 5. Capítulos 4–5 de la página explicativa pasan a figuras estáticas. Nunca se recorta: comparativa completa, evaluación final en test y Sonda con los horizontes del enunciado.
 
 ## Verificación
 

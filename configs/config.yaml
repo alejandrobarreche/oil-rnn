@@ -17,7 +17,7 @@ data:
     type: code                   # fetch() en src/oil_rnn/sources.py
     filename: dataset.csv        # nombre en data/raw/
     start: "2000-01-01"
-    end: null                    # null = hasta el día de la descarga
+    end: "2026-11-11"            # fecha de la descarga vigente: congela el dataset y los splits · null = hasta hoy
     calendar: brent              # filas = días con dato de esta columna
     fred:                        # columna: id de la serie en FRED
       brent: DCOILBRENTEU        # EIA, Brent spot
@@ -39,14 +39,18 @@ data:
   # raw_file: otro.csv           # por defecto, data.source.filename
   na_values: []                  # textos que significan «sin dato», ej. ["."] en FRED
   target: brent                  # columna que se predice
-  features: PENDIENTE            # lista de columnas, o all = todas las numéricas (incluido el target)
+  # Lista de columnas, o all = todas las numéricas (incluido el target). Sin brent_fut_*: solo
+  # existe desde 2007 y su cierre repite el spot. Los datos empiezan en la primera fila completa.
+  features: [brent, wti, henry_hub, ecb_deposit_rate, usd_per_eur, cny_per_usd, vix,
+             wti_fut_open, wti_fut_high, wti_fut_low, wti_fut_close, wti_fut_volume,
+             copper, gold, dollar_index]
   time_column: date              # columna de fecha; los datos se ordenan por ella
   fill_missing: ffill            # PROVISIONAL · ffill = repetir el último valor conocido · null = no rellenar
   window: 60                     # PROVISIONAL · pasos de historia que ve la red; 60 frente a 120 se decide en validación
   horizon: 5                     # días hábiles por delante. Un modelo por horizonte: 5, 21, 63 y 252 (--set data.horizon=N)
   target_mode: log_return        # log_return = log(valor / último conocido) · change = diferencia · level = el valor
   val_size: 0.15                 # proporción para validación
-  test_size: 0.15                # proporción para test (≈ últimos 4 años: contiene horizontes de 252 días)
+  test_size: 0.15                # proporción para test (≈ últimos 3,8 años: 3–4 pronósticos independientes a 252 días)
 
 model:                           # PROVISIONAL
   cell: lstm                     # rnn | lstm | gru

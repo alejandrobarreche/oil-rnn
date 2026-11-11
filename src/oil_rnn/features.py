@@ -11,7 +11,7 @@ import pandas as pd
 from numpy.lib.stride_tricks import sliding_window_view
 
 from .config import require
-from .data import CONTEXT_COLUMN
+from .data import CONTEXT_COLUMN, feature_columns
 
 # Decisiones que necesita el preprocesado; si alguna sigue PENDIENTE, el entrenamiento se para.
 REQUIRED = ("data.target", "data.features", "data.window", "data.horizon", "data.target_mode")
@@ -49,12 +49,7 @@ class Preprocessor:
         self.classes = None
 
     def fit(self, df: pd.DataFrame) -> Preprocessor:
-        if self.requested_features == "all":
-            excluded = {self.time_column, CONTEXT_COLUMN}
-            numeric = df.select_dtypes(include="number").columns
-            self.features = [c for c in numeric if c not in excluded]
-        else:
-            self.features = list(self.requested_features)
+        self.features = feature_columns(df, self.requested_features, self.time_column)
         if self.target not in df.select_dtypes(include="number").columns:
             raise TypeError(f"El target '{self.target}' debe ser numérico en una serie temporal")
         x = df[self.features].to_numpy(np.float64)
