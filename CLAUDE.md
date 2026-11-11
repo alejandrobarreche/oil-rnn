@@ -117,5 +117,6 @@ Si hay dudas sobre quién ejecuta algo, se pregunta.
 ## 11. Documentación
 
 - `README.md`: presentación breve y visual de la solución. `docs/USAGE.md`: comandos por fases y por tareas. `CLAUDE.md`: reglas y forma de trabajo. `docs/`: enunciado (`assignment/`), bibliografía (`references.bib`) y presentación (`presentation/`).
+- `docs/PLAN.md`: única versión del plan del proyecto (fases, decisiones, orden de recorte). Los cambios de plan se editan ahí; no se mantienen copias en otro sitio.
 - No se crean más documentos (planes, estados, registros…) sin petición explícita.
 - Cuando cambia una regla, se edita su sección y queda solo la versión vigente.
