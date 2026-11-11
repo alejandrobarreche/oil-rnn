@@ -76,15 +76,14 @@ Cada comando que debe ejecutar el usuario se añade como mensaje al final de `do
 
 ## 6. Máquinas
 
-| | Desarrollo (Mac) | Entrenamiento (GPU) |
+| | Mac | Windows (GPU) |
 |---|---|---|
-| Función | Código, configs, tests, análisis, documentación | Entrenamientos |
-| Escribe en | Todo el repositorio **excepto** `runs/` y `artifacts/` | **Solo** `runs/<id>/` y `artifacts/<id>/` |
-| Git | Commit y push de código | Commit y push solo de su run |
+| Función | Código, configs, tests, análisis, documentación | Lo mismo que el Mac, más los entrenamientos |
+| Escribe en | Todo el repositorio **excepto** `runs/` y `artifacts/` | Todo el repositorio; `runs/<id>/` y `artifacts/<id>/` solo los escribe un entrenamiento |
 
-- Claude identifica la máquina por la plataforma (`darwin` = Mac).
-- La máquina de entrenamiento no edita código: si algo falla, se describe el error y se corrige en desarrollo.
-- `git pull --rebase` antes de empezar y antes de cada push. En entrenamiento: `git add runs/<id> artifacts/<id>`, nunca `git add .`.
+- Claude identifica la máquina por la plataforma (`darwin` = Mac, `win32` = Windows).
+- El código se puede editar en cualquiera de las dos; los cambios de código y los runs van en commits separados.
+- `git pull --rebase` antes de empezar y antes de cada push. Los runs se añaden con `git add runs/<id> artifacts/<id>`, nunca con `git add .`.
 - Lo que cambia entre máquinas va en `.env`, nunca en el código.
 
 ## 7. Git
