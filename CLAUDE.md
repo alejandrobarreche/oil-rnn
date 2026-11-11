@@ -116,6 +116,6 @@ Si hay dudas sobre quién ejecuta algo, se pregunta.
 
 ## 11. Documentación
 
-- `README.md`: presentación y uso. `CLAUDE.md`: reglas y forma de trabajo. `docs/`: enunciado (`assignment/`), bibliografía (`references.bib`) y presentación (`presentation/`).
+- `README.md`: presentación breve y visual de la solución. `docs/USAGE.md`: comandos por fases y por tareas. `CLAUDE.md`: reglas y forma de trabajo. `docs/`: enunciado (`assignment/`), bibliografía (`references.bib`) y presentación (`presentation/`).
 - No se crean más documentos (planes, estados, registros…) sin petición explícita.
 - Cuando cambia una regla, se edita su sección y queda solo la versión vigente.
