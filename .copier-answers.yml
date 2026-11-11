@@ -1,0 +1,14 @@
+# No edites este archivo: lo usa `copier update` para actualizar el proyecto desde la plantilla
+_src_path: ../../../plantilla-ml
+data_kind: time_series
+data_source: code
+description: ''
+include_claude_md: true
+include_notebooks: true
+include_presentation: true
+project_title: ''
+project_type: pytorch
+repo_name: oil-rnn
+setup_now: true
+use_mlflow: true
+web_app: static

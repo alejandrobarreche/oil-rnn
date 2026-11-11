@@ -1,0 +1,66 @@
+# Configuración de oil-rnn. Cada run guarda una copia exacta en runs/<run_id>/config.yaml.
+#
+# Tres tipos de valor:
+#   PENDIENTE    decisión del proyecto aún no tomada. El comando que la necesita se para.
+#   PROVISIONAL  valor de partida para una prueba de humo; funciona, pero no está decidido.
+#   (sin marca)  fijo: regla de la plantilla o dato ya decidido.
+# `make pending` lista los dos primeros.
+# Probar un valor sin editar este archivo:  make train NAME=prueba ARGS="--set seed=7"
+
+seed: 42
+task: regression            # classification | regression
+data_kind: time_series       # tabular | time_series
+
+data:
+  # ── Obtención: make data ────────────────────────────────
+  source:
+    type: code                   # fetch() en src/oil_rnn/sources.py
+    filename: dataset.csv        # nombre en data/raw/
+    start: "2000-01-01"
+    end: null                    # null = hasta el día de la descarga
+    calendar: brent              # filas = días con dato de esta columna
+    fred:                        # columna: id de la serie en FRED
+      brent: DCOILBRENTEU        # EIA, Brent spot
+      wti: DCOILWTICO            # EIA, WTI spot
+      henry_hub: DHHNGSP         # EIA, gas natural Henry Hub
+      ecb_deposit_rate: ECBDFR   # BCE, facilidad de depósito
+      usd_per_eur: DEXUSEU
+      cny_per_usd: DEXCHUS
+      vix: VIXCLS                # volatilidad implícita del S&P 500
+    yahoo_ohlcv:                 # columna: ticker → <columna>_open/high/low/close/volume
+      brent_fut: BZ=F            # futuro Brent (datos desde ~2007)
+      wti_fut: CL=F              # futuro WTI
+    yahoo_close:                 # columna: ticker → solo el cierre
+      copper: HG=F
+      gold: GC=F
+      dollar_index: DX-Y.NYB
+
+  # ── Lectura y splits: make prepare ──────────────────────
+  # raw_file: otro.csv           # por defecto, data.source.filename
+  na_values: []                  # textos que significan «sin dato», ej. ["."] en FRED
+  target: PENDIENTE              # columna que se predice
+  features: PENDIENTE            # lista de columnas, o all = todas las numéricas (incluido el target)
+  time_column: PENDIENTE         # columna de fecha; los datos se ordenan por ella
+  fill_missing: ffill            # PROVISIONAL · ffill = repetir el último valor conocido · null = no rellenar
+  window: PENDIENTE              # pasos de historia que ve la red
+  horizon: PENDIENTE             # pasos por delante que se predicen
+  target_mode: PENDIENTE         # change = predecir el cambio (precios) · level = el valor
+  val_size: PENDIENTE            # proporción para validación, ej. 0.15
+  test_size: PENDIENTE           # proporción para test, ej. 0.15
+
+model:                           # PROVISIONAL
+  cell: lstm                     # rnn | lstm | gru
+  hidden_size: 64
+  num_layers: 2
+  dropout: 0.1
+
+train:                           # PROVISIONAL
+  epochs: 30
+  batch_size: 64
+  learning_rate: 0.001
+  patience: 5                    # early stopping sobre la pérdida de validación
+
+mlflow:
+  experiment: oil-rnn
+  tracking_uri: local            # local = runs/mlflow.db · o http://servidor:5000
+  log_models: true

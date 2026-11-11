@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>oil-rnn</title>
+    <link rel="icon" href="data:," />
+  </head>
+  <body>
+    <main>
+      <header>
+        <h1>oil-rnn</h1>
+        <p class="subtitle"></p>
+      </header>
+
+      <section class="panel">
+        <h2>Modelo</h2>
+        <p id="model-info">Cargando el modelo…</p>
+      </section>
+
+      <section class="panel">
+        <h2>Datos de entrada</h2>
+        <p id="input-help" class="help"></p>
+        <textarea id="input" rows="10" spellcheck="false"></textarea>
+        <div class="actions">
+          <button id="example" type="button" class="secondary">Cargar ejemplo</button>
+          <button id="predict" type="button" disabled>Predecir</button>
+        </div>
+      </section>
+
+      <section class="panel">
+        <h2>Predicción</h2>
+        <p id="output" class="output">—</p>
+      </section>
+
+      <footer>
+        El modelo se ejecuta en tu navegador; los datos no salen de este equipo. Uso educativo.
+      </footer>
+    </main>
+    <script type="module" src="./src/main.ts"></script>
+  </body>
+</html>

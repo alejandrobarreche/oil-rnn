@@ -1,0 +1,9 @@
+# Entorno conda del proyecto: solo aporta Python 3.12 y pip.
+# Las dependencias las instala Poetry dentro de este entorno (ver poetry.toml),
+# y las que dependen del hardware (GPU) las instala el Makefile: `make install`.
+name: oil-rnn
+channels:
+  - conda-forge
+dependencies:
+  - python=3.12
+  - pip

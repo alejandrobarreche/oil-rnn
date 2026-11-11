@@ -1,0 +1,47 @@
+# ── Sistema y editores ──
+.DS_Store
+.idea/
+.vscode/
+
+# ── Python ──
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+.ipynb_checkpoints/
+.setup.log
+.venv/
+dist/
+build/
+*.egg-info/
+
+# ── Secretos y configuración local de cada máquina ──
+.env
+.env.*
+!.env.example
+
+# ── Datos: no se versionan, se obtienen con `make data` ──
+/data/**
+!/data/**/
+!/data/**/.gitkeep
+
+# ── Pesos: se quedan en la máquina que entrena (o se publican como Release) ──
+/models/*
+!/models/.gitkeep
+*.pt
+*.pth
+*.ckpt
+*.joblib
+*.keras
+*.onnx
+
+# ── Resultados ligeros de cada run: SÍ se versionan (runs/<id>/, artifacts/<id>/) ──
+# Las bases de MLflow son locales de cada máquina.
+/runs/mlflow.db*
+/runs/mlflow_artifacts/
+mlruns/
+*.run.zip
+
+# ── Web ──
+/web/node_modules/
+/web/dist/

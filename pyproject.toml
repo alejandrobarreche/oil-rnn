@@ -1,0 +1,55 @@
+[project]
+name = "oil-rnn"
+version = "0.1.0"
+description = ""
+readme = "README.md"
+requires-python = ">=3.12,<3.13"
+# PyTorch no aparece aquí: depende del hardware y lo instala `make install` (ver Makefile).
+dependencies = [
+    "numpy>=2.0",
+    "pandas>=2.2",
+    "pyarrow>=17.0",
+    "scikit-learn>=1.5",
+    "joblib>=1.4",
+    "pyyaml>=6.0",
+    "python-dotenv>=1.0",
+    "matplotlib>=3.9",
+    "mlflow>=3.0",
+    "requests>=2.32",
+    "yfinance (>=1.8.0,<2.0.0)",
+]
+
+[project.scripts]
+download-data = "oil_rnn.download:main"
+prepare-data = "oil_rnn.data:main"
+train = "oil_rnn.train:main"
+evaluate = "oil_rnn.evaluate:main"
+runs = "oil_rnn.runs_cli:main"
+export-web = "oil_rnn.export_web:main"
+
+[tool.poetry]
+packages = [{ include = "oil_rnn", from = "src" }]
+
+[tool.poetry.group.dev.dependencies]
+pytest = ">=8.0"
+ruff = ">=0.6"
+ipykernel = ">=6.29"
+
+[tool.poetry.group.web.dependencies]
+onnx = ">=1.17"
+onnxscript = ">=0.2"
+onnxruntime = ">=1.20"
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"

@@ -1,0 +1,24 @@
+# Comprueba cada push y pull request con los mismos comandos que en local: make test y make lint.
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        shell: bash -el {0}   # shell de login: activa el entorno conda en cada paso
+    steps:
+      - uses: actions/checkout@v4
+      - uses: conda-incubator/setup-miniconda@v3
+        with:
+          environment-file: environment.yml
+          activate-environment: oil-rnn
+          auto-activate-base: false
+      - run: pipx install poetry
+      - run: make install BACKEND=cpu
+      - run: make test
+      - run: make lint

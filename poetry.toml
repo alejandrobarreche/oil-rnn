@@ -1,0 +1,4 @@
+# Poetry no crea un entorno virtual propio: instala en el entorno conda activo.
+# Por eso los comandos de instalación pasan por `make`, que comprueba antes que el entorno es el correcto.
+[virtualenvs]
+create = false

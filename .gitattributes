@@ -1,0 +1,8 @@
+# Finales de línea LF en todos los sistemas: evita que Windows marque archivos como modificados.
+* text=auto eol=lf
+
+*.png binary
+*.jpg binary
+*.onnx binary
+*.parquet binary
+*.zip binary
