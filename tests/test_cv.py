@@ -86,3 +86,16 @@ def test_calibracion_por_pliegues_solo_con_el_pasado(tmp_path):
     )
     assert out["cv_conformal_correction"] == pytest.approx(saved["correction"])
     assert (tmp_path / "conformal.json").exists()
+
+
+def test_rejilla_de_la_comparativa():
+    from oil_rnn.config import load_config
+    from oil_rnn.sweep import combinations
+
+    cfg = load_config()
+    combos = combinations(cfg)
+    s = cfg["sweep"]
+    n = len(s["cells"]) * len(s["horizons"]) * len(s["hidden_size"]) * len(s["depth"])
+    assert len(combos) == n * len(s["learning_rate"])
+    assert len({name for name, _ in combos}) == len(combos)  # el nombre identifica la combinación
+    assert all(name.startswith(f"{s['prefix']}-") for name, _ in combos)

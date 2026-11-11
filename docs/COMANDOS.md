@@ -160,3 +160,21 @@ make cv NAME=humo-lstm-h252 ARGS="--set data.horizon=252 --set train.epochs=3 --
 Pásale a Claude la salida de los tres comandos. Al subirlos, añade solo esos tres runs: `git add runs/<id> artifacts/<id>` por cada uno.
 
 Resultado (11/11): los tres runs (`211209_humo-rnn-h5`, `211237_humo-gru-h5`, `211303_humo-lstm-h252`) terminan con `status: finished`, con `conformal.json` y `cv_predictions.csv`. Windows no registra ningún aborto de python.exe desde las 21:10, así que el arreglo de cuDNN funciona con `make`. Las tres celdas y h=252 funcionan de principio a fin. Las cifras, a 3 épocas, no valen como resultado.
+
+---
+
+**🖥️ Windows GPU · 11/11/2026 · ⏳**
+Fase 3, rejilla de la comparativa: 432 runs de `make cv` (3 celdas × 4 horizontes × 36 configuraciones, 60 épocas con paciencia 10). Estimación sin medir: 6–8 h de GPU; mejor de noche y con el portátil enchufado y sin suspensión. Si se corta, se repite `make sweep` y salta las terminadas.
+
+```bash
+git pull --rebase
+make sweep ARGS="--dry-run" | head -3
+make sweep
+make compare
+```
+
+Pásale a Claude la salida de `make compare` (y la lista de fallidas, si `make sweep` la imprime). Para subirlos, solo los runs de la rejilla:
+
+```bash
+git add runs/*_g1-* artifacts/*_g1-*
+```

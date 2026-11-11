@@ -66,17 +66,26 @@ model:
   num_layers: 2                  # PROVISIONAL
   dropout: 0.1                   # PROVISIONAL
 
-train:                           # PROVISIONAL
-  epochs: 30
-  batch_size: 64
-  learning_rate: 0.001
-  patience: 5                    # early stopping sobre la pérdida de validación
+train:
+  epochs: 60
+  batch_size: 64                 # PROVISIONAL
+  learning_rate: 0.001           # PROVISIONAL · se elige en la rejilla (sweep)
+  patience: 10                   # early stopping sobre la pérdida de validación
   min_epochs: 10                 # no se para antes de esta época
 
 cv:                              # validación walk-forward sobre train + val (make cv); test queda fuera
   folds: 4                       # bloques de evaluación consecutivos que terminan al final de val
   block: 504                     # filas por bloque (≈ 2 años: 2 pronósticos independientes a 252 días)
   holdout: 252                   # últimas filas de cada entrenamiento para early stopping (≈ 1 año); purga = data.horizon
+
+sweep:                           # comparativa de la fase 3 (make sweep · make compare): un make cv por combinación
+  prefix: g1                     # va al principio del nombre de cada run; otro prefijo = otra rejilla
+  cells: [rnn, lstm, gru]
+  horizons: [5, 21, 63, 252]
+  hidden_size: [32, 64, 128, 256]
+  depth: [[1, 0.0], [2, 0.0], [2, 0.3]]   # [num_layers, dropout]: con 1 capa PyTorch no aplica dropout
+  learning_rate: [0.001, 0.0003, 0.0001]
+  select_by: pinball             # métrica cv_<select_by> (media de pliegues) que elige la mejor; menor = mejor
 
 mlflow:
   experiment: oil-rnn

@@ -62,6 +62,7 @@ Cambios mínimos sobre lo existente:
 ## Fase 3 · Comparativa RNN · LSTM · GRU (días 3–5, GPU)
 
 - Condiciones iguales: mismos datos, ventana, pliegues y la misma rejilla de hiperparámetros y semillas para las tres celdas (tamaño oculto, capas, dropout, tasa de aprendizaje).
+- Rejilla decidida (11/11, `sweep` en `configs/config.yaml`, `make sweep`): oculto {32, 64, 128, 256} × [1 capa | 2 capas, dropout 0 | 2 capas, dropout 0,3] × lr {1e-3, 3e-4, 1e-4} = 36 configuraciones × 3 celdas × 4 horizontes = 432 runs de `make cv`, semilla 42, 60 épocas con paciencia 10. Criterio de selección: `cv_pinball` (media de los 4 pliegues). Ventana 60 fija en la rejilla.
 - Capacidad elegida por brecha train/val, como en el trabajo anterior.
 - Finalistas con 3 semillas para medir estabilidad.
 - El usuario lanza los entrenamientos con los comandos exactos; cada uno es un run (`runs/<id>/`).

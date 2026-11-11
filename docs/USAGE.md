@@ -193,14 +193,16 @@ make train NAME=<nombre> ARGS="--set train.epochs=<n> --set train.learning_rate=
 
 ### Comparar RNN, LSTM y GRU
 
-Los tres modelos con los mismos datos, la misma ventana y la misma partición:
+Las tres celdas con los mismos datos, ventana, pliegues y rejilla de hiperparámetros (sección `sweep` de `configs/config.yaml`), un `make cv` por combinación:
 
 ```bash
-make cv NAME=rnn ARGS="--set model.cell=rnn"
-make cv NAME=lstm ARGS="--set model.cell=lstm"
-make cv NAME=gru ARGS="--set model.cell=gru"
-make runs
+make sweep ARGS="--dry-run"   # combinaciones pendientes
+make sweep                    # las lanza; si se interrumpe, se repite y salta las terminadas
+make compare                  # mejor configuración por red y horizonte (cv_<sweep.select_by>)
+make compare ARGS="--all"     # todas
 ```
+
+Para repetir la rejilla con otro valor fijo se cambia el prefijo, por ejemplo `make sweep ARGS="--set seed=7 --set sweep.prefix=g1s7"`.
 
 ### Evaluar un run concreto
 
@@ -212,9 +214,9 @@ make evaluate RUN=<run_id>
 
 ### Trabajar con dos ordenadores
 
-Un ordenador para desarrollar (por ejemplo, Mac) y otro para entrenar con GPU.
+El código se puede cambiar en cualquiera de los dos; los entrenamientos se lanzan en el de GPU. Los cambios de código y los runs van en commits separados.
 
-Desarrollo, tras cambiar código o configuración:
+Tras cambiar código o configuración, en cualquiera de los dos:
 
 ```bash
 make test
@@ -225,7 +227,7 @@ git pull --rebase
 git push
 ```
 
-Entrenamiento, que solo sube su run:
+En el de GPU, tras un entrenamiento, solo se sube el run:
 
 ```bash
 git pull --rebase
@@ -236,7 +238,7 @@ git pull --rebase
 git push
 ```
 
-Desarrollo, para analizar los resultados:
+En el otro, para analizar los resultados:
 
 ```bash
 git pull --rebase
