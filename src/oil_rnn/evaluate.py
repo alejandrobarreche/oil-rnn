@@ -35,6 +35,12 @@ def run_evaluation(argv: list[str] | None = None) -> dict:
     run_id = args.run or latest_run_id()
     cfg = load_config(run_paths(run_id)["run"] / "config.yaml")
     require(cfg, *REQUIRED)
+    if args.split != "test":
+        log.warning(
+            "make train entrena con train + val: evaluar en '%s' es dentro de la muestra. "
+            "Las métricas de validación son las de make cv.",
+            args.split,
+        )
     history = Preprocessor(cfg).history
     df = load_split(args.split, context=history)
 

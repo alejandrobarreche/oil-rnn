@@ -107,11 +107,16 @@ make prepare
 
 `make data` descarga en `data/raw/` y registra origen y hashes en `data/raw/_source.json`. `make prepare` crea `data/train`, `data/val`, `data/test` y `data/splits.json`. `data/raw/` no se modifica a mano.
 
-### 4. Entrenamiento
+### 4. Validación y entrenamiento
 
 ```bash
+make cv NAME=<nombre>
 make train NAME=<nombre>
 ```
+
+`make cv` entrena un pliegue por cada bloque de 2 años de train + val (4 pliegues, 2015–2023): cada uno con todo lo anterior a su bloque, purgado `data.horizon` filas y con el último año para early stopping. Registra métricas por pliegue (`fold<k>_*`) y su media (`cv_*`), y guarda las predicciones de los bloques en `artifacts/<id>/cv_predictions.csv`. Con estas métricas se comparan modelos.
+
+`make train` entrena el modelo final con train + val por el mismo procedimiento; se evalúa en test con `make evaluate`.
 
 Cada ejecución es un run con id `<AAAAMMDD-HHMMSS>_<nombre>_<máquina>` que nombra tres carpetas: `runs/<id>`, `artifacts/<id>` y `models/<id>`. Un run terminado no se reescribe; un cambio es un run nuevo.
 
@@ -189,23 +194,19 @@ make train NAME=<nombre> ARGS="--set train.epochs=<n> --set train.learning_rate=
 Los tres modelos con los mismos datos, la misma ventana y la misma partición:
 
 ```bash
-make train NAME=rnn ARGS="--set model.cell=rnn"
-make train NAME=lstm ARGS="--set model.cell=lstm"
-make train NAME=gru ARGS="--set model.cell=gru"
+make cv NAME=rnn ARGS="--set model.cell=rnn"
+make cv NAME=lstm ARGS="--set model.cell=lstm"
+make cv NAME=gru ARGS="--set model.cell=gru"
 make runs
 ```
 
-### Evaluar un run concreto o sobre validación
+### Evaluar un run concreto
 
 ```bash
 make evaluate RUN=<run_id>
 ```
 
-```bash
-make evaluate SPLIT=val
-```
-
-`test` solo se usa en la evaluación final; para decidir arquitectura o hiperparámetros se usa `val`.
+`test` solo se usa en la evaluación final; para decidir arquitectura o hiperparámetros se usan las métricas `cv_*` de `make cv`.
 
 ### Trabajar con dos ordenadores
 

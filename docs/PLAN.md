@@ -54,7 +54,7 @@ Cambios mínimos sobre lo existente:
 
 - `src/oil_rnn/features.py` — `Preprocessor`: `target_mode: log_return`, features derivadas, `n_outputs` = número de cuantiles.
 - `src/oil_rnn/model.py` — `RNNRegressor`: cabeza con 3 salidas (cuantiles 0,1 · 0,5 · 0,9), pérdida *pinball*, `min_epochs`; registrar número de parámetros y tiempo de entrenamiento con `run.log_metrics`.
-- `src/oil_rnn/data.py` — pliegues *walk-forward* de ventana creciente sobre train+val (reutiliza `_split` y `load_split(context=…)`); test queda fuera.
+- `src/oil_rnn/data.py` + `cv.py` — `make cv`: 4 pliegues *walk-forward* de ventana creciente sobre train+val, con bloques de evaluación de 2 años (2015–2023), purga de `horizon` filas en cada frontera y *early stopping* con el último año de cada entrenamiento; test queda fuera. `make train` = modelo final con train+val por el mismo procedimiento.
 - `src/oil_rnn/metrics.py` — `compute_metrics`: añadir MSE, acierto de dirección, cobertura del 80 %, anchura del intervalo y *pinball*; referencia de intervalo = cuantiles históricos del rendimiento a h días en train.
 - Calibración conforme de los cuantiles (CQR) con el tramo de validación; guardada con el modelo.
 - Tests nuevos en `tests/`: ningún target de train posterior al fin de train; ninguna ventana usa filas posteriores a t−h; cuantiles no cruzados; inversa de `log_return`.

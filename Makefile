@@ -30,7 +30,7 @@ RELEASE ?= model-v1
 
 .PHONY: help setup pending check-env install install-mac install-cpu install-cuda install-rocm \
         backend-mac backend-cpu backend-cuda backend-rocm lock test lint format device \
-        data prepare train evaluate runs pack unpack mlflow-ui export-web web-install web-dev web-test web-build web-release
+        data prepare cv train evaluate runs pack unpack mlflow-ui export-web web-install web-dev web-test web-build web-release
 
 
 help:
@@ -45,8 +45,9 @@ help:
 	@echo "== Datos y experimentos =="
 	@echo "  make data             descarga los datos en data/raw/"
 	@echo "  make prepare          crea data/train, data/val y data/test"
-	@echo "  make train NAME=baseline ARGS='--set train.epochs=50'"
-	@echo "  make evaluate         evalua el ultimo run sobre test, opciones RUN=id SPLIT=val"
+	@echo "  make cv NAME=lstm-h5   validacion walk-forward (4 pliegues sobre train+val)"
+	@echo "  make train NAME=baseline ARGS='--set train.epochs=50'  modelo final (train+val)"
+	@echo "  make evaluate         evalua el ultimo run sobre test, opcion RUN=id"
 	@echo "  make runs             tabla de runs"
 	@echo "  make pack RUN=id      empaqueta un run con sus pesos, y make unpack ZIP=archivo lo restaura"
 	@echo "  make mlflow-ui        interfaz de MLflow"
@@ -107,6 +108,9 @@ data: check-env
 
 prepare: check-env
 	$(PYTHON) -m $(PKG).data $(ARGS)
+
+cv: check-env
+	$(PYTHON) -m $(PKG).cv --name $(NAME) $(ARGS)
 
 train: check-env
 	$(PYTHON) -m $(PKG).train --name $(NAME) $(ARGS)

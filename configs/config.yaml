@@ -73,6 +73,11 @@ train:                           # PROVISIONAL
   patience: 5                    # early stopping sobre la pérdida de validación
   min_epochs: 10                 # no se para antes de esta época
 
+cv:                              # validación walk-forward sobre train + val (make cv); test queda fuera
+  folds: 4                       # bloques de evaluación consecutivos que terminan al final de val
+  block: 504                     # filas por bloque (≈ 2 años: 2 pronósticos independientes a 252 días)
+  holdout: 252                   # últimas filas de cada entrenamiento para early stopping (≈ 1 año); purga = data.horizon
+
 mlflow:
   experiment: oil-rnn
   tracking_uri: local            # local = runs/mlflow.db · o http://servidor:5000

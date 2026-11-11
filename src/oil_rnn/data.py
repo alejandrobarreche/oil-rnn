@@ -173,6 +173,52 @@ def load_split(name: str, context: int = 0) -> pd.DataFrame:
     return df
 
 
+def load_train_val() -> pd.DataFrame:
+    """train + val en orden: el tramo de desarrollo (pliegues walk-forward y modelo final)."""
+    return pd.concat([_read_split("train"), _read_split("val")], ignore_index=True)
+
+
+def segment(df: pd.DataFrame, start: int, end: int, history: int) -> pd.DataFrame:
+    """Filas [start, end) para predecir, precedidas de `history` filas de contexto (marcadas en
+    _context: sirven de entrada a las primeras ventanas, no se predicen)."""
+    lo = max(0, start - history)
+    part = df.iloc[lo:end].reset_index(drop=True)
+    return part.assign(**{CONTEXT_COLUMN: part.index < start - lo})
+
+
+def training_bounds(boundary: int, horizon: int, holdout: int) -> tuple[int, int, int]:
+    """Filas de entrenamiento antes de `boundary`, la primera fila que se predice después.
+
+    Purga: la primera predicción tras la frontera se hace desde boundary - horizon, así que
+    ningún target de entrenamiento puede ser posterior a esa fila (si no, la red habría visto
+    precios futuros a ese instante). Lo mismo entre el ajuste y el tramo de early stopping.
+
+    Devuelve (fit_end, stop_start, stop_end): se ajusta con targets en [0, fit_end) y se para
+    con los de [stop_start, stop_end), los `holdout` últimos antes de la purga."""
+    stop_end = boundary - horizon + 1
+    stop_start = stop_end - holdout
+    fit_end = stop_start - horizon + 1
+    if fit_end <= 0:
+        raise ValueError(f"No quedan filas de ajuste antes de la fila {boundary}")
+    return fit_end, stop_start, stop_end
+
+
+def training_segments(
+    df: pd.DataFrame, boundary: int, horizon: int, holdout: int, history: int
+) -> tuple[pd.DataFrame, pd.DataFrame]:
+    """(ajuste, early stopping) con todo lo anterior a `boundary`, purgado."""
+    fit_end, stop_start, stop_end = training_bounds(boundary, horizon, holdout)
+    return df.iloc[:fit_end].reset_index(drop=True), segment(df, stop_start, stop_end, history)
+
+
+def fold_boundaries(n: int, folds: int, block: int) -> list[tuple[int, int]]:
+    """Bloques de evaluación walk-forward: `folds` tramos consecutivos de `block` filas que
+    terminan en la fila n. Cada pliegue entrena con todo lo anterior a su bloque."""
+    if folds * block >= n:
+        raise ValueError(f"{folds} bloques de {block} filas no caben en {n} filas")
+    return [(n - (folds - k) * block, n - (folds - k - 1) * block) for k in range(folds)]
+
+
 def data_fingerprint() -> dict:
     """Qué datos se usaron: se guarda en el meta.json de cada run."""
     if SPLITS_MANIFEST.exists():
