@@ -45,3 +45,44 @@ def test_segmentos_con_contexto():
     assert stop_targets.max() == 90 - 5  # nada posterior al origen de la fila 90
     assert fit["t"].max() == stop_targets.min() - 5
     assert CONTEXT_COLUMN not in fit
+
+
+def test_calibracion_por_pliegues_solo_con_el_pasado(tmp_path):
+    from oil_rnn import conformal
+    from oil_rnn.config import load_config
+    from oil_rnn.cv import _calibrate
+
+    class _Run:
+        dir, logged = tmp_path, {}
+
+        def log_metrics(self, m, step=None):
+            self.logged.update(m)
+
+    def frame(width):  # intervalo de la red [y_pred - width, y_pred + width]
+        rng = np.random.default_rng(int(width * 10))
+        y = 100 * np.exp(rng.normal(0, 0.05, 300))
+        return pd.DataFrame(
+            {"y_true": y, "y_pred": 100.0, "y_lo": 100 - width, "y_hi": 100 + width}
+        )
+
+    cfg = load_config(overrides=["data.horizon=5"])
+    frames = [frame(w) for w in (1.0, 2.0, 3.0, 4.0)]
+    run = _Run()
+    out = _calibrate(cfg, frames, run)
+    # El pliegue 2 se corrige solo con el 1
+    conf = conformal.fit(frames[0]["y_true"], 99.0, 101.0, "log_return", 0.8, 5)
+    lo, hi = conformal.apply(98.0, 100.0, 102.0, conf["correction"], "log_return")
+    y = frames[1]["y_true"]
+    assert run.logged["fold2_coverage_cqr"] == pytest.approx(np.mean((lo <= y) & (y <= hi)))
+    assert "fold1_coverage_cqr" not in run.logged
+    # La corrección guardada usa los cuatro bloques
+    saved = conformal.fit(
+        pd.concat(frames)["y_true"],
+        pd.concat(frames)["y_lo"],
+        pd.concat(frames)["y_hi"],
+        "log_return",
+        0.8,
+        5,
+    )
+    assert out["cv_conformal_correction"] == pytest.approx(saved["correction"])
+    assert (tmp_path / "conformal.json").exists()

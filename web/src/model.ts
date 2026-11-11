@@ -8,6 +8,7 @@ export interface Manifest {
   target: string;
   classes: string[] | null;
   quantiles?: number[] | null;
+  conformal?: { correction: number; mode: string } | null;
   features: string[];
   x_mean: number[];
   x_scale: number[];
@@ -137,12 +138,31 @@ export function softmax(logits: number[]): number[] {
   return exp.map((v) => v / sum);
 }
 
+/** Corrección conforme del intervalo, réplica de conformal.calibrate_quantiles. */
+export function calibrate(
+  values: number[],
+  quantiles: number[],
+  c: { correction: number; mode: string },
+): number[] {
+  const out = [...values];
+  const last = out.length - 1;
+  const mid = out[quantiles.indexOf(0.5)];
+  const q = c.correction;
+  const [lo, hi] =
+    c.mode === "log_return"
+      ? [out[0] * Math.exp(-q), out[last] * Math.exp(q)]
+      : [out[0] - q, out[last] + q];
+  out[0] = Math.min(lo, mid);
+  out[last] = Math.max(hi, mid);
+  return out;
+}
+
 /** Salida de la red → valor final (regresión; uno por cuantil si m.quantiles) o probabilidades
  * por clase (clasificación). */
 export function postprocess(m: Manifest, output: ArrayLike<number>, p: Prepared): number[] {
   if (m.data_kind === "time_series") {
     const n = m.quantiles?.length || 1;
-    return Array.from(output)
+    const values = Array.from(output)
       .slice(0, n)
       .map((o) => {
         const y = o * (m.y_scale ?? 1) + (m.y_mean ?? 0);
@@ -150,6 +170,7 @@ export function postprocess(m: Manifest, output: ArrayLike<number>, p: Prepared)
         if (m.target_mode === "log_return") return p.last * Math.exp(y);
         return y;
       });
+    return m.conformal && m.quantiles ? calibrate(values, m.quantiles, m.conformal) : values;
   }
   if (m.task === "classification") {
     return softmax(Array.from(output).slice(0, m.classes?.length ?? output.length));

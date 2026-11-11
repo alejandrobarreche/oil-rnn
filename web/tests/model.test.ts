@@ -3,6 +3,7 @@ import { fileURLToPath } from "node:url";
 import * as ort from "onnxruntime-node";
 import { describe, expect, it } from "vitest";
 import {
+  calibrate,
   type Manifest,
   parseCsv,
   predict,
@@ -53,6 +54,18 @@ describe("utilidades", () => {
     // desviación típica muestral de [log 2, log 0,5] = |2·log 2| / √2
     expect(vol).toBeCloseTo((2 * Math.log(2)) / Math.SQRT2, 12);
     expect(out[1][4]).toBeNaN(); // antes de warmup = 2 no hay volatilidad
+  });
+
+  it("corrección conforme como conformal.calibrate_quantiles", () => {
+    const log = { correction: Math.log(1.1), mode: "log_return" };
+    const out = calibrate([90, 100, 110], [0.1, 0.5, 0.9], log);
+    expect(out[0]).toBeCloseTo(90 / 1.1, 10);
+    expect(out[1]).toBe(100);
+    expect(out[2]).toBeCloseTo(110 * 1.1, 10);
+    // Estrechar no cruza la mediana
+    expect(calibrate([99, 100, 101], [0.1, 0.5, 0.9], { correction: -1, mode: "change" })).toEqual([
+      100, 100, 100,
+    ]);
   });
 
   it("recorta las entradas estandarizadas a ±clip", () => {

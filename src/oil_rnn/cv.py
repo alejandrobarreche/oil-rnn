@@ -7,16 +7,19 @@ Cada pliegue entrena con todo lo anterior a su bloque (purgado, con el último a
 stopping) y predice el bloque, que solo se usa para medir. Test no interviene.
 
 runs/<id>/metrics.json        fold<k>_<métrica> por pliegue y cv_<métrica> = media de pliegues
-artifacts/<id>/cv_predictions.csv   predicciones de cada bloque (para calibrar el intervalo)
+runs/<id>/conformal.json      corrección del intervalo para make train CALIB=<id>
+artifacts/<id>/cv_predictions.csv   predicciones de cada bloque
 """
 
 from __future__ import annotations
 
 import argparse
+import json
 
 import numpy as np
 import pandas as pd
 
+from . import conformal
 from .config import add_config_args, load_config, require
 from .data import fold_boundaries, load_train_val, segment, training_segments
 from .features import REQUIRED, Preprocessor
@@ -34,6 +37,37 @@ class _FoldRun:
 
     def log_metrics(self, metrics: dict[str, float], step: int | None = None) -> None:
         self.run.log_metrics({self.prefix + k: v for k, v in metrics.items()}, step=step)
+
+
+def _calibrate(cfg: dict, frames: list[pd.DataFrame], run: Run) -> dict[str, float]:
+    """Calibración conforme del intervalo con las predicciones de los bloques.
+
+    Para medirla sin mirar el futuro, el pliegue k se corrige solo con los pliegues anteriores
+    (el 1 no tiene con qué). La corrección que se guarda (conformal.json, la usa make train
+    CALIB=<este run>) sale de los cuatro bloques, todos anteriores a test."""
+    q = cfg["model"]["quantiles"]
+    coverage = max(q) - min(q)
+    mode, h = cfg["data"]["target_mode"], int(cfg["data"]["horizon"])
+
+    def fit(parts: list[pd.DataFrame]) -> dict:
+        d = pd.concat(parts)
+        return conformal.fit(d["y_true"], d["y_lo"], d["y_hi"], mode, coverage, h)
+
+    cov, width = [], []
+    for k in range(1, len(frames)):
+        conf, f = fit(frames[:k]), frames[k]
+        lo, hi = conformal.apply(f["y_lo"], f["y_pred"], f["y_hi"], conf["correction"], mode)
+        cov.append(float(np.mean((lo <= f["y_true"]) & (f["y_true"] <= hi))))
+        width.append(float(np.mean(hi - lo)))
+        run.log_metrics({f"fold{k + 1}_coverage_cqr": cov[-1], f"fold{k + 1}_width_cqr": width[-1]})
+
+    final = fit(frames)
+    (run.dir / "conformal.json").write_text(json.dumps(final, indent=2), encoding="utf-8")
+    return {
+        "cv_coverage_cqr": float(np.mean(cov)),  # media de los pliegues 2..k
+        "cv_interval_width_cqr": float(np.mean(width)),
+        "cv_conformal_correction": final["correction"],
+    }
 
 
 def run_cv(argv: list[str] | None = None) -> str:
@@ -64,6 +98,8 @@ def run_cv(argv: list[str] | None = None) -> str:
             frames.append(predictions_frame(out).assign(fold=k))
 
         summary = {f"cv_{m}": float(np.mean([f[m] for f in per_fold])) for m in per_fold[0]}
+        if fitted["quantiles"]:
+            summary |= _calibrate(cfg, frames, run)
         run.log_metrics(summary)
         pd.concat(frames).to_csv(run.artifacts_dir / "cv_predictions.csv", index=False)
 

@@ -27,6 +27,7 @@ RUN ?=
 SPLIT ?= test
 ZIP ?=
 RELEASE ?= model-v1
+CALIB ?=
 
 .PHONY: help setup pending check-env install install-mac install-cpu install-cuda install-rocm \
         backend-mac backend-cpu backend-cuda backend-rocm lock test lint format device \
@@ -46,7 +47,7 @@ help:
 	@echo "  make data             descarga los datos en data/raw/"
 	@echo "  make prepare          crea data/train, data/val y data/test"
 	@echo "  make cv NAME=lstm-h5   validacion walk-forward (4 pliegues sobre train+val)"
-	@echo "  make train NAME=baseline ARGS='--set train.epochs=50'  modelo final (train+val)"
+	@echo "  make train NAME=baseline ARGS='--set train.epochs=50'  modelo final (train+val), CALIB=<run de cv> calibra el intervalo"
 	@echo "  make evaluate         evalua el ultimo run sobre test, opcion RUN=id"
 	@echo "  make runs             tabla de runs"
 	@echo "  make pack RUN=id      empaqueta un run con sus pesos, y make unpack ZIP=archivo lo restaura"
@@ -113,7 +114,7 @@ cv: check-env
 	$(PYTHON) -m $(PKG).cv --name $(NAME) $(ARGS)
 
 train: check-env
-	$(PYTHON) -m $(PKG).train --name $(NAME) $(ARGS)
+	$(PYTHON) -m $(PKG).train --name $(NAME) $(if $(CALIB),--calibration $(CALIB),) $(ARGS)
 
 evaluate: check-env
 	$(PYTHON) -m $(PKG).evaluate --split $(SPLIT) $(if $(RUN),--run $(RUN),)

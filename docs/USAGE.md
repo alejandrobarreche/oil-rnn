@@ -111,12 +111,14 @@ make prepare
 
 ```bash
 make cv NAME=<nombre>
-make train NAME=<nombre>
+make train NAME=<nombre> CALIB=<run_id de make cv>
 ```
 
 `make cv` entrena un pliegue por cada bloque de 2 años de train + val (4 pliegues, 2015–2023): cada uno con todo lo anterior a su bloque, purgado `data.horizon` filas y con el último año para early stopping. Registra métricas por pliegue (`fold<k>_*`) y su media (`cv_*`), y guarda las predicciones de los bloques en `artifacts/<id>/cv_predictions.csv`. Con estas métricas se comparan modelos.
 
-`make train` entrena el modelo final con train + val por el mismo procedimiento; se evalúa en test con `make evaluate`.
+`make cv` también calibra el intervalo del 80 % (calibración conforme): mide su cobertura corrigiendo cada pliegue solo con los anteriores (`cv_coverage_cqr`) y guarda la corrección de los cuatro bloques en `runs/<id>/conformal.json`.
+
+`make train` entrena el modelo final con train + val por el mismo procedimiento; con `CALIB=<run de make cv>` aplica esa corrección, siempre que la configuración coincida. Se evalúa en test con `make evaluate`.
 
 Cada ejecución es un run con id `<AAAAMMDD-HHMMSS>_<nombre>_<máquina>` que nombra tres carpetas: `runs/<id>`, `artifacts/<id>` y `models/<id>`. Un run terminado no se reescribe; un cambio es un run nuevo.
 

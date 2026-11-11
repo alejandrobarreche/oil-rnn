@@ -26,6 +26,7 @@ import torch
 from torch import nn
 from torch.utils.data import DataLoader, TensorDataset
 
+from .conformal import calibrate_quantiles
 from .features import Preprocessor
 
 log = logging.getLogger("oil_rnn")
@@ -207,7 +208,9 @@ def save_model(fitted: dict, model_dir: Path, cfg: dict) -> None:
     torch.save(
         {"state_dict": fitted["net"].state_dict(), "init": fitted["init"]}, model_dir / "model.pt"
     )
-    _save_common(fitted["preprocessor"], model_dir, cfg, fitted.get("quantiles"))
+    _save_common(
+        fitted["preprocessor"], model_dir, cfg, fitted.get("quantiles"), fitted.get("conformal")
+    )
 
 
 class Predictor:
@@ -237,6 +240,8 @@ class Predictor:
         quantiles = self.card.get("quantiles")
         train_targets = getattr(prep, "train_targets", None)  # no existe en modelos antiguos
         if quantiles:
+            if self.card.get("conformal"):
+                pred = calibrate_quantiles(pred, quantiles, self.card["conformal"])
             out["y_pred"] = pred[:, quantiles.index(0.5)]
             out["y_lo"], out["y_hi"] = pred[:, 0], pred[:, -1]
             out["y_quantiles"], out["quantiles"] = pred, quantiles
@@ -252,7 +257,11 @@ class Predictor:
 
 # ── común a todos los frameworks ───────────────────────────
 def _save_common(
-    prep: Preprocessor, model_dir: Path, cfg: dict, quantiles: list[float] | None = None
+    prep: Preprocessor,
+    model_dir: Path,
+    cfg: dict,
+    quantiles: list[float] | None = None,
+    conformal: dict | None = None,
 ) -> None:
     joblib.dump(prep, model_dir / "preprocessor.joblib")
     card = {
@@ -268,6 +277,7 @@ def _save_common(
         "horizon": prep.horizon,
         "target_mode": prep.target_mode,
         "quantiles": quantiles,
+        "conformal": conformal,  # corrección del intervalo (conformal.py), o None
         "saved_at": datetime.now(UTC).isoformat(timespec="seconds"),
     }
     (model_dir / "model_card.json").write_text(
