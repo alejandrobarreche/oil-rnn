@@ -28,6 +28,8 @@ class Preprocessor:
       change  la red predice el cambio respecto al último valor conocido y el valor se reconstruye
               sumándolo. En series no estacionarias (precios) suele generalizar mucho mejor,
               porque test cae a menudo fuera del rango de valores visto en train.
+      log_return  la red predice log(valor / último valor conocido): un cambio relativo,
+              comparable entre épocas con niveles de precio distintos. Exige un target positivo.
     """
 
     def __init__(self, cfg: dict):
@@ -38,8 +40,10 @@ class Preprocessor:
         self.window: int = int(dcfg["window"])
         self.horizon: int = int(dcfg["horizon"])
         self.target_mode: str = dcfg["target_mode"]
-        if self.target_mode not in ("level", "change"):
-            raise ValueError(f"data.target_mode debe ser level o change, no {self.target_mode}")
+        if self.target_mode not in ("level", "change", "log_return"):
+            raise ValueError(
+                f"data.target_mode debe ser level, change o log_return, no {self.target_mode}"
+            )
         self.requested_features = dcfg["features"]
         self.features: list[str] = []
         self.classes = None
@@ -62,11 +66,14 @@ class Preprocessor:
 
     def _model_target(self, level: np.ndarray) -> np.ndarray:
         """Lo que aprende la red en cada fila: el valor o su cambio a `horizon` pasos."""
-        if self.target_mode == "change":
-            out = np.full_like(level, np.nan)
-            out[self.horizon :] = level[self.horizon :] - level[: -self.horizon]
-            return out
-        return level
+        if self.target_mode == "level":
+            return level
+        if self.target_mode == "log_return" and np.nanmin(level) <= 0:
+            raise ValueError(f"target_mode=log_return exige '{self.target}' > 0 en todas las filas")
+        out = np.full_like(level, np.nan)
+        now, before = level[self.horizon :], level[: -self.horizon]
+        out[self.horizon :] = now - before if self.target_mode == "change" else np.log(now / before)
+        return out
 
     @property
     def n_features(self) -> int:
@@ -114,14 +121,20 @@ class Preprocessor:
             out["y_last"] = y[targets - self.horizon]  # último valor conocido = referencia
             model_y = self._model_target(y)[targets]
             out["y"] = ((model_y - self.y_mean) / self.y_scale).astype(np.float32)
-        elif self.target_mode == "change":
-            raise ValueError(f"target_mode=change necesita la columna '{self.target}' en los datos")
+        elif self.target_mode != "level":
+            raise ValueError(
+                f"target_mode={self.target_mode} necesita la columna '{self.target}' en los datos"
+            )
         return out
 
     def inverse_target(self, y_scaled: np.ndarray, last_value: np.ndarray) -> np.ndarray:
         """Salida de la red → valor real. last_value es el último valor conocido (y_last)."""
         y = np.asarray(y_scaled, np.float64) * self.y_scale + self.y_mean
-        return last_value + y if self.target_mode == "change" else y
+        if self.target_mode == "change":
+            return last_value + y
+        if self.target_mode == "log_return":
+            return last_value * np.exp(y)
+        return y
 
 
 def _safe_scale(std: np.ndarray) -> np.ndarray:

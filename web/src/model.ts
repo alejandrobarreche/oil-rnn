@@ -13,7 +13,7 @@ export interface Manifest {
   x_fill?: number[];
   window?: number;
   horizon?: number;
-  target_mode?: "level" | "change";
+  target_mode?: "level" | "change" | "log_return";
   target_index?: number | null;
   y_mean?: number;
   y_scale?: number;
@@ -83,7 +83,9 @@ export function softmax(logits: number[]): number[] {
 export function postprocess(m: Manifest, output: ArrayLike<number>, p: Prepared): number[] {
   if (m.data_kind === "time_series") {
     const y = output[0] * (m.y_scale ?? 1) + (m.y_mean ?? 0);
-    return [m.target_mode === "change" ? p.last + y : y];
+    if (m.target_mode === "change") return [p.last + y];
+    if (m.target_mode === "log_return") return [p.last * Math.exp(y)];
+    return [y];
   }
   if (m.task === "classification") {
     return softmax(Array.from(output).slice(0, m.classes?.length ?? output.length));

@@ -45,8 +45,10 @@ def _preprocessing(prep) -> dict:
 
 def _examples(predictor: Predictor) -> list[dict]:
     prep = predictor.preprocessor
-    if prep.target_mode == "change" and prep.target not in prep.features:
-        raise ValueError("Con target_mode=change el target debe estar entre las features")
+    if prep.target_mode != "level" and prep.target not in prep.features:
+        raise ValueError(
+            f"Con target_mode={prep.target_mode} el target debe estar entre las features"
+        )
     df = load_split("test").tail(prep.window + N_EXAMPLES - 1).reset_index(drop=True)
     rows = df[prep.features].to_numpy(np.float64)
     examples = []

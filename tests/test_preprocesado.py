@@ -46,8 +46,8 @@ def test_ventanas_alineadas_sin_futuro():
 
 
 def test_modo_cambio_reconstruye_el_nivel():
-    df = _series()
-    for mode in ("level", "change"):
+    df = _series().assign(y=lambda d: d["y"] + 1)  # log_return exige un target positivo
+    for mode in ("level", "change", "log_return"):
         prep = Preprocessor(_cfg(mode=mode)).fit(df)
         w = prep.windows(df)
         np.testing.assert_allclose(prep.inverse_target(w["y"], w["y_last"]), w["y_true"], atol=1e-4)
