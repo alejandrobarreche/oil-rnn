@@ -38,15 +38,15 @@ data:
   # ── Lectura y splits: make prepare ──────────────────────
   # raw_file: otro.csv           # por defecto, data.source.filename
   na_values: []                  # textos que significan «sin dato», ej. ["."] en FRED
-  target: PENDIENTE              # columna que se predice
+  target: brent                  # columna que se predice
   features: PENDIENTE            # lista de columnas, o all = todas las numéricas (incluido el target)
-  time_column: PENDIENTE         # columna de fecha; los datos se ordenan por ella
+  time_column: date              # columna de fecha; los datos se ordenan por ella
   fill_missing: ffill            # PROVISIONAL · ffill = repetir el último valor conocido · null = no rellenar
-  window: PENDIENTE              # pasos de historia que ve la red
-  horizon: PENDIENTE             # pasos por delante que se predicen
-  target_mode: PENDIENTE         # change = predecir el cambio (precios) · level = el valor
-  val_size: PENDIENTE            # proporción para validación, ej. 0.15
-  test_size: PENDIENTE           # proporción para test, ej. 0.15
+  window: 60                     # PROVISIONAL · pasos de historia que ve la red; 60 frente a 120 se decide en validación
+  horizon: 5                     # días hábiles por delante. Un modelo por horizonte: 5, 21, 63 y 252 (--set data.horizon=N)
+  target_mode: log_return        # log_return = log(valor / último conocido) · change = diferencia · level = el valor
+  val_size: 0.15                 # proporción para validación
+  test_size: 0.15                # proporción para test (≈ últimos 4 años: contiene horizontes de 252 días)
 
 model:                           # PROVISIONAL
   cell: lstm                     # rnn | lstm | gru
