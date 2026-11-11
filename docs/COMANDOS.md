@@ -147,7 +147,7 @@ Arreglo (11/11): `finish_process()` en `run.py`. Al final de `make cv` y `make t
 
 ---
 
-**🖥️ Windows GPU · 11/11/2026 · ⏳**
+**🖥️ Windows GPU · 11/11/2026 · ✅**
 Cierre de la fase 2: prueba de humo de las celdas que faltan (RNN y GRU, h=5) y del horizonte más largo (LSTM, h=252), a 3 épocas. Solo comprueba que todo funciona y que `make` termina sin error; sus cifras no valen como resultado.
 
 ```bash
@@ -158,3 +158,5 @@ make cv NAME=humo-lstm-h252 ARGS="--set data.horizon=252 --set train.epochs=3 --
 ```
 
 Pásale a Claude la salida de los tres comandos. Al subirlos, añade solo esos tres runs: `git add runs/<id> artifacts/<id>` por cada uno.
+
+Resultado (11/11): los tres runs (`211209_humo-rnn-h5`, `211237_humo-gru-h5`, `211303_humo-lstm-h252`) terminan con `status: finished`, con `conformal.json` y `cv_predictions.csv`. Windows no registra ningún aborto de python.exe desde las 21:10, así que el arreglo de cuDNN funciona con `make`. Las tres celdas y h=252 funcionan de principio a fin. Las cifras, a 3 épocas, no valen como resultado.
