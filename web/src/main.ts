@@ -22,6 +22,13 @@ function describe(m: Manifest, values: number[]): string {
     return `${m.classes[best]}  (${probs})`;
   }
   const when = m.data_kind === "time_series" ? ` dentro de ${m.horizon} paso(s)` : "";
+  const q = m.quantiles;
+  if (q && q.length > 1) {
+    const mid = values[q.indexOf(0.5)];
+    const range = `${fmt.format(values[0])} – ${fmt.format(values[q.length - 1])}`;
+    const pct = Math.round((q[q.length - 1] - q[0]) * 100);
+    return `${m.target}${when}: ${fmt.format(mid)} (intervalo del ${pct} %: ${range})`;
+  }
   return `${m.target}${when}: ${fmt.format(values[0])}`;
 }
 

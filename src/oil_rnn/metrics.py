@@ -64,6 +64,8 @@ def save_eval_plots(task: str, out: dict, out_dir: Path, split: str) -> list[Pat
     elif "time" in out:
         fig, ax = plt.subplots(figsize=(10, 4))
         x = out.get("time", np.arange(len(y_true)))
+        if "y_lo" in out:
+            ax.fill_between(x, out["y_lo"], out["y_hi"], alpha=0.25, label="Intervalo")
         ax.plot(x, y_true, linewidth=1, label="Real")
         ax.plot(x, y_pred, linewidth=1, label="Predicho")
         ax.set_title(f"Serie real y predicha ({split})")
@@ -88,5 +90,6 @@ def predictions_frame(out: dict):
     """Tabla con una fila por predicción (sin probabilidades)."""
     import pandas as pd
 
-    cols = {k: out[k] for k in ("time", "y_true", "y_pred", "y_baseline") if k in out}
+    keys = ("time", "y_true", "y_pred", "y_lo", "y_hi", "y_baseline")
+    cols = {k: out[k] for k in keys if k in out}
     return pd.DataFrame(cols)

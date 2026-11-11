@@ -7,6 +7,7 @@ export interface Manifest {
   data_kind: "tabular" | "time_series";
   target: string;
   classes: string[] | null;
+  quantiles?: number[] | null;
   features: string[];
   x_mean: number[];
   x_scale: number[];
@@ -136,13 +137,19 @@ export function softmax(logits: number[]): number[] {
   return exp.map((v) => v / sum);
 }
 
-/** Salida de la red → valor final (regresión) o probabilidades por clase (clasificación). */
+/** Salida de la red → valor final (regresión; uno por cuantil si m.quantiles) o probabilidades
+ * por clase (clasificación). */
 export function postprocess(m: Manifest, output: ArrayLike<number>, p: Prepared): number[] {
   if (m.data_kind === "time_series") {
-    const y = output[0] * (m.y_scale ?? 1) + (m.y_mean ?? 0);
-    if (m.target_mode === "change") return [p.last + y];
-    if (m.target_mode === "log_return") return [p.last * Math.exp(y)];
-    return [y];
+    const n = m.quantiles?.length || 1;
+    return Array.from(output)
+      .slice(0, n)
+      .map((o) => {
+        const y = o * (m.y_scale ?? 1) + (m.y_mean ?? 0);
+        if (m.target_mode === "change") return p.last + y;
+        if (m.target_mode === "log_return") return p.last * Math.exp(y);
+        return y;
+      });
   }
   if (m.task === "classification") {
     return softmax(Array.from(output).slice(0, m.classes?.length ?? output.length));

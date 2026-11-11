@@ -64,7 +64,8 @@ def _examples(predictor: Predictor) -> list[dict]:
         x = prep.window_from_rows(window)[None]
         last = window[-1, prep.features.index(prep.target)] if prep.target in prep.features else 0
         pred = prep.inverse_target(predictor.forward(x), np.array([last]))
-        examples.append({"rows": window.tolist(), "expected": [float(pred[0])]})
+        expected = np.atleast_1d(pred[0]).tolist()  # un valor o uno por cuantil
+        examples.append({"rows": window.tolist(), "expected": expected})
     return examples
 
 
@@ -102,6 +103,7 @@ def export(run_id: str, release: str) -> dict:
         "data_kind": card["data_kind"],
         "target": card["target"],
         "classes": card["classes"],
+        "quantiles": card.get("quantiles"),
         **_preprocessing(prep),
         "model_file": onnx_path.name,
         "sha256": file_sha256(onnx_path),

@@ -169,10 +169,6 @@ class Preprocessor:
         """Número de entradas de la red (features transformadas + derivadas)."""
         return len(self.inputs)
 
-    @property
-    def n_outputs(self) -> int:
-        return 1
-
     def scale_features(self, values: np.ndarray) -> np.ndarray:
         """Estandariza con train y, si hay data.inputs.clip, recorta a ±clip desviaciones."""
         z = (values - self.x_mean) / self.x_scale
@@ -228,8 +224,13 @@ class Preprocessor:
         return self.scale_features(x)
 
     def inverse_target(self, y_scaled: np.ndarray, last_value: np.ndarray) -> np.ndarray:
-        """Salida de la red → valor real. last_value es el último valor conocido (y_last)."""
+        """Salida de la red → valor real. last_value es el último valor conocido (y_last).
+        Con varios cuantiles, y_scaled es (n, q); la transformación es creciente, así que
+        cada cuantil del rendimiento da el mismo cuantil del precio."""
         y = np.asarray(y_scaled, np.float64) * self.y_scale + self.y_mean
+        last_value = np.asarray(last_value, np.float64)
+        if y.ndim == 2:
+            last_value = last_value[:, None]
         if self.target_mode == "change":
             return last_value + y
         if self.target_mode == "log_return":

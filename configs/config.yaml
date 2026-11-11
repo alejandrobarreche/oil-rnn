@@ -59,17 +59,19 @@ data:
   val_size: 0.15                 # proporción para validación
   test_size: 0.15                # proporción para test (≈ últimos 3,8 años: 3–4 pronósticos independientes a 252 días)
 
-model:                           # PROVISIONAL
-  cell: lstm                     # rnn | lstm | gru
-  hidden_size: 64
-  num_layers: 2
-  dropout: 0.1
+model:
+  quantiles: [0.1, 0.5, 0.9]     # salidas de la red, pérdida pinball; 0.5 = predicción puntual, 0.1–0.9 = intervalo del 80 % · null = un valor con MSE
+  cell: lstm                     # PROVISIONAL · rnn | lstm | gru
+  hidden_size: 64                # PROVISIONAL
+  num_layers: 2                  # PROVISIONAL
+  dropout: 0.1                   # PROVISIONAL
 
 train:                           # PROVISIONAL
   epochs: 30
   batch_size: 64
   learning_rate: 0.001
   patience: 5                    # early stopping sobre la pérdida de validación
+  min_epochs: 10                 # no se para antes de esta época
 
 mlflow:
   experiment: oil-rnn
