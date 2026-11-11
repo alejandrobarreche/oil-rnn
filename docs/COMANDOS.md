@@ -33,7 +33,22 @@ git push
 **🖥️ Windows GPU · ⏳**
 Preparar la máquina con el código y los mismos datos que el Mac.
 
-1. Traer el código:
+1. Código y entorno. Requisitos: Miniconda o Miniforge, Git y el driver de NVIDIA al día (`nvidia-smi` debe indicar «CUDA Version» ≥ 12.6). Todo en «Anaconda Prompt».
+
+Primera vez (clonar y crear el entorno):
+
+```bash
+git clone <url-del-repo>
+cd oil-rnn
+conda env create -f environment.yml
+conda activate oil-rnn
+conda install -c conda-forge make
+python -m pip install "poetry>=2"
+make install-cuda
+make device
+```
+
+Si ya estaba clonado y con entorno:
 
 ```bash
 git pull --rebase
@@ -41,7 +56,7 @@ conda activate oil-rnn
 make device
 ```
 
-Si `conda activate` falla porque el entorno no existe, antes: `make setup`. `make device` debe decir `cuda`.
+`make device` debe mostrar `CUDA: True` y el nombre de la GPU. Si dice `False`, no sigas.
 
 2. Copiar del Mac a Windows, a mano (USB, nube…), estos dos archivos a la misma ruta: `data/raw/dataset.csv` y `data/raw/_source.json`. `data/` no va a git, y volver a descargar podría dar datos ligeramente distintos.
 
