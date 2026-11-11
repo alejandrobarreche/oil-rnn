@@ -72,6 +72,8 @@ models/<id>/       pesos + preprocessor.joblib + model_card.json (fuera de git)
 
 Si hay dudas sobre quién ejecuta algo, se pregunta.
 
+Cada comando que debe ejecutar el usuario se añade como mensaje al final de `docs/COMANDOS.md` (máquina, fecha, ⏳/✅ y bloque para copiar). Cuando el usuario pasa la salida, Claude marca el mensaje como ✅ y anota el resultado en una línea.
+
 ## 6. Máquinas
 
 | | Desarrollo (Mac) | Entrenamiento (GPU) |
@@ -117,6 +119,7 @@ Si hay dudas sobre quién ejecuta algo, se pregunta.
 ## 11. Documentación
 
 - `README.md`: presentación breve y visual de la solución. `docs/USAGE.md`: comandos por fases y por tareas. `CLAUDE.md`: reglas y forma de trabajo. `docs/`: enunciado (`assignment/`), bibliografía (`references.bib`) y presentación (`presentation/`).
+- `docs/COMANDOS.md`: chat Mac ↔ Windows con los comandos que ejecuta el usuario en cada máquina (§5).
 - `docs/PLAN.md`: única versión del plan del proyecto (fases, decisiones, orden de recorte). Los cambios de plan se editan ahí; no se mantienen copias en otro sitio.
 - No se crean más documentos (planes, estados, registros…) sin petición explícita.
 - Cuando cambia una regla, se edita su sección y queda solo la versión vigente.
