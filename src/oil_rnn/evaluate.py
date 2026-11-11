@@ -16,7 +16,7 @@ from datetime import UTC, datetime
 
 from .config import load_config, require
 from .data import data_fingerprint, load_split
-from .features import REQUIRED
+from .features import REQUIRED, Preprocessor
 from .metrics import compute_metrics, predictions_frame, save_eval_plots
 from .model import Predictor
 from .paths import latest_run_id, relative, run_paths
@@ -35,7 +35,7 @@ def run_evaluation(argv: list[str] | None = None) -> dict:
     run_id = args.run or latest_run_id()
     cfg = load_config(run_paths(run_id)["run"] / "config.yaml")
     require(cfg, *REQUIRED)
-    history = int(cfg["data"]["window"]) + int(cfg["data"]["horizon"]) - 1
+    history = Preprocessor(cfg).history
     df = load_split(args.split, context=history)
 
     with Run(cfg, run_id=run_id) as run:

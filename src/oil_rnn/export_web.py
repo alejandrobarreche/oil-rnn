@@ -36,6 +36,12 @@ def _preprocessing(prep) -> dict:
         "horizon": prep.horizon,
         "target_mode": prep.target_mode,
         "target_index": prep.features.index(prep.target) if prep.target in prep.features else None,
+        "inputs": prep.inputs,
+        "transforms": prep.transforms,
+        "floor": [prep.floor.get(f) for f in prep.features],
+        "volatility": prep.volatility,
+        "clip": prep.clip,
+        "warmup": prep.warmup,
         "x_mean": prep.x_mean.tolist(),
         "x_scale": prep.x_scale.tolist(),
         "y_mean": prep.y_mean,
@@ -49,12 +55,13 @@ def _examples(predictor: Predictor) -> list[dict]:
         raise ValueError(
             f"Con target_mode={prep.target_mode} el target debe estar entre las features"
         )
-    df = load_split("test").tail(prep.window + N_EXAMPLES - 1).reset_index(drop=True)
+    need = prep.window + prep.warmup
+    df = load_split("test").tail(need + N_EXAMPLES - 1).reset_index(drop=True)
     rows = df[prep.features].to_numpy(np.float64)
     examples = []
     for i in range(N_EXAMPLES):
-        window = rows[i : i + prep.window]
-        x = prep.scale_features(window)[None]
+        window = rows[i : i + need]
+        x = prep.window_from_rows(window)[None]
         last = window[-1, prep.features.index(prep.target)] if prep.target in prep.features else 0
         pred = prep.inverse_target(predictor.forward(x), np.array([last]))
         examples.append({"rows": window.tolist(), "expected": [float(pred[0])]})

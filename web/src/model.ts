@@ -15,6 +15,12 @@ export interface Manifest {
   horizon?: number;
   target_mode?: "level" | "change" | "log_return";
   target_index?: number | null;
+  inputs?: string[];
+  transforms?: Transform[];
+  floor?: (number | null)[];
+  volatility?: number | null;
+  clip?: number | null;
+  warmup?: number;
   y_mean?: number;
   y_scale?: number;
   model_file: string;
@@ -23,6 +29,41 @@ export interface Manifest {
 }
 
 export type Row = (number | null)[];
+
+export type Transform = "level" | "diff" | "log1p_diff" | "log_diff";
+
+/** Desviación típica muestral (ddof = 1), como pandas rolling().std(). */
+function sampleStd(values: number[]): number {
+  const mean = values.reduce((a, b) => a + b, 0) / values.length;
+  const ss = values.reduce((a, v) => a + (v - mean) ** 2, 0);
+  return Math.sqrt(ss / (values.length - 1));
+}
+
+/** Filas en bruto → entradas sin escalar, réplica de Preprocessor._inputs. Fila t: solo filas <= t. */
+export function transformRows(m: Manifest, raw: number[][]): number[][] {
+  const kinds = m.transforms ?? m.features.map((): Transform => "level");
+  const x = raw.map((row) =>
+    row.map((v, j) => {
+      const f = m.floor?.[j];
+      return f != null ? Math.max(v, f) : v;
+    }),
+  );
+  const change = (kind: Transform, now: number, prev: number) => {
+    if (kind === "diff") return now - prev;
+    if (kind === "log1p_diff") return Math.log1p(now) - Math.log1p(prev);
+    return Math.log(now / prev);
+  };
+  const out = x.map((row, t) =>
+    row.map((v, j) => (kinds[j] === "level" ? v : t === 0 ? Number.NaN : change(kinds[j], v, x[t - 1][j]))),
+  );
+  const v = m.volatility;
+  if (v) {
+    const k = m.target_index as number;
+    const ret = x.map((row, t) => (t === 0 ? Number.NaN : Math.log(row[k] / x[t - 1][k])));
+    out.forEach((row, t) => row.push(t >= v ? sampleStd(ret.slice(t - v + 1, t + 1)) : Number.NaN));
+  }
+  return out;
+}
 
 export interface Prepared {
   data: Float32Array;
@@ -44,23 +85,39 @@ export interface SessionLike {
 
 export function preprocess(m: Manifest, rows: Row[]): Prepared {
   const F = m.features.length;
-  const scale = (v: number, j: number) => (v - m.x_mean[j]) / m.x_scale[j];
+  const c = m.clip;
+  const scale = (v: number, j: number) => {
+    const z = (v - m.x_mean[j]) / m.x_scale[j];
+    return c ? Math.min(Math.max(z, -c), c) : z;
+  };
 
   if (m.data_kind === "time_series") {
     const W = m.window ?? 1;
-    if (rows.length < W) throw new Error(`Hacen falta al menos ${W} filas; hay ${rows.length}.`);
-    const win = rows.slice(-W);
-    const data = new Float32Array(W * F);
-    win.forEach((row, i) =>
-      row.forEach((v, j) => {
+    const need = W + (m.warmup ?? 0);
+    if (rows.length < need) {
+      throw new Error(`Hacen falta al menos ${need} filas; hay ${rows.length}.`);
+    }
+    const raw = rows.slice(-need).map((row, i) =>
+      row.map((v, j) => {
         if (v === null || Number.isNaN(v)) {
           throw new Error(`Valor vacío en la fila ${i + 1}, columna ${m.features[j]}.`);
         }
-        data[i * F + j] = scale(v, j);
+        return v;
       }),
     );
-    const last = m.target_index != null ? (win[W - 1][m.target_index] as number) : 0;
-    return { data, dims: [1, W, F], last };
+    const inputs = m.inputs ?? m.features;
+    const I = inputs.length;
+    const data = new Float32Array(W * I);
+    transformRows(m, raw)
+      .slice(-W)
+      .forEach((row, i) =>
+        row.forEach((v, j) => {
+          if (!Number.isFinite(v)) throw new Error(`Entrada no finita: ${inputs[j]}.`);
+          data[i * I + j] = scale(v, j);
+        }),
+      );
+    const last = m.target_index != null ? raw[need - 1][m.target_index] : 0;
+    return { data, dims: [1, W, I], last };
   }
 
   const row = rows[0];

@@ -10,7 +10,7 @@ import argparse
 
 from .config import add_config_args, load_config, require
 from .data import load_split
-from .features import REQUIRED
+from .features import REQUIRED, Preprocessor
 from .metrics import compute_metrics, save_eval_plots
 from .model import Predictor, save_model, set_seed, train_model
 from .paths import relative
@@ -27,7 +27,7 @@ def run_training(argv: list[str] | None = None) -> str:
     set_seed(cfg.get("seed", 42))
 
     train_df = load_split("train")
-    history = int(cfg["data"]["window"]) + int(cfg["data"]["horizon"]) - 1
+    history = Preprocessor(cfg).history
     val_df = load_split("val", context=history)  # las primeras ventanas usan el final de train
 
     with Run(cfg, name=args.name) as run:

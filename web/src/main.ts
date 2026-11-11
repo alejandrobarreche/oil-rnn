@@ -35,7 +35,8 @@ async function init() {
     ` · ${manifest.features.length} variables`;
   $("input-help").textContent =
     manifest.data_kind === "time_series"
-      ? `CSV con cabecera y al menos ${manifest.window} filas (las más recientes al final). ` +
+      ? `CSV con cabecera y al menos ${(manifest.window ?? 1) + (manifest.warmup ?? 0)} filas ` +
+        "(las más recientes al final). " +
         `Columnas: ${manifest.features.join(", ")}.`
       : `CSV con cabecera y una fila. Columnas: ${manifest.features.join(", ")}.`;
 

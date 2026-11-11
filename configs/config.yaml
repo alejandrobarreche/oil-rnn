@@ -48,6 +48,13 @@ data:
   fill_missing: ffill            # PROVISIONAL · ffill = repetir el último valor conocido · null = no rellenar
   window: 60                     # PROVISIONAL · pasos de historia que ve la red; 60 frente a 120 se decide en validación
   horizon: 5                     # días hábiles por delante. Un modelo por horizonte: 5, 21, 63 y 252 (--set data.horizon=N)
+  inputs:                        # cómo entra cada feature en la red (antes de estandarizar)
+    transform: returns           # returns = cambio diario, log(x[t]/x[t-1]) salvo las listas de abajo · level = el valor
+    diff: [ecb_deposit_rate]     # x[t] - x[t-1]: admite valores <= 0
+    log1p_diff: [wti_fut_volume] # log(1+x[t]) - log(1+x[t-1]): volúmenes con ceros
+    floor: {wti: 1.0, wti_fut_open: 1.0, wti_fut_high: 1.0, wti_fut_low: 1.0, wti_fut_close: 1.0}  # $/barril mínimo: WTI negativo del 20/04/2020
+    volatility: 21               # añade la desviación típica móvil de 21 días del rendimiento del target · null = no
+    clip: 5                      # recorta las entradas estandarizadas a ±5 desviaciones (el WTI de abril de 2020 llega a ~120) · null = no
   target_mode: log_return        # log_return = log(valor / último conocido) · change = diferencia · level = el valor
   val_size: 0.15                 # proporción para validación
   test_size: 0.15                # proporción para test (≈ últimos 3,8 años: 3–4 pronósticos independientes a 252 días)

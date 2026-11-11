@@ -189,6 +189,7 @@ def _save_common(prep: Preprocessor, model_dir: Path, cfg: dict) -> None:
         "data_kind": cfg.get("data_kind", "tabular"),
         "target": cfg["data"]["target"],
         "features": prep.features,
+        "inputs": prep.inputs,
         "classes": prep.classes,
         "window": prep.window,
         "horizon": prep.horizon,
