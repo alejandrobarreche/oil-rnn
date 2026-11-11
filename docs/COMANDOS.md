@@ -144,3 +144,17 @@ Resultado (11/11): `make train` hecho, run `20261111-204612_humo-h5_omen-pc` com
 Diagnóstico (11/11, entrenamientos de 1 a 5 épocas lanzados por Claude con permiso, salidas en el scratchpad): el fallo aparece siempre que el LSTM se entrena en CUDA con cuDNN. No aparece en CPU ni con `torch.backends.cudnn.enabled = False`. MLflow, las gráficas y OpenMP no influyen. El proceso sigue vivo después de entrenar, y liberar memoria (`gc`, `empty_cache`) no falla. Aborta al descargar las DLL al salir: `os._exit` no lo evita y `TerminateProcess` sí. Sin cuDNN, cada época tarda 5,9 s; con cuDNN, entre 0,8 y 1,1 s. Versiones: torch 2.14.0+cu126, cuDNN 9.10.02, driver 610.91, RTX 3050 Ti Laptop.
 
 Arreglo (11/11): `finish_process()` en `run.py`. Al final de `make cv` y `make train`, si es Windows y se usó CUDA, vacía stdout y stderr, cierra el logging y termina con `TerminateProcess`. Claude lo comprobó con `cv` y `train` reales (1 época, salidas en el scratchpad): salen con código 0, con el log completo y `status: finished`.
+
+---
+
+**🖥️ Windows GPU · 11/11/2026 · ⏳**
+Cierre de la fase 2: prueba de humo de las celdas que faltan (RNN y GRU, h=5) y del horizonte más largo (LSTM, h=252), a 3 épocas. Solo comprueba que todo funciona y que `make` termina sin error; sus cifras no valen como resultado.
+
+```bash
+git pull --rebase
+make cv NAME=humo-rnn-h5 ARGS="--set model.cell=rnn --set train.epochs=3 --set train.min_epochs=1"
+make cv NAME=humo-gru-h5 ARGS="--set model.cell=gru --set train.epochs=3 --set train.min_epochs=1"
+make cv NAME=humo-lstm-h252 ARGS="--set data.horizon=252 --set train.epochs=3 --set train.min_epochs=1"
+```
+
+Pásale a Claude la salida de los tres comandos. Al subirlos, añade solo esos tres runs: `git add runs/<id> artifacts/<id>` por cada uno.
