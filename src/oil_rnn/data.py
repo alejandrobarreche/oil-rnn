@@ -20,7 +20,7 @@ import pandas as pd
 from .config import add_config_args, get, load_config, require
 from .paths import RAW_DIR, SPLIT_DIRS, SPLITS_MANIFEST, relative
 
-READERS = {".csv": pd.read_csv, ".parquet": pd.read_parquet}
+READERS = {".csv": pd.read_csv, ".parquet": pd.read_parquet, ".pkl": pd.read_pickle}
 SPLITS = ("train", "val", "test")
 CONTEXT_COLUMN = "_context"  # filas añadidas solo como historia, no se predicen
 
@@ -39,7 +39,9 @@ def read_table(path: Path, na_values: list[str] | None = None) -> pd.DataFrame:
         return pd.read_csv(path, na_values=na_values or None)
     if suffix == ".parquet":
         return pd.read_parquet(path)
-    raise ValueError(f"Formato no soportado: {path.suffix} (usa .csv o .parquet)")
+    if suffix == ".pkl":
+        return pd.read_pickle(path)
+    raise ValueError(f"Formato no soportado: {path.suffix} (usa .csv, .parquet o .pkl)")
 
 
 def raw_path(cfg: dict) -> Path:
@@ -142,8 +144,13 @@ def prepare_data(cfg: dict) -> dict:
     for name, part in parts.items():
         folder = SPLIT_DIRS[name]
         folder.mkdir(parents=True, exist_ok=True)
-        out = folder / f"{name}.parquet"
-        part.to_parquet(out, index=False)
+        # Se borran los splits anteriores: _read_split concatena todo lo que hay en la carpeta.
+        for old in folder.glob("*"):
+            if old.suffix.lower() in READERS:
+                old.unlink()
+        # Pickle y no parquet: Smart App Control (Windows) bloquea las DLL de pyarrow.
+        out = folder / f"{name}.pkl"
+        part.reset_index(drop=True).to_pickle(out)
         manifest["splits"][name] = {
             "file": relative(out),
             "rows": len(part),

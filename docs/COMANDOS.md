@@ -116,3 +116,21 @@ Get-MpComputerStatus | Select-Object SmartAppControlState
 ```
 
 Progreso (11/11): `pip uninstall` y `conda install` hechos (pyarrow 26.0.1 de conda-forge). Falta desde `import pyarrow.parquet`.
+
+Resultado (11/11): `import pyarrow` da `ModuleNotFoundError`. En conda-forge, `pyarrow` es un metapaquete sin archivos (0 en `conda-meta`); el código Python está en `pyarrow-core`, que no quedó instalado, y conda dice «already installed». Las DLL `libarrow*` sí están.
+
+---
+
+**🖥️ Windows GPU · 11/11/2026 · ✅**
+Instalar `pyarrow-core`, la parte de `pyarrow` que contiene el código Python, y repetir la comprobación:
+
+```bash
+conda install -y -c conda-forge "pyarrow-core=26.0.1"
+python -c "import pyarrow.parquet; print('parquet OK')"
+make prepare
+python -c "import json; print(json.load(open('data/splits.json'))['source']['sha256'])"
+```
+
+El hash debe ser `fa54aa0a5eaa494c52d4ca2764c7b46961391cdf7e9c0e6e826ace7eb72cf377`. Si `import pyarrow.parquet` da «Una directiva de Control de aplicaciones bloqueó este archivo», pasa la salida de `Get-MpComputerStatus | Select-Object SmartAppControlState`.
+
+Resultado (11/11): `pyarrow-core` se instala, pero Smart App Control bloquea también su DLL (`pyarrow.lib`). Los splits pasan a guardarse como pickle de pandas (`data/<split>/<split>.pkl`), así que ya no hace falta pyarrow. Claude ejecutó `make prepare` en Windows: el hash coincide (`fa54aa0a…cf377`) y 4454/955/955 filas.
