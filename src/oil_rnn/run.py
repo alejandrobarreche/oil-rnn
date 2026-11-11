@@ -48,6 +48,26 @@ def make_run_id(name: str) -> str:
     return f"{stamp}_{slug}_{machine_name()}"
 
 
+def finish_process() -> None:
+    """Fin de make cv / make train cuando ya está todo escrito.
+
+    En Windows, si se usó CUDA, cuDNN aborta al descargar sus DLL al salir (0xC0000409) y el
+    comando devuelve error aunque el run haya terminado bien. Ni os._exit lo evita: se termina el
+    proceso con TerminateProcess, que no descarga las DLL. En el resto de casos no hace nada."""
+    torch = sys.modules.get("torch")
+    if sys.platform != "win32" or torch is None or not torch.cuda.is_initialized():
+        return
+    import ctypes
+
+    logging.shutdown()
+    sys.stdout.flush()
+    sys.stderr.flush()
+    kernel32 = ctypes.windll.kernel32
+    kernel32.GetCurrentProcess.restype = ctypes.c_void_p
+    kernel32.TerminateProcess.argtypes = [ctypes.c_void_p, ctypes.c_uint]
+    kernel32.TerminateProcess(kernel32.GetCurrentProcess(), 0)
+
+
 def git_info() -> dict:
     def git(*args: str) -> str | None:
         res = subprocess.run(["git", *args], cwd=ROOT, capture_output=True, text=True, timeout=5)

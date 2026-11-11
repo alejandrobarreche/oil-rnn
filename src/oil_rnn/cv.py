@@ -26,7 +26,7 @@ from .features import REQUIRED, Preprocessor
 from .metrics import compute_metrics, predictions_frame
 from .model import Predictor, set_seed, train_model
 from .paths import relative
-from .run import Run
+from .run import Run, finish_process
 
 
 class _FoldRun:
@@ -117,6 +117,7 @@ def run_cv(argv: list[str] | None = None) -> str:
 
 def main() -> None:
     run_cv()
+    finish_process()
 
 
 if __name__ == "__main__":

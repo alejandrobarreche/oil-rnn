@@ -17,7 +17,7 @@ from .features import REQUIRED, Preprocessor
 from .metrics import compute_metrics, save_eval_plots
 from .model import Predictor, save_model, set_seed, train_model
 from .paths import relative, run_paths
-from .run import Run
+from .run import Run, finish_process
 
 log = logging.getLogger("oil_rnn")
 
@@ -87,6 +87,7 @@ def run_training(argv: list[str] | None = None) -> str:
 
 def main() -> None:
     run_training()
+    finish_process()
 
 
 if __name__ == "__main__":
