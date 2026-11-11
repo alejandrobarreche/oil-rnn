@@ -20,7 +20,7 @@ Resultado: `data/raw/dataset.csv` con sha256 `fa54aa0a5eaa494c52d4ca2764c7b46961
 
 ---
 
-**💻 Mac · 11/11/2026 · ⏳**
+**💻 Mac · 11/11/2026 · ✅**
 Subir los commits de la fase 2 (código de los pasos 1–5 y este chat).
 
 ```bash
@@ -30,7 +30,7 @@ git push
 
 ---
 
-**🖥️ Windows GPU · ⏳**
+**🖥️ Windows GPU · ✅**
 Preparar la máquina con el código y los mismos datos que el Mac.
 
 1. Código y entorno. Requisitos: Miniconda o Miniforge, Git y el driver de NVIDIA al día (`nvidia-smi` debe indicar «CUDA Version» ≥ 12.6). Todo en «Anaconda Prompt».
@@ -73,7 +73,7 @@ El hash debe ser `fa54aa0a5eaa494c52d4ca2764c7b46961391cdf7e9c0e6e826ace7eb72cf3
 
 ---
 
-**🖥️ Windows GPU · ⏳**
+**🖥️ Windows GPU · ✅**
 Prueba de humo de la fase 2: validación walk-forward y modelo final, a 3 épocas. Solo comprueba que todo funciona; sus cifras no valen como resultado.
 
 ```bash
@@ -97,7 +97,7 @@ git push
 
 ---
 
-**🖥️ Windows GPU · 11/11/2026 · ⏳**
+**🖥️ Windows GPU · 11/11/2026 · ✅**
 `make prepare` falla: Windows (Control de aplicaciones / Smart App Control) bloquea la DLL `_parquet` de `pyarrow` instalada por pip. Se sustituye por la compilación de conda-forge, que es otro binario. En «Anaconda Prompt»:
 
 ```bash
@@ -134,3 +134,9 @@ python -c "import json; print(json.load(open('data/splits.json'))['source']['sha
 El hash debe ser `fa54aa0a5eaa494c52d4ca2764c7b46961391cdf7e9c0e6e826ace7eb72cf377`. Si `import pyarrow.parquet` da «Una directiva de Control de aplicaciones bloqueó este archivo», pasa la salida de `Get-MpComputerStatus | Select-Object SmartAppControlState`.
 
 Resultado (11/11): `pyarrow-core` se instala, pero Smart App Control bloquea también su DLL (`pyarrow.lib`). Los splits pasan a guardarse como pickle de pandas (`data/<split>/<split>.pkl`), así que ya no hace falta pyarrow. Claude ejecutó `make prepare` en Windows: el hash coincide (`fa54aa0a…cf377`) y 4454/955/955 filas.
+
+Nota (11/11), prueba de humo de la fase 2: el primer `make cv` falló porque Smart App Control bloqueó `sqlite3.dll`, que usa MLflow. Según el registro Code Integrity, casi todas las DLL bloqueadas (`_sqlite3.pyd`, `sqlite3.dll`, `sklearn\tree\_splitter…pyd`, `arrow_compute.dll`) aparecen bloqueadas una sola vez y luego cargan. A las 20:41 `sqlite3` y el almacén SQLite de MLflow importan sin error. Hay que repetir el comando de la prueba de humo tal cual.
+
+Progreso (11/11): `make cv` hecho, run `20261111-204237_humo-h5_omen-pc` con `status: finished`, 4 pliegues, `conformal.json` y `cv_predictions.csv`. Al cerrar, Python termina con `0xC0000409` en `ucrtbase.dll` y make devuelve error, pero todo se había escrito antes. Claude intentó reproducirlo con MLflow (SQLite) y un LSTM en CUDA y no falló. Falta `make train` con `CALIB=20261111-204237_humo-h5_omen-pc`.
+
+Resultado (11/11): `make train` hecho, run `20261111-204612_humo-h5_omen-pc` completo. Termina con el mismo `0xC0000409`, así que el fallo al cerrar se repite. En el informe de Windows, el proceso tenía cargados dos runtimes OpenMP (`libiomp5md.dll` de torch y `vcomp140.dll` de sklearn). Claude no lo reproduce sin entrenar: lo probó con Run + MLflow + CUDA, con matplotlib, joblib y sklearn, y lanzado desde make. Los dos runs están en el commit `97f36ae`. Queda abierto el fallo al cerrar: hay que resolverlo antes de las baterías de experimentos.
