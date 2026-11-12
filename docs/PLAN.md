@@ -3,8 +3,8 @@
 **Finalidad**: única versión del plan del Caso III: fases, decisiones tomadas y orden de recorte.
 **Cuándo usarlo**: al empezar una sesión, antes de una decisión de proyecto y al cerrar cada fase.
 **Resultado**: repositorio, aplicación funcional y 5 diapositivas, entregados el 20/11/2026.
-**Flujo**: Fase 0 Decisiones → 1 Datos → 2 Pipeline → 3 Comparativa → 4 Evaluación → 5 Sonda → 6 Página explicativa → 7 Actualización → 8 Presentación
-**Estado**: fases 0–5 hechas · 6 y 7 sin empezar · siguiente: rediseño de Sonda.
+**Flujo**: Fase 0 Decisiones → 1 Datos → 2 Pipeline → 3 Comparativa → 4 Evaluación → 5 Sonda → 5b Decisiones y explorador → 6 Página explicativa → 7 Actualización → 8 Presentación
+**Estado**: fases 0–5 y 5b hechas · 6 y 7 sin empezar · siguiente: decidir las mejoras de `docs/DECISIONES.md` (apartado 12).
 
 ## 0. Antes de empezar: encargo, estado y decisiones del usuario
 
@@ -21,10 +21,13 @@
 | 3 · Comparativa | Hecha: rejilla `g1` (432 runs de cv) y finalistas con 3 semillas | `runs/*_g1-*`, `runs/*_g1s7-*`, `runs/*_g1s123-*`, `make compare` |
 | 4 · Evaluación final | Hecha: ninguna red supera a la persistencia en test | runs `final-*`, tablas en `README.md` |
 | 5 · Sonda | Hecha y publicada en https://alejandrobarreche.github.io/oil-rnn/ (Release `model-v1`) | `web/`, `make export-web` |
+| 5b · Decisiones y explorador | Hecha; falta que el usuario ejecute los cuadernos y `make explore` | `docs/DECISIONES.md`, `notebooks/02`–`05`, `app/explorador.py` |
 | 6 · Página explicativa | Sin empezar | — |
 | 7 · Actualización y reentrenamiento | Sin empezar | — |
 
-- **Orden acordado con el usuario**: rediseño de la interfaz de Sonda (fase 5) en otra sesión; después, fase 6 y fase 7.
+- **Orden acordado con el usuario** (12/11): la fase 5b va antes que las fases 6 y 7; el rediseño de Sonda, en otra sesión.
+- **Fase 5b**: documentar primero y decidir después. Las mejoras de `docs/DECISIONES.md` (apartado 12) no se ejecutan sin decisión del usuario.
+- **Figuras para la fase 6**: las de `src/oil_rnn/explore_plots.py` cubren los capítulos 1 a 5 de la página explicativa.
 
 ### 0.3 Decisiones del usuario
 - **Aplicación**: web estática + GitHub Actions para datos y reentrenamiento.

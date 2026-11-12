@@ -55,6 +55,8 @@ make prepare                      # Crea los splits y data/splits.json
 make train NAME=<nombre>          # Entrenamiento (solo en Windows)
 make evaluate SPLIT=test RUN=<id> # Evaluación final con la config guardada en el run
 make export-web                   # Modelo, manifiesto y ejemplos para web/
+make explore-install              # Streamlit (grupo opcional explore)
+make explore                      # Explorador local del proceso, solo lectura
 make web-release                  # Publica el modelo como Release de GitHub
 ```
 
@@ -66,7 +68,11 @@ make web-release                  # Publica el modelo como Release de GitHub
 | `src/oil_rnn/paths.py` | Todas las rutas del proyecto |
 | `src/oil_rnn/features.py` | Preprocesado: se ajusta solo con train y se guarda con el modelo |
 | `configs/config.yaml` | Todos los parámetros |
+| `src/oil_rnn/explore.py` · `explore_plots.py` | Vistas y figuras de solo lectura que usan los cuadernos 02–05 y el explorador |
 | `notebooks/01_eda.ipynb` | Análisis exploratorio, solo con train; importa el paquete |
+| `notebooks/02`–`05` | Proceso del dato, validación, modelos y resultados; leen `runs/` y `artifacts/` |
+| `app/explorador.py` | Explorador Streamlit local (`make explore`); no sustituye a `web/` |
+| `docs/DECISIONES.md` | Cada decisión con motivo, comprobación y valoración; comparación con Brentcast |
 | `web/src/model.ts` | Réplica en TypeScript del preprocesado de `features.py` |
 | `docs/COMANDOS.md` | Chat Mac ↔ Windows con los comandos que ejecuta el usuario |
 
@@ -85,9 +91,11 @@ models/<id>/     pesos + preprocessor.joblib + model_card.json (fuera de git)
 - **Config**: `PENDIENTE` = decisión sin tomar; `PROVISIONAL` = solo prueba de humo, sus resultados no son definitivos; sin marca = fijo.
 - **PyTorch**: bucles explícitos; no uses Lightning.
 - **Dependencias**: en `pyproject.toml` con Poetry; PyTorch se instala con `make install`, no con `poetry add`.
+- **Decisiones**: si cambias una decisión del método, actualiza su apartado de `docs/DECISIONES.md`.
+- **Explorador**: la lógica va en `explore.py` y las figuras en `explore_plots.py`; cuadernos y `app/` solo las llaman.
 - **Web**: si cambias `features.py`, cambia `web/src/model.ts` (y al revés) y pasa `make web-test`.
 - **Máquinas**: lo que difiere entre máquinas va en `.env`, nunca en el código.
-- **Documentos**: `README.md` (presentación breve), `docs/USAGE.md` (comandos por fases), `docs/PLAN.md` (único plan). No crees otros sin petición explícita.
+- **Documentos**: `README.md` (presentación breve), `docs/USAGE.md` (comandos por fases), `docs/PLAN.md` (único plan), `docs/DECISIONES.md` (decisiones valoradas). No crees otros sin petición explícita.
 - **Reglas**: al cambiar una regla de este archivo, edita su sección y deja solo la versión vigente.
 
 **Respuestas**

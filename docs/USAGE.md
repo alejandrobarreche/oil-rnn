@@ -3,7 +3,7 @@
 **Finalidad**: todos los comandos del proyecto, por fases y por tareas, listos para copiar.
 **Cuándo usarla**: para instalar, preparar datos, entrenar, evaluar, publicar la web o resolver una tarea concreta.
 **Resultado**: el comando exacto de cada paso y lo que produce.
-**Flujo**: Instalar → Configurar → Datos → Validar y entrenar → Evaluar → Web → Publicar · Calidad en cualquier momento
+**Flujo**: Instalar → Configurar → Datos → Validar y entrenar → Evaluar → Web → Publicar · Calidad y explorador en cualquier momento
 
 ## 0. Antes de empezar: cómo leer los comandos
 
@@ -194,6 +194,20 @@ make lock
 ```
 
 ## 9. Tareas: casos frecuentes fuera del flujo principal
+
+### 9.0 Entender el proceso: decisiones, cuadernos y explorador
+- **Decisiones**: `docs/DECISIONES.md` reúne cada decisión con su motivo, su comprobación y su valoración.
+- **Cuadernos**: `notebooks/02_proceso_del_dato`, `03_validacion`, `04_modelos` y `05_resultados`. Se abren con el kernel del entorno `oil-rnn`.
+- **Explorador**: las mismas figuras, con controles. Solo lee `data/`, `runs/` y `artifacts/`.
+
+```bash
+make explore-install
+make explore
+```
+
+- **`make explore-install`**: instala Streamlit, del grupo opcional `explore`. Solo hace falta una vez.
+- **`make explore`**: abre http://localhost:8501; se para con Ctrl+C.
+- **Requisitos**: `make data` y `make prepare` hechos en esa máquina.
 
 ### 9.1 Entrenar con otros parámetros
 

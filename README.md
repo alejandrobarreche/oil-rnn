@@ -6,6 +6,7 @@
 
 [![Abrir la aplicación](https://img.shields.io/badge/Abrir_la_aplicación-1f6feb?style=for-the-badge&logo=googlechrome&logoColor=white)](https://alejandrobarreche.github.io/oil-rnn/)
 [![Guía de uso](https://img.shields.io/badge/Guía_de_uso-2da44e?style=for-the-badge&logo=readthedocs&logoColor=white)](docs/USAGE.md)
+[![Decisiones](https://img.shields.io/badge/Decisiones-8250df?style=for-the-badge&logo=bookstack&logoColor=white)](docs/DECISIONES.md)
 [![Bibliografía](https://img.shields.io/badge/Bibliografía-b08800?style=for-the-badge&logo=zotero&logoColor=white)](docs/references.bib)
 
 [![CI](https://github.com/alejandrobarreche/oil-rnn/actions/workflows/ci.yml/badge.svg)](https://github.com/alejandrobarreche/oil-rnn/actions/workflows/ci.yml)
@@ -178,10 +179,11 @@ oil-rnn/
 ├── runs/<run_id>/          config, meta, métricas y log del run
 ├── artifacts/<run_id>/     gráficas y predicciones
 ├── models/<run_id>/        pesos y preprocesado (no se versiona)
-├── notebooks/              exploración con train
+├── notebooks/              exploración con train y cuadernos 02–05 del proceso
+├── app/                    explorador Streamlit local (make explore)
 ├── src/oil_rnn/            datos, features, modelo, métricas, runs, exportación
 ├── web/                    aplicación web (Vite + TypeScript)
-├── docs/                   USAGE.md · enunciado · bibliografía · presentación
+├── docs/                   USAGE.md · DECISIONES.md · enunciado · bibliografía · presentación
 ├── tests/
 └── Makefile
 ```
@@ -197,6 +199,7 @@ oil-rnn/
 - [x] Comparación de RNN, LSTM y GRU en validación walk-forward (432 runs + 3 semillas)
 - [x] Evaluación final en test
 - [x] Modelos exportados y aplicación publicada (Sonda, primera versión)
+- [x] Decisiones documentadas, cuadernos del proceso y explorador local
 - [ ] Rediseño de la aplicación
 - [ ] Página explicativa
 - [ ] Actualización de datos y reentrenamiento periódicos
