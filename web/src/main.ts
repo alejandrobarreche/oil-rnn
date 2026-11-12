@@ -4,8 +4,19 @@
 // con los datos de make export-web y las predicciones ONNX calculadas en el navegador.
 // Versión WebAssembly (CPU): el .wasm se empaqueta con la web, sin depender de un CDN.
 import * as ort from "onnxruntime-web/wasm";
-import { type BacktestPoint, occlusion } from "./explain";
+import { occlusion } from "./explain";
 import { type Bundle, predict, type Row } from "./model";
+import { mountPortal } from "./portal";
+import {
+  type ChartState,
+  type CycleEvent,
+  type Forecast,
+  type Html,
+  horizonLabel as label,
+  type Quality,
+  S,
+  type SondaMarket,
+} from "./sonda";
 import "./sonda/tokens.css";
 import "./sonda/bundle.css";
 import "./sonda/bundle.js";
@@ -14,12 +25,6 @@ import "./style.css";
 ort.env.wasm.numThreads = 1; // GitHub Pages no permite memoria compartida entre hilos
 
 // ── datos exportados (make export-web) ───────────────────────
-interface CycleEvent {
-  t: string;
-  price: number;
-  label: string;
-  kind: "max" | "min";
-}
 interface Market {
   asset: string;
   last: number;
@@ -30,95 +35,6 @@ interface Market {
   features: string[];
   rows: { t: string[]; values: Row[] };
 }
-interface Quality {
-  horizon: number;
-  period: [string, string];
-  metrics: { hit_rate: number; mae: number; rmse: number; coverage80: number };
-  baseline: { mae: number; rmse: number; hit_rate_best_constant: number; best_constant: "up" | "down" };
-  backtest: BacktestPoint[];
-}
-
-// ── contrato de datos de Sonda (index.d.ts del sistema de diseño) ──
-interface Series {
-  t: string[];
-  close: number[];
-}
-interface SondaMarket {
-  asset: string;
-  unit: string;
-  last: number;
-  change: number;
-  ts: string;
-  history: Series;
-  wti?: Series;
-  events: CycleEvent[];
-}
-interface Forecast {
-  h: number;
-  model?: string;
-  lo: number;
-  mid: number;
-  hi: number;
-  drivers: { name: string; value: number }[];
-  quality?: Quality;
-}
-interface PathPoint {
-  t: string;
-  mid: number;
-  lo80: number;
-  hi80: number;
-  computed: boolean;
-}
-interface ChartState {
-  range: string;
-  scale: string;
-  kind: string;
-  indicators: Record<string, boolean>;
-}
-
-type Html = string;
-interface SondaApi {
-  theme: { init(): void; bind(root?: ParentNode): void };
-  fmt: {
-    num(v: number, dp?: number): string;
-    pct(v: number, dp?: number): string;
-    longDate(t: string): string;
-    monthYear(t: string): string;
-  };
-  horizons: { h: number; label: string; short: string }[];
-  tradingDays(from: string, n: number): string[];
-  probUp(last: number, f: Forecast): number;
-  fan(last: number, forecasts: Forecast[], H: number, from: string): PathPoint[];
-  charts: {
-    price(
-      host: HTMLElement,
-      o: {
-        history: Series;
-        wti?: Series;
-        events?: CycleEvent[];
-        forecast: { path: PathPoint[] };
-        range: string;
-        scale: string;
-        kind: string;
-        indicators: Record<string, boolean>;
-        height: number;
-      },
-    ): { state(): ChartState };
-    backtest(host: HTMLElement, o: { points: BacktestPoint[]; height?: number }): void;
-  };
-  ui: {
-    logo(o?: { size?: number }): Html;
-    themeToggle(): Html;
-    horizonTabs(selected: number): Html;
-    chg(abs: number, rel: number): Html;
-    badge(text: string, tone?: "up" | "down" | "warn", block?: boolean): Html;
-    directionMeter(probabilityUp: number): Html;
-    priceHeader(m: SondaMarket, f: Forecast): Html;
-    forecastCards(m: SondaMarket, fs: Forecast[], selected: number): Html;
-    drivers(list: { name: string; value: number }[], n?: number): Html;
-  };
-}
-const S = (window as unknown as { Sonda: SondaApi }).Sonda;
 
 const LABELS: Record<string, string> = {
   brent: "Brent",
@@ -144,7 +60,6 @@ const RANGE: Record<number, string> = { 5: "3M", 21: "6M", 63: "1A", 252: "5A" }
 // Alto fijo alrededor del lienzo: leyenda (40), controles inferiores (44), huecos y relleno de la tarjeta
 const CHART_CHROME = 40 + 44 + 12 + 20 + 24;
 
-const label = (h: number) => S.horizons.find((x) => x.h === h)?.label ?? `${h} días`;
 const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
 const base = import.meta.env.BASE_URL;
 
@@ -190,7 +105,7 @@ function forecastPanel(m: SondaMarket, f: Forecast): Html {
     <div class="bx-fc-when">${longDate(target)}</div>
     ${S.ui.directionMeter(S.probUp(m.last, f))}
     <dl class="bx-kv" style="margin-top:6px">${rows.map(([k, v, t]) => `<div><dt title="${t}">${k}</dt><dd>${v}</dd></div>`).join("")}</dl>
-    ${q ? `<div style="margin-top:auto;padding-top:16px">${S.ui.badge(better ? "Más preciso que «sin cambios»" : "Orientativo · falla más que «sin cambios»", better ? "up" : "warn", true)}</div>` : ""}`;
+    ${q ? `<div style="padding-top:14px">${S.ui.badge(better ? "Más preciso que «sin cambios»" : "Orientativo · falla más que «sin cambios»", better ? "up" : "warn", true)}</div>` : ""}`;
 }
 
 /** Fiabilidad de los cuatro modelos en el test, cada cifra junto a su referencia trivial. */
@@ -299,12 +214,13 @@ async function init() {
   });
   document.addEventListener("click", (e) => {
     const t = (e.target as HTMLElement).closest<HTMLElement>("[data-h]");
-    if (!t) return;
+    if (!t || t.closest("dialog")) return;
     sel = Number(t.dataset.h);
     render();
   });
   $("loading").remove();
   render();
+  mountPortal({ market, forecasts, history: mk.history, onMarketShown: () => mountChart(true) });
 }
 
 init().catch((err: Error) => {

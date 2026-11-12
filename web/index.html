@@ -14,34 +14,49 @@
           <h1>Brent</h1>
           <span class="bx-muted">Spot · $/bbl</span>
         </div>
+        <nav class="nav bx-pills" aria-label="Secciones">
+          <a class="bx-pill" href="#/mercado" data-route="mercado">Mercado</a>
+          <a class="bx-pill" href="#/cartera" data-route="cartera">Mi cartera</a>
+          <a class="bx-pill" href="#/y-si" data-route="y-si">¿Y si…?</a>
+          <a class="bx-pill" href="#/historial" data-route="historial">Historial</a>
+        </nav>
         <span class="bx-spacer"></span>
+        <a class="bx-pill bx-pill-solid chip" id="balance" href="#/cartera"></a>
         <span class="bx-pill bx-pill-solid asof" id="asof"></span>
         <span id="theme"></span>
       </header>
 
       <p id="loading" class="loading">Calculando las predicciones en el navegador…</p>
 
-      <div class="bx-ws-main">
-        <section class="bx-card chart-card">
-          <div class="chart-h"><div id="ph"></div><nav id="tabs" class="hz" aria-label="Horizonte de la previsión"></nav></div>
-          <div id="chart"></div>
-        </section>
-        <aside class="bx-card bx-ws-panel" id="panel"></aside>
-      </div>
-      <h2 class="bx-ws-h2">Todos los horizontes</h2>
-      <div id="cards"></div>
-      <div class="bx-ws-pair">
-        <section class="bx-card">
-          <div class="bx-card-t" id="perf-t">Fiabilidad</div>
-          <div id="metrics"></div>
-          <div class="bt-h" id="bt-t"></div>
-          <div id="bt"></div>
-        </section>
-        <section class="bx-card">
-          <div class="bx-card-t" id="drv-t">Variables del modelo</div>
-          <div id="drv"></div>
-        </section>
-      </div>
+      <main class="view" data-view="mercado">
+        <div class="bx-ws-main">
+          <section class="bx-card chart-card">
+            <div class="chart-h"><div id="ph"></div><nav id="tabs" class="hz" aria-label="Horizonte de la previsión"></nav></div>
+            <div id="chart"></div>
+          </section>
+          <aside class="side">
+            <section class="bx-card bx-ws-panel" id="panel"></section>
+            <section class="bx-card mini" id="mini"></section>
+          </aside>
+        </div>
+        <h2 class="bx-ws-h2">Todos los horizontes</h2>
+        <div id="cards"></div>
+        <div class="bx-ws-pair">
+          <section class="bx-card">
+            <div class="bx-card-t" id="perf-t">Fiabilidad</div>
+            <div id="metrics"></div>
+            <div class="bt-h" id="bt-t"></div>
+            <div id="bt"></div>
+          </section>
+          <section class="bx-card">
+            <div class="bx-card-t" id="drv-t">Variables del modelo</div>
+            <div id="drv"></div>
+          </section>
+        </div>
+      </main>
+      <main class="view" data-view="cartera" id="view-cartera" hidden></main>
+      <main class="view" data-view="y-si" id="view-y-si" hidden></main>
+      <main class="view" data-view="historial" id="view-historial" hidden></main>
     </div>
     <script type="module" src="./src/main.ts"></script>
   </body>
