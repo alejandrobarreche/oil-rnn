@@ -3,7 +3,7 @@
 **Finalidad**: registro de los comandos que el usuario ejecuta en cada máquina, con su resultado.
 **Cuándo usarlo**: cada vez que Claude da un comando al usuario y cuando el usuario devuelve la salida.
 **Resultado**: mensajes en orden cronológico, cada uno con máquina, estado, bloques para copiar y resultado.
-**Estado**: mensajes 14 y 15 ⏳; el resto ✅.
+**Estado**: mensaje 15 ⏳; el resto ✅.
 
 ## 0. Antes de empezar: cómo se lee y se escribe este chat
 
@@ -329,7 +329,7 @@ make web-dev
 - **Resultado (12/11)**: Release `model-v1` con los 4 modelos; repositorio hecho público y Pages activado por el usuario.
 - **Publicación**: la web está en https://alejandrobarreche.github.io/oil-rnn/ (página, manifiesto, datos y modelos responden 200). El rediseño queda para otra sesión.
 
-## 14. Mac · 12/11/2026 · ⏳: instalar Streamlit y abrir el explorador
+## 14. Mac · 12/11/2026 · ✅: instalar Streamlit y abrir el explorador
 
 - **Hecho por Claude**: `docs/DECISIONES.md`, `src/oil_rnn/explore.py`, `explore_plots.py`, cuadernos 02–05 y `app/explorador.py`. Pasó `make test` (56) y `make lint`.
 - **Sin comprobar**: el explorador no se ha abierto; Streamlit no está instalado en el Mac.
@@ -344,6 +344,7 @@ make explore
 
 - **`make test`**: ahora ejecuta también `tests/test_explorador.py`, que abre las seis páginas.
 - **Qué revisar**: las seis páginas del menú lateral. Pásale a Claude la salida de `make test` y lo que falle o no se entienda.
+- **Resultado (12/11)**: lock regenerado (solo añade Streamlit 1.67.0 y 7 dependencias; ninguna versión existente cambia) y `make test` con 62 pasados, incluidas las seis páginas del explorador. Falta tu revisión visual de `make explore`.
 
 ## 15. Mac · 12/11/2026 · ⏳: ejecutar los cuadernos 02 a 05
 
