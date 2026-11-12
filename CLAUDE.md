@@ -101,7 +101,7 @@ models/<id>/     pesos + preprocessor.joblib + model_card.json (fuera de git)
 ## Flujos habituales
 
 **Pedir al usuario que ejecute un comando**
-1. Añade un mensaje al final de `docs/COMANDOS.md` con máquina, fecha, ⏳ y bloque para copiar.
+1. Añade un mensaje numerado al final de `docs/COMANDOS.md` con máquina, fecha, ⏳ y bloque para copiar.
 2. Cuando el usuario pase la salida, cambia ⏳ por ✅ y anota el resultado en una línea.
 3. Si no está claro quién ejecuta algo, pregunta.
 
