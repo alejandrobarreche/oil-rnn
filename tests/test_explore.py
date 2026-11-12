@@ -142,6 +142,21 @@ def test_nombre_de_run():
     assert explore.parse_run_name("humo-h5") == {}
 
 
+def test_misma_configuracion():
+    row = {
+        "cell": "gru",
+        "horizon": 5,
+        "hidden_size": 64,
+        "num_layers": 2,
+        "dropout": 0.3,
+        "learning_rate": 1e-4,
+    }
+    runs = pd.DataFrame(
+        [row | {"seed": 42}, row | {"seed": 7}, row | {"cell": "rnn"}, row | {"dropout": 0.0}]
+    )
+    assert explore.same_config(runs, row)["seed"].dropna().tolist() == [42, 7]
+
+
 def test_error_y_cobertura_por_año():
     pred = pd.DataFrame(
         {

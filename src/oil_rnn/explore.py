@@ -210,6 +210,18 @@ def runs_table(prefix: str | None = None) -> pd.DataFrame:
     return pd.DataFrame(rows)
 
 
+CONFIG_KEYS = ["cell", "horizon", "hidden_size", "num_layers", "dropout", "learning_rate"]
+
+
+def same_config(runs: pd.DataFrame, row) -> pd.DataFrame:
+    """Los runs de `runs` con la misma red, horizonte e hiperparámetros que `row` (otra semilla,
+    el run de make cv de un modelo final…)."""
+    mask = np.logical_and.reduce(
+        [np.isclose(runs[k], row[k]) if k != "cell" else runs[k] == row[k] for k in CONFIG_KEYS]
+    )
+    return runs[mask]
+
+
 def fold_metrics(run_id: str) -> pd.DataFrame:
     """Métricas finales de cada pliegue de un run de make cv (filas: pliegue)."""
     metrics = _read_json(run_paths(run_id)["run"] / "metrics.json")
