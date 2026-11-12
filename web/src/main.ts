@@ -109,6 +109,7 @@ interface SondaApi {
   ui: {
     logo(o?: { size?: number }): Html;
     themeToggle(): Html;
+    horizonTabs(selected: number): Html;
     chg(abs: number, rel: number): Html;
     badge(text: string, tone?: "up" | "down" | "warn", block?: boolean): Html;
     directionMeter(probabilityUp: number): Html;
@@ -140,6 +141,8 @@ const LABELS: Record<string, string> = {
 const CELL: Record<string, string> = { rnn: "RNN simple", lstm: "LSTM", gru: "GRU" };
 // Rango del gráfico según el horizonte elegido (Workspace: 1S → 3M, 1M → 6M, 3M → 1A, 1A → 5A)
 const RANGE: Record<number, string> = { 5: "3M", 21: "6M", 63: "1A", 252: "5A" };
+// Alto fijo alrededor del lienzo: leyenda (40), controles inferiores (44), huecos y relleno de la tarjeta
+const CHART_CHROME = 40 + 44 + 12 + 20 + 24;
 
 const label = (h: number) => S.horizons.find((x) => x.h === h)?.label ?? `${h} días`;
 const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
@@ -250,6 +253,7 @@ async function init() {
   let chart: { state(): ChartState } | null = null;
   const render = () => {
     const f = forecasts.find((x) => x.h === sel) as Forecast;
+    $("tabs").innerHTML = S.ui.horizonTabs(sel);
     $("ph").innerHTML = S.ui.priceHeader(market, f);
     $("panel").innerHTML = forecastPanel(market, f);
     $("cards").innerHTML = S.ui.forecastCards(market, forecasts, sel);
@@ -262,28 +266,45 @@ async function init() {
       $("bt-t").textContent = `Real frente a previsto · ${label(sel)}`;
       S.charts.backtest($("bt"), { points: f.quality.backtest, height: 190 });
     }
-    // Al cambiar de horizonte se conservan escala e indicadores, y el rango se ajusta
+    mountChart(false);
+  };
+  // Alto del gráfico: lo que queda de pantalla bajo su cabecera, para verlo entero al abrir
+  const chartHeight = () => {
+    const top = $("chart").getBoundingClientRect().top + window.scrollY;
+    return Math.round(Math.min(760, Math.max(320, window.innerHeight - top - CHART_CHROME)));
+  };
+  let height = 0;
+  // keep: conserva el rango (cambio de tamaño); si no, el rango se ajusta al horizonte
+  const mountChart = (keep: boolean) => {
     const st = chart?.state();
+    height = chartHeight();
     chart = S.charts.price($("chart"), {
       history: market.history,
       wti: market.wti,
       events: market.events,
       forecast: { path: S.fan(market.last, forecasts, sel, market.ts) },
-      range: RANGE[sel] ?? "1A",
+      range: (keep && st?.range) || (RANGE[sel] ?? "1A"),
       scale: st?.scale ?? "lin",
       kind: st?.kind ?? "line",
       indicators: st?.indicators ?? {},
-      height: 440,
+      height,
     });
   };
+  let resizing = 0;
+  window.addEventListener("resize", () => {
+    clearTimeout(resizing);
+    resizing = window.setTimeout(() => {
+      if (Math.abs(chartHeight() - height) > 24) mountChart(true);
+    }, 200);
+  });
   document.addEventListener("click", (e) => {
     const t = (e.target as HTMLElement).closest<HTMLElement>("[data-h]");
     if (!t) return;
     sel = Number(t.dataset.h);
     render();
   });
-  render();
   $("loading").remove();
+  render();
 }
 
 init().catch((err: Error) => {

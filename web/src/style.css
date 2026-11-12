@@ -23,9 +23,6 @@
 .asof:hover {
   background: var(--pill);
 }
-.ph {
-  margin-bottom: 14px;
-}
 .loading {
   margin: 0;
   color: var(--ink-3);
@@ -145,4 +142,44 @@
 .bt-h {
   margin: var(--space-5) 0 var(--space-2);
   font-weight: 600;
+}
+
+/* Primera pantalla: cabecera compacta y gráfico entero a la vista */
+.bx-ws {
+  padding-top: 14px;
+}
+.chart-card {
+  padding-top: var(--space-4);
+}
+.chart-h {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--space-3) var(--space-6);
+  margin-bottom: var(--space-2);
+}
+.chart-h .bx-ph-v {
+  font-size: 26px;
+  line-height: 32px;
+}
+.chart-h .bx-ph-b .bx-ph-v2 {
+  font-size: 17px;
+  line-height: 24px;
+  margin-top: 2px;
+}
+/* Horizonte como control segmentado, secundario frente al gráfico */
+.hz .bx-pills {
+  gap: 2px;
+  padding: 3px;
+  border-radius: calc(var(--radius-pill) + 3px);
+  background: var(--surface-2);
+}
+.hz .bx-pill {
+  height: 30px;
+  padding: 0 12px;
+  font-size: 13px;
+}
+.hz .bx-pill.is-active {
+  background: var(--pill-active);
 }

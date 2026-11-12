@@ -21,11 +21,15 @@
 
       <p id="loading" class="loading">Calculando las predicciones en el navegador…</p>
 
-      <nav id="cards" aria-label="Horizonte de la previsión"></nav>
       <div class="bx-ws-main">
-        <section class="bx-card"><div id="ph" class="ph"></div><div id="chart"></div></section>
+        <section class="bx-card chart-card">
+          <div class="chart-h"><div id="ph"></div><nav id="tabs" class="hz" aria-label="Horizonte de la previsión"></nav></div>
+          <div id="chart"></div>
+        </section>
         <aside class="bx-card bx-ws-panel" id="panel"></aside>
       </div>
+      <h2 class="bx-ws-h2">Todos los horizontes</h2>
+      <div id="cards"></div>
       <div class="bx-ws-pair">
         <section class="bx-card">
           <div class="bx-card-t" id="perf-t">Fiabilidad</div>
