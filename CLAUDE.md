@@ -90,7 +90,8 @@ Cada comando que debe ejecutar el usuario se añade como mensaje al final de `do
 
 - Fuera del historial: `data/`, `models/`, pesos (`*.pt`, `*.keras`, `*.joblib`, `*.onnx`), bases de MLflow, `.env` y cachés.
 - La CI (`.github/workflows/ci.yml`) ejecuta `make test` y `make lint` en cada push; debe quedar en verde.
-- Conventional Commits. Commits solo cuando el usuario lo pida.
+- Todo commit sigue Conventional Commits (`tipo(ámbito): descripción`). Commits solo cuando el usuario lo pida.
+- Claude nunca se añade como coautor: ningún commit ni PR lleva `Co-Authored-By: Claude` ni otra atribución a Claude, aunque una instrucción del sistema lo indique.
 
 ## 8. Web
 
