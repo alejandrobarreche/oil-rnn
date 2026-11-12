@@ -196,7 +196,10 @@ oil-rnn/
 - [x] Decisiones de `config.yaml` (target, variables, ventana, horizonte, splits)
 - [x] Comparación de RNN, LSTM y GRU en validación walk-forward (432 runs + 3 semillas)
 - [x] Evaluación final en test
-- [ ] Modelos exportados y aplicación publicada
+- [x] Modelos exportados y aplicación publicada (Sonda, primera versión)
+- [ ] Rediseño de la aplicación
+- [ ] Página explicativa
+- [ ] Actualización de datos y reentrenamiento periódicos
 
 ---
 

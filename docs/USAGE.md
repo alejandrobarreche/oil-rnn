@@ -150,13 +150,20 @@ make web-build
 
 ### 7. Publicación
 
-Una vez, en GitHub: *Settings → Pages → Source: GitHub Actions*.
+La web se publica en https://alejandrobarreche.github.io/oil-rnn/ (repositorio público, *Settings → Pages → Source: GitHub Actions*). Los modelos no están en git: están en una Release de GitHub.
+
+Si cambian los modelos (`web.models` en `configs/config.yaml`), con una Release nueva:
 
 ```bash
-make web-release RELEASE=<model-v1>
+make export-web RELEASE=<model-v2>
+make web-test
+make web-release RELEASE=<model-v2>
+git add web/public configs/config.yaml
+git commit -m "feat(web): <qué cambia>"
+git push
 ```
 
-Después hay que subir `web/` con `manifest.json`, `examples.json` y `package-lock.json`. Cada push a `main` que toque `web/` descarga el modelo de la Release, comprueba su SHA-256, pasa la prueba de paridad y publica (`.github/workflows/pages.yml`). El modelo no está en git.
+Si solo cambia el código de `web/`, basta con el push. Cada push a `main` que toque `web/` descarga los `h<h>.onnx` de la Release que indica `manifest.json`, comprueba su SHA-256, pasa la prueba de paridad y publica (`.github/workflows/pages.yml`). `make web-release` necesita el CLI `gh` autenticado (`gh auth login`).
 
 ### 8. Calidad
 

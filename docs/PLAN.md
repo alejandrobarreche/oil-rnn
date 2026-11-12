@@ -4,7 +4,18 @@
 
 El enunciado pide comparar RNN simple, LSTM y GRU para predecir el Brent a 5, 63 y 252 días hábiles, con incertidumbre, frente a persistencia, e integrar el mejor modelo en una aplicación que calcule, explique y se actualice. Entregables: repositorio, aplicación funcional y 5 diapositivas.
 
-Estado comprobado del repositorio: estructura, descarga (`data/raw/dataset.csv` existe), red `RNNRegressor` con una salida, `Preprocessor` con ventana y un solo horizonte, métricas con `baseline_*`, web base con ONNX. Sin splits ni runs. Ocho valores `PENDIENTE` en `configs/config.yaml`.
+### Estado a 12/11/2026 (punto de partida de la próxima sesión)
+
+| Fase | Estado | Dónde está |
+|---|---|---|
+| 0–2 · Decisiones, datos, pipeline | Hecha | `configs/config.yaml`, `src/oil_rnn/` |
+| 3 · Comparativa | Hecha: rejilla `g1` (432 runs de cv) y finalistas con 3 semillas | `runs/*_g1-*`, `runs/*_g1s7-*`, `runs/*_g1s123-*`, `make compare` |
+| 4 · Evaluación final | Hecha: ninguna red supera a la persistencia en test | runs `final-*`, tablas en `README.md` |
+| 5 · Sonda | Hecha y publicada en https://alejandrobarreche.github.io/oil-rnn/ (Release `model-v1`) | `web/`, `make export-web` |
+| 6 · Página explicativa | Sin empezar | — |
+| 7 · Actualización y reentrenamiento | Sin empezar | — |
+
+Pendiente acordado con el usuario: **rediseño de la interfaz de Sonda** (fase 5) en otra sesión, después la fase 6 y la 7. Cabos sueltos: en el Mac falta `git fetch origin && git reset --hard origin/main` (historial reescrito el 12/11 para quitar la atribución a Claude) y, después, borrar la rama local `backup/pre-coauthor-rewrite` en Windows.
 
 Decisiones ya tomadas por el usuario:
 
@@ -100,8 +111,16 @@ Cambios mínimos sobre lo existente:
 - Requisitos del enunciado: selector de horizonte, histórico con sucesos marcados, precio previsto, variación, intervalo del 80 %, texto para usuario no técnico (plantilla alimentada por la fiabilidad medida en la fase 4 y por los factores obtenidos por oclusión de variables en el navegador).
 - El abanico entre horizontes se interpola y los cuatro puntos calculados se marcan como tales.
 - `web/src/model.ts` replica `features.py`; `make web-test` en verde.
-- Decisiones (12/11): se adapta `bundle.js` de Sonda para que lea los datos exportados, en lugar de rehacer los gráficos. Fuera: columna de activos, alertas, curva de futuros, comparador de modelos e intradía. El medidor de dirección se mantiene con zona «Sin sesgo claro» (probabilidad de subida entre 45 % y 55 %) y, al lado, el acierto de dirección en test frente a la dirección constante más frecuente. El panel de rendimiento muestra cada métrica junto a su referencia. Sucesos del ciclo económico (`web.events` en `config.yaml`): fecha y precio salen de los datos; las causas son solo las que da el enunciado, sin fuentes externas (el usuario decide no usar Zotero); la de 2026 queda sin documentar.
+- Decisiones (12/11): se usa `bundle.js` de Sonda sin modificar (motor de gráficos, iconos y clases `bx-*`), alimentado con los datos exportados; las vistas de dominio (cabecera, tarjetas, medidor, factores, rendimiento) se construyen en `web/src/main.ts` con sus clases. Fuera: columna de activos, alertas, curva de futuros, comparador de modelos e intradía. El medidor de dirección se mantiene con zona «Sin sesgo claro» (probabilidad de subida entre 45 % y 55 %) y, al lado, el acierto de dirección en test frente a la dirección constante más frecuente. El panel de rendimiento muestra cada métrica junto a su referencia. Sucesos del ciclo económico (`web.events` en `config.yaml`): fecha y precio salen de los datos; las causas son solo las que da el enunciado, sin fuentes externas (el usuario decide no usar Zotero); la de 2026 queda sin documentar.
 - Pasos: 1) exportación de los 4 modelos, `market.json` y `quality.json`; 2) inferencia y paridad de los 4 en el navegador; 3) interfaz con Sonda; 4) texto para el usuario; 5) ciclo económico.
+- Hecho (12/11): los 5 pasos, comprobados con `make test`, `make lint`, `make web-test` (15/15), compilación, capturas de la vista de 1 semana y despliegue en GitHub Pages.
+- Cómo está construida la web, para el rediseño:
+  - `web/src/sonda/`: `bundle.js` y `bundle.css` copiados tal cual del sistema de diseño; `tokens.css` generado desde su `tokens.json`. Si el sistema de diseño cambia, se vuelven a copiar.
+  - `web/src/main.ts`: carga los datos, ejecuta los 4 modelos y construye las vistas; `web/src/style.css`: composición (dos columnas, apilado por debajo de 1100 px); `web/index.html`: estructura.
+  - `web/src/explain.ts` (con tests en `web/tests/explain.test.ts`): abanico interpolado en log-precio, P(subida) suponiendo log-precio normal, factores por oclusión (entrada fijada a su media de train) y sesgo del backtest.
+  - `web/src/model.ts`: réplica de `features.py`; no se toca en un rediseño (paridad con `make web-test`).
+  - Datos: `web/public/data/market.json` (histórico, sucesos, últimas 81 filas) y `quality.json` (métricas de test frente a referencias y backtest); los genera `make export-web`.
+- Lo que muestra hoy (datos al 3/11/2026): +4,1 % a 1 semana, +9,2 % a 1 mes y +63 % a 3 meses y a 1 año. El texto de cada horizonte sale de las métricas de test (no mejora a la persistencia, sesgo alcista, intervalo a un solo lado), no de frases fijas. No se han visto en captura las vistas de 1 mes, 3 meses y 1 año.
 
 ## Fase 6 · Página explicativa: el elemento diferencial (días 6–8)
 

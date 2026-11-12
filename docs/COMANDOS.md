@@ -274,7 +274,7 @@ Resultado (12/11): push forzado hecho en Windows; ningún commit de `main` lleva
 
 ---
 
-**🖥️ Windows GPU · 12/11/2026 · ⏳**
+**🖥️ Windows GPU · 12/11/2026 · ✅**
 Fase 5, pasos 3–5: interfaz con Sonda, texto para el usuario y ciclo económico. Claude ya pasó `make test`, `make lint`, las pruebas web (15/15), la compilación y una captura de la página. Revisa la interfaz en el navegador y prueba los cuatro horizontes (pestañas o tarjetas):
 
 ```powershell
@@ -282,3 +282,5 @@ make web-dev
 ```
 
 Se abre en http://localhost:5173 y se para con Ctrl+C. Pásale a Claude lo que quieras cambiar.
+
+Resultado (12/11): Release `model-v1` con los 4 modelos; repositorio hecho público y Pages activado por el usuario. La web está publicada en https://alejandrobarreche.github.io/oil-rnn/ (página, manifiesto, datos y modelos responden 200). El rediseño queda para otra sesión.
