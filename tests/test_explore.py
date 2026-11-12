@@ -177,3 +177,41 @@ def test_numero_de_parametros(cell, layers):
     net = RNNRegressor(16, 32, layers, 0.0, cell=cell, n_outputs=3)
     real = sum(p.numel() for p in net.parameters())
     assert explore.count_params(cell, 16, 32, layers, 3) == real
+
+
+def test_figuras_con_datos_sinteticos():
+    """Las figuras de explore_plots se construyen sin error con lo que devuelve explore."""
+    from matplotlib.figure import Figure
+
+    from oil_rnn import explore_plots as plots
+
+    cfg, raw = _cfg(), _raw()
+    stages = explore.pipeline_stages(cfg, raw)
+    prep, df = _fitted()
+    win = explore.window_at(prep, df, df["t"].iloc[30])
+    trace = explore.cell_trace(
+        "gru", explore.cell_weights(RNNRegressor(3, 4, 1, 0.0, cell="gru").rnn), win["X"].to_numpy()
+    )
+    pred = pd.DataFrame(
+        {
+            "time": df["t"].iloc[:20].to_numpy(),
+            "y_true": df["y"].iloc[:20].to_numpy(),
+            "y_pred": df["y"].iloc[:20].to_numpy() + 1,
+            "y_lo": df["y"].iloc[:20].to_numpy() - 2,
+            "y_hi": df["y"].iloc[:20].to_numpy() + 2,
+            "y_baseline": df["y"].iloc[:20].to_numpy() - 1,
+        }
+    )
+    figures = [
+        plots.missing_map(explore.missing_by_year(raw, "t")),
+        plots.fill_effect(stages["corte"], stages["relleno"], "t", "x"),
+        plots.input_forms(explore.input_stages(prep, df), "y", prep.clip),
+        plots.window_heatmap(win),
+        plots.window_on_price(df, "t", "y", win),
+        plots.folds_timeline(explore.fold_table(cfg, df.iloc[:90]), 2),
+        plots.gates_heatmap(trace, "gru"),
+        plots.predictions_plot(pred),
+        plots.bars_by_group(explore.skill_by(pred), "skill_rmse", "Mejora"),
+        plots.pinball_curves(),
+    ]
+    assert all(isinstance(f, Figure) for f in figures)
