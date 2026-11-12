@@ -251,3 +251,34 @@ make web-dev
 `make web-test` debe pasar las 4 pruebas de paridad (una por horizonte). `make web-dev` abre la página provisional en http://localhost:5173: debe listar los 4 horizontes. Pásale a Claude la salida de `make web-test` y las cifras de la página (se para con Ctrl+C).
 
 Resultado (12/11): Node instalado; `make web-test` pasa 9/9, con las 4 pruebas de paridad. La página provisional da las mismas cifras que Python (h=5: 111,39; h=21: 116,89; h=63: 174,48; h=252: 174,75 $/bbl).
+
+---
+
+**🖥️ Windows GPU · 12/11/2026 · ✅**
+Claude ha reescrito localmente los 33 commits de `main` para quitar la línea `Co-Authored-By: Claude` (8 commits afectados). Contenido, autores y fechas no cambian, pero sí los hashes, así que hay que forzar el push. Copia de seguridad en la rama local `backup/pre-coauthor-rewrite`.
+
+```powershell
+git push --force-with-lease origin main
+```
+
+En el Mac, antes de seguir trabajando (descarta el `main` local antiguo; si tienes cambios sin commitear, guárdalos antes con `git stash`):
+
+```bash
+git fetch origin
+git reset --hard origin/main
+```
+
+Cuando todo esté bien en las dos máquinas: `git branch -D backup/pre-coauthor-rewrite`.
+
+Resultado (12/11): push forzado hecho en Windows; ningún commit de `main` lleva ya `Co-Authored-By`. Falta el `reset` en el Mac.
+
+---
+
+**🖥️ Windows GPU · 12/11/2026 · ⏳**
+Fase 5, pasos 3–5: interfaz con Sonda, texto para el usuario y ciclo económico. Claude ya pasó `make test`, `make lint`, las pruebas web (15/15), la compilación y una captura de la página. Revisa la interfaz en el navegador y prueba los cuatro horizontes (pestañas o tarjetas):
+
+```powershell
+make web-dev
+```
+
+Se abre en http://localhost:5173 y se para con Ctrl+C. Pásale a Claude lo que quieras cambiar.

@@ -93,6 +93,21 @@ web:                             # make export-web: modelo de cada horizonte (de
     21: 20261112-125257_final-lstm-h21_omen-pc
     63: 20261112-125335_final-gru-h63_omen-pc
     252: 20261112-125438_final-rnn-h252_omen-pc
+  # Sucesos del ciclo económico que marca el histórico: fecha y precio salen de los datos (máximo
+  # o mínimo del tramo); las causas son las que da el enunciado (docs/assignment), sin otras fuentes.
+  events:
+    - {start: "2008-01-01", end: "2008-12-31", kind: max, label: "Máximo de 2008",
+       text: "Máximo de toda la serie, al final de la expansión previa a la crisis financiera."}
+    - {start: "2008-07-01", end: "2009-06-30", kind: min, label: "Crisis financiera",
+       text: "Desplome posterior por la crisis financiera, que llevó a la economía mundial a una recesión."}
+    - {start: "2015-01-01", end: "2016-12-31", kind: min, label: "Exceso de oferta",
+       text: "Final de la caída de 2014–2016, provocada por un exceso de oferta de crudo."}
+    - {start: "2020-01-01", end: "2020-12-31", kind: min, label: "Pandemia",
+       text: "Desplome por la pandemia, que frenó la actividad y la demanda mundiales."}
+    - {start: "2022-01-01", end: "2022-12-31", kind: max, label: "Invasión de Ucrania",
+       text: "Subida tras la invasión de Ucrania."}
+    - {start: "2026-01-01", end: "2026-12-31", kind: max, label: "Subida de 2026",
+       text: "Movimiento más reciente de la serie. Su causa no se documenta en este proyecto."}
 
 mlflow:
   experiment: oil-rnn

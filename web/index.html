@@ -3,30 +3,66 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>oil-rnn</title>
+    <title>Sonda · Brent</title>
     <link rel="icon" href="data:," />
   </head>
-  <body>
-    <main>
-      <header>
-        <h1>oil-rnn</h1>
-        <p class="subtitle"></p>
-      </header>
+  <body class="bx-paper">
+    <header class="top bx-glass">
+      <div id="logo"></div>
+      <span class="title">Brent · predicción del precio</span>
+      <div id="tabs"></div>
+      <div class="spacer"></div>
+      <span id="status"></span>
+    </header>
 
-      <section class="panel">
-        <h2>Modelo</h2>
-        <p id="model-info">Cargando los modelos…</p>
-      </section>
+    <p id="loading" class="loading">Calculando las predicciones en el navegador…</p>
 
-      <section class="panel">
-        <h2>Predicción</h2>
-        <ul id="output" class="output"></ul>
-      </section>
+    <div class="grid">
+      <main class="col bx-enter">
+        <section class="bx-glass hero">
+          <div class="bx-watermark wm" id="wm"></div>
+          <div id="ph"></div>
+          <div class="bar">
+            <div class="bx-legend">
+              <span class="bx-legend-item"><i class="bx-key bx-actual"></i>Real</span>
+              <span class="bx-legend-item"><i class="bx-key bx-fc"></i>Previsto</span>
+              <span class="bx-legend-item"><i class="bx-key bx-band80"></i>80 %</span>
+              <span class="bx-muted bx-body-sm" id="model-note"></span>
+            </div>
+          </div>
+          <div class="chart"><div id="chart"></div></div>
+        </section>
 
-      <footer>
-        El modelo se ejecuta en tu navegador; los datos no salen de este equipo. Uso educativo.
-      </footer>
-    </main>
+        <div class="hz" id="cards"></div>
+
+        <section>
+          <div class="bx-section-h"><h3>Histórico y ciclo económico</h3><span class="bx-muted bx-body-sm">Brent spot desde 2000</span></div>
+          <div id="cycle"></div>
+          <div id="cycle-list"></div>
+        </section>
+      </main>
+
+      <aside class="col bx-enter">
+        <section id="dm"></section>
+        <section>
+          <div class="bx-section-h"><h3>Qué dice la predicción</h3></div>
+          <div id="text" class="text"></div>
+        </section>
+        <section>
+          <div class="bx-section-h"><h3>Qué variables usa el modelo</h3><span class="bx-muted bx-body-sm" id="drv-h"></span></div>
+          <div id="drv"></div>
+        </section>
+        <section class="bx-field perf">
+          <div class="bx-row perf-h"><b>Rendimiento</b><span class="bx-muted bx-body-sm" id="perf-h"></span></div>
+          <div id="met"></div>
+          <div id="bt"></div>
+        </section>
+      </aside>
+    </div>
+
+    <footer>
+      Los modelos se ejecutan en tu navegador con los datos de FRED y Yahoo Finance hasta la última descarga. Uso educativo: Sonda informa, no recomienda.
+    </footer>
     <script type="module" src="./src/main.ts"></script>
   </body>
 </html>

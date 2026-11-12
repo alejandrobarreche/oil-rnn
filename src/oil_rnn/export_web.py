@@ -9,7 +9,7 @@ Genera en web/public/model/:
     examples.json   por horizonte: entradas de ejemplo y la salida de Python (prueba de paridad)
 
 y en web/public/data/ (forma del contrato de datos de Sonda):
-    market.json     histórico del target y las últimas filas de variables para predecir
+    market.json     histórico del target, sucesos del ciclo (web.events) y las últimas filas
     quality.json    por horizonte: métricas de test frente a las referencias y backtest de test
 
 La web replica el preprocesado de features.py en web/src/model.ts con los parámetros del
@@ -131,6 +131,12 @@ def market(cfg: dict, need: int) -> dict:
     features = list(cfg["data"]["features"])
     last, prev = df[target].iloc[-1], df[target].iloc[-2]
     tail = df.tail(need)
+    series = df.set_index(pd.to_datetime(df[time_col]))[target]
+    events = []
+    for e in cfg["web"].get("events", []):
+        part = series[e["start"] : e["end"]]
+        t = part.idxmax() if e["kind"] == "max" else part.idxmin()
+        events.append({**e, "t": str(t.date()), "price": float(part[t])})
     return {
         "asset": target.upper(),
         "last": float(last),
@@ -141,6 +147,7 @@ def market(cfg: dict, need: int) -> dict:
             {"t": str(t)[:10], "close": round(float(v), 4)}
             for t, v in zip(df[time_col], df[target], strict=True)
         ],
+        "events": events,
         "features": features,
         "rows": {
             "t": [str(t)[:10] for t in tail[time_col]],

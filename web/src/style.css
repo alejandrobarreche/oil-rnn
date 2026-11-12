@@ -1,93 +1,200 @@
-:root {
-  --bg: #f6f7f8;
-  --panel: #ffffff;
-  --text: #15191d;
-  --muted: #5b636b;
-  --line: #e2e5e8;
-  font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
-  color: var(--text);
+/* Composición de la página sobre las clases bx-* de Sonda (src/sonda/bundle.css): reducción del
+   Workspace a un activo y cuatro horizontes. Colores y medidas, siempre con los tokens de Sonda. */
+body {
+  min-height: 100vh;
   background: var(--bg);
 }
 
-body {
-  margin: 0;
-}
-
-main {
-  max-width: 760px;
-  margin: 0 auto;
-  padding: 48px 20px;
-  display: grid;
-  gap: 20px;
-}
-
-h1 {
-  margin: 0 0 6px;
-  font-size: 1.8rem;
-}
-
-h2 {
-  margin: 0 0 10px;
-  font-size: 1rem;
-}
-
-.subtitle,
-.help,
-footer {
-  color: var(--muted);
-  margin: 0;
-}
-
-.panel {
-  background: var(--panel);
-  border: 1px solid var(--line);
-  border-radius: 12px;
-  padding: 20px;
-}
-
-textarea {
-  width: 100%;
-  box-sizing: border-box;
-  margin-top: 10px;
-  font: 13px ui-monospace, Menlo, Consolas, monospace;
-  border: 1px solid var(--line);
-  border-radius: 8px;
-  padding: 10px;
-}
-
-.actions {
+.top {
+  position: sticky;
+  top: 12px;
+  z-index: 10;
+  margin: 12px 12px 0;
+  min-height: 52px;
+  padding: 0 16px;
   display: flex;
-  gap: 10px;
-  justify-content: flex-end;
-  margin-top: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 20px;
+  border-radius: var(--radius-lg);
+}
+.top .title {
+  font-size: 15px;
+  font-weight: 600;
+}
+.spacer {
+  flex: 1;
 }
 
-button {
-  border: 1px solid var(--text);
-  background: var(--text);
-  color: #fff;
-  border-radius: 8px;
-  padding: 8px 16px;
-  font-weight: 600;
+.loading {
+  margin: 24px;
+  color: var(--ink-3);
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 360px;
+  gap: 24px;
+  padding: 20px 12px 32px;
+  align-items: start;
+  max-width: 1680px;
+  margin: 0 auto;
+}
+.col {
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+  min-width: 0;
+}
+
+.hero {
+  padding: 4px 0 16px;
+}
+.hero .bx-ph {
+  background: transparent;
+  padding: 16px 20px 12px;
+}
+.hero .wm {
+  right: -90px;
+  top: -120px;
+}
+.hero .bar {
+  padding: 0 20px;
+}
+.hero .chart {
+  padding: 4px 20px 0;
+}
+
+.hz {
+  display: flex;
+  align-items: stretch;
+}
+.hz .bx-fcard {
+  flex: 1;
+  border: 0;
+  background: transparent;
+  border-radius: 0;
+  padding: 10px 16px 4px;
+  box-shadow: none;
   cursor: pointer;
 }
-
-button.secondary {
-  background: transparent;
-  color: var(--text);
+.hz .bx-fcard.is-active {
+  box-shadow: inset 0 2px 0 var(--forecast);
+}
+.hz .bx-fcard:hover {
+  background: var(--surface-hover);
+}
+.hz .bx-fcard:focus-visible {
+  outline: 2px solid var(--forecast);
+  outline-offset: -2px;
 }
 
-button:disabled {
-  opacity: 0.4;
-  cursor: default;
+/* Puntos de los horizontes calculados y de los sucesos del ciclo */
+.bx-marker.bx-dot-fc {
+  fill: var(--forecast);
+}
+.bx-marker.bx-dot-up {
+  fill: var(--up);
+}
+.bx-marker.bx-dot-down {
+  fill: var(--down);
 }
 
-.output {
-  font-size: 1.25rem;
-  font-weight: 600;
+.note {
+  margin: var(--space-2) 0 0;
+  font-size: 12px;
+  line-height: 16px;
+  color: var(--ink-3);
+}
+.note b {
+  color: var(--ink-2);
+}
+
+.text h4 {
+  margin: var(--space-3) 0 var(--space-1);
+  font-size: 11px;
+  line-height: 14px;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+.text h4:first-child {
+  margin-top: 0;
+}
+.text p {
   margin: 0;
 }
 
+.perf {
+  padding: 14px 16px 12px;
+  overflow: hidden;
+}
+.perf-h {
+  justify-content: space-between;
+}
+.perf-h b {
+  font-size: 15px;
+}
+.perf .verdict {
+  margin: var(--space-2) 0;
+}
+.perf .bx-metrics {
+  border: 0;
+  border-radius: 0;
+  grid-template-columns: 1fr 1fr;
+  gap: 0;
+}
+.perf .bx-metric {
+  background: transparent;
+  padding: 8px 0;
+}
+.perf .bx-metric + .bx-metric {
+  border-left: 0;
+}
+
+.events {
+  margin: var(--space-3) 0 0;
+  padding: 0;
+  list-style: none;
+  counter-reset: ev;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: var(--space-3) var(--space-6);
+}
+.events li {
+  counter-increment: ev;
+}
+.events .ev-h {
+  display: flex;
+  flex-direction: column;
+}
+.events .ev-h b::before {
+  content: counter(ev) ". ";
+  color: var(--ink-3);
+}
+
 footer {
-  font-size: 0.85rem;
+  padding: 0 24px 32px;
+  color: var(--ink-3);
+  font-size: 12px;
+  text-align: center;
+}
+
+/* Pantallas estrechas: una columna (Sonda está pensada para escritorio) */
+@media (max-width: 1100px) {
+  .grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+@media (max-width: 720px) {
+  .hz {
+    flex-wrap: wrap;
+  }
+  .hz .bx-fcard {
+    flex: 1 1 45%;
+  }
+  .hz .bx-rule-v {
+    display: none;
+  }
 }

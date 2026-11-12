@@ -27,6 +27,8 @@ RUN ?=
 SPLIT ?= test
 ZIP ?=
 RELEASE ?= model-v1
+# Repositorio explícito: el remoto SSH usa un alias de host que gh no reconoce.
+GH_REPO ?= alejandrobarreche/oil-rnn
 CALIB ?=
 
 .PHONY: help setup pending check-env install install-mac install-cpu install-cuda install-rocm \
@@ -157,7 +159,7 @@ web-build: web-install
 	cd web && npm run build
 
 web-release:
-	gh release create $(RELEASE) web/public/model/*.onnx --title $(RELEASE) --notes "Modelos para la web"
+	gh release create $(RELEASE) web/public/model/*.onnx --repo $(GH_REPO) --title $(RELEASE) --notes "Modelos para la web"
 
 
 # ── Calidad ────────────────────────────────────────────────
