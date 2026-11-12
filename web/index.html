@@ -9,20 +9,13 @@
   <body class="bx-page">
     <div class="bx-ws">
       <header class="bx-top">
-        <span id="logo"></span>
-        <div class="title">
-          <h1>Brent</h1>
-          <span class="bx-muted">Spot · $/bbl</span>
-        </div>
-        <nav class="nav bx-pills" aria-label="Secciones">
-          <a class="bx-pill" href="#/mercado" data-route="mercado">Mercado</a>
-          <a class="bx-pill" href="#/cartera" data-route="cartera">Mi cartera</a>
-          <a class="bx-pill" href="#/y-si" data-route="y-si">¿Y si…?</a>
-          <a class="bx-pill" href="#/historial" data-route="historial">Historial</a>
-        </nav>
+        <a class="home" href="#/mercado" aria-label="Mercado">
+          <span id="logo"></span>
+          <span class="title"><h1>Brent</h1><span class="bx-muted">Spot · $/bbl</span></span>
+        </a>
         <span class="bx-spacer"></span>
-        <a class="bx-pill bx-pill-solid chip" id="balance" href="#/cartera"></a>
         <span class="bx-pill bx-pill-solid asof" id="asof"></span>
+        <a class="wallet" id="wallet" href="#/cartera" title="Mi cartera" aria-label="Mi cartera"></a>
         <span id="theme"></span>
       </header>
 
@@ -58,7 +51,7 @@
         </div>
       </main>
       <main class="view" data-view="cartera" id="view-cartera" hidden></main>
-      <main class="view" data-view="y-si" id="view-y-si" hidden></main>
+      <main class="view" data-view="calculadora" id="view-calculadora" hidden></main>
       <main class="view" data-view="historial" id="view-historial" hidden></main>
     </div>
     <script type="module" src="./src/main.ts"></script>

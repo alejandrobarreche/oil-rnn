@@ -193,20 +193,6 @@
 .view[hidden] {
   display: none;
 }
-.nav {
-  margin-left: var(--space-4);
-}
-.nav .bx-pill {
-  text-decoration: none;
-}
-.chip {
-  text-decoration: none;
-  gap: 6px;
-  font-weight: 400;
-}
-.chip b {
-  font-weight: 600;
-}
 .btn-primary {
   background: var(--forecast);
   color: var(--on-forecast);
@@ -534,11 +520,6 @@
   .tiles {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
-  .nav {
-    order: 10;
-    margin-left: 0;
-    width: 100%;
-  }
 }
 @media (max-width: 640px) {
   .tiles {
@@ -586,15 +567,6 @@
   font-size: 24px;
   line-height: 30px;
 }
-.nav {
-  margin-left: var(--space-6);
-  gap: 4px;
-}
-.nav .bx-pill {
-  height: 36px;
-  padding: 0 14px;
-}
-.chip,
 .asof {
   height: 36px;
   padding: 0 14px;
@@ -806,4 +778,82 @@
 }
 .bx-measure-l.is-down text {
   fill: var(--down-text);
+}
+
+/* ── cartera: acceso desde la cabecera y pestañas internas ─ */
+.home {
+  display: inline-flex;
+  align-items: center;
+  gap: 14px;
+  color: inherit;
+  text-decoration: none;
+}
+.wallet {
+  height: 36px;
+  padding: 0 14px 0 12px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  border-radius: var(--radius-pill);
+  background: var(--pill);
+  color: var(--ink);
+  font-weight: 600;
+  text-decoration: none;
+  transition: background var(--dur-fast) var(--ease-out), box-shadow var(--dur-fast) var(--ease-out);
+}
+.wallet:hover {
+  background: var(--pill-active);
+}
+.wallet.is-active {
+  box-shadow: inset 0 0 0 1.5px var(--forecast);
+}
+.back {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  align-self: flex-start;
+  color: var(--ink-3);
+  text-decoration: none;
+  font-size: 13px;
+}
+.back:hover {
+  color: var(--ink);
+}
+.wh {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  border-bottom: 1px solid var(--line);
+  margin-bottom: var(--space-2);
+}
+.subtabs {
+  display: flex;
+  gap: var(--space-6);
+}
+.subtabs a {
+  padding: 10px 0 12px;
+  margin-bottom: -1px;
+  border-bottom: 2px solid transparent;
+  color: var(--ink-3);
+  font-size: 15px;
+  font-weight: 500;
+  text-decoration: none;
+  transition: color var(--dur-fast) var(--ease-out), border-color var(--dur-fast) var(--ease-out);
+}
+.subtabs a:hover {
+  color: var(--ink);
+}
+.subtabs a.is-active {
+  color: var(--ink);
+  border-bottom-color: var(--forecast);
+}
+.wh .btn,
+.wh .more {
+  margin-bottom: 6px;
+}
+@media (max-width: 640px) {
+  .wallet span {
+    display: none;
+  }
 }

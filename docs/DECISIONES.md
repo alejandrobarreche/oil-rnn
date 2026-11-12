@@ -360,7 +360,7 @@
 - **Valoración**: Mal hasta que se haga: es un requisito del enunciado.
 
 ### 10.4 Portal con dinero ficticio
-- **Qué**: pestañas Mercado, Mi cartera, ¿Y si…? e Historial.
+- **Qué**: vista Mercado y, tras el icono de cartera de la cabecera, pestañas Posiciones, Calculadora e Historial.
   - Cartera simulada de 10.000 $ con solo posiciones largas, abiertas y cerradas al último precio exportado.
   - «Si hubiera invertido» un día desde 2000.
   - «Si hubiera seguido al modelo» en test: tramos de `h` días sin solape; invierte si la previsión supera al precio del origen.

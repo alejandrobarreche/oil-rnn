@@ -1,4 +1,4 @@
-// Portal de inversión simulada: rutas (#/mercado, #/cartera, #/y-si, #/historial), cartera simulada,
+// Portal de inversión simulada: rutas (#/mercado, #/cartera, #/cartera/calculadora, #/cartera/historial),
 // «¿y si…?», evaluaciones en un recuadro e historial descargable. La lógica está en sim.ts y store.ts;
 // aquí solo se construye el HTML con las clases de Sonda y se enlazan los eventos.
 import { probUp } from "../explain";
@@ -31,8 +31,27 @@ export interface PortalContext {
   onMarketShown: () => void;
 }
 
-const ROUTES = ["mercado", "cartera", "y-si", "historial"] as const;
-type Route = (typeof ROUTES)[number];
+type Route = "mercado" | "cartera" | "calculadora" | "historial";
+/** Ruta a partir del hash; acepta también las antiguas (#/y-si, #/historial). */
+const HASH: Record<string, Route> = {
+  cartera: "cartera",
+  "cartera/calculadora": "calculadora",
+  "cartera/historial": "historial",
+  "y-si": "calculadora",
+  historial: "historial",
+};
+export const WALLET_ICON =
+  '<svg class="bx-icon" width="18" height="18" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12.5 5V3.5a1 1 0 0 0-1-1h-8a1.5 1.5 0 0 0 0 3h10a1 1 0 0 1 1 1v6a1 1 0 0 1-1 1h-10A1.5 1.5 0 0 1 2 12V4"/><circle cx="11" cy="9.25" r=".75" fill="currentColor"/></svg>';
+const BACK_ICON =
+  '<svg class="bx-icon" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 3.5 5.5 8l4.5 4.5"/></svg>';
+/** Cabecera de la cartera: volver a Mercado, pestañas internas y acciones de la pestaña. */
+const walletHead = (active: Route, actions = "") => {
+  const tab = (r: Route, href: string, label: string) =>
+    `<a href="${href}" class="${r === active ? "is-active" : ""}"${r === active ? ' aria-current="page"' : ""}>${label}</a>`;
+  return `<a class="back" href="#/mercado">${BACK_ICON}Mercado</a>
+    <div class="wh"><nav class="subtabs" aria-label="Mi cartera">${tab("cartera", "#/cartera", "Posiciones")}${tab("calculadora", "#/cartera/calculadora", "Calculadora")}${tab("historial", "#/cartera/historial", "Historial")}</nav>
+    <span class="bx-spacer"></span>${actions}</div>`;
+};
 
 const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
 const money = (v: number) => `${S.fmt.num(v)} $`;
@@ -90,7 +109,9 @@ export function mountPortal(ctx: PortalContext): void {
   // ── piezas comunes ─────────────────────────────────────────
   function balanceChip() {
     const sm = summary(state, price);
-    $("balance").innerHTML = `Cartera <b>${money(sm.total)}</b>`;
+    const w = $("wallet");
+    w.innerHTML = `${WALLET_ICON}<span>${money(sm.total)}</span>`;
+    w.classList.toggle("is-active", route !== "mercado");
   }
 
   function miniCard(): Html {
@@ -138,9 +159,11 @@ export function mountPortal(ctx: PortalContext): void {
           .join("")}</tbody></table>`
       : '<p class="empty">Todavía no hay movimientos.</p>';
     $("view-cartera").innerHTML = `
-      <div class="bar"><span class="bar-t">Precios del ${S.fmt.longDate(dataDate)}, el último dato publicado</span><span class="bx-spacer"></span>
-        ${btn("Solicitar evaluación", "evaluate")}${btn("Abrir posición", "open-position", "primary")}
-        ${moreMenu([["Exportar cartera (JSON)", "export"], ["Importar cartera", "import"], ["Empezar de cero", "reset", true]])}</div>
+      ${walletHead(
+        "cartera",
+        `${btn("Solicitar evaluación", "evaluate")}${btn("Abrir posición", "open-position", "primary")}
+        ${moreMenu([["Exportar cartera (JSON)", "export"], ["Importar cartera", "import"], ["Empezar de cero", "reset", true]])}`,
+      )}
       <div class="tiles">
         ${tile("Valor total", money(sm.total), S.ui.chg(sm.total - state.initial, sm.ret))}
         ${tile("Efectivo", money(sm.cash), `<span class="bx-muted">De ${money(state.initial)} iniciales</span>`)}
@@ -154,18 +177,18 @@ export function mountPortal(ctx: PortalContext): void {
       <section class="bx-card">${cardHead("Operaciones", "Aperturas y cierres de posiciones")}${trades}</section>`;
   }
 
-  // ── ¿Y si…? ───────────────────────────────────────────────
+  // ── Calculadora ───────────────────────────────────────────
   const PRESETS: [string, string][] = [
     ["Hace 1 año", shiftYears(dataDate, -1)],
     ["Hace 5 años", shiftYears(dataDate, -5)],
     ["Máximo de 2008", "2008-07-03"],
     ["Covid 2020", "2020-04-21"],
   ];
-  function renderYsi() {
+  function renderCalc() {
     const first = ctx.history[0].t;
     const recent = state.history.filter((r) => r.kind === "si-invertido" || r.kind === "seguir-modelo").slice(0, 5);
-    $("view-y-si").innerHTML = `
-      <div class="bar"><span class="bar-t">Simulaciones con precios reales del Brent desde 2000</span></div>
+    $("view-calculadora").innerHTML = `
+      ${walletHead("calculadora")}
       <div class="bx-ws-pair">
         <section class="bx-card form-card">
           ${cardHead("Si hubiera invertido", "Qué valdría hoy una inversión en Brent hecha un día del pasado")}
@@ -181,7 +204,7 @@ export function mountPortal(ctx: PortalContext): void {
           <div class="form-f">${btn("Calcular", "follow", "primary")}</div>
         </section>
       </div>
-      <section class="bx-card">${cardHead("Últimas simulaciones guardadas", "", '<a class="link" href="#/historial">Ver historial</a>')}
+      <section class="bx-card">${cardHead("Últimas simulaciones guardadas", "", '<a class="link" href="#/cartera/historial">Ver historial</a>')}
         ${recent.length ? historyTable(recent) : '<p class="empty">Las consultas que guardes aparecerán aquí.</p>'}</section>`;
   }
 
@@ -422,10 +445,13 @@ export function mountPortal(ctx: PortalContext): void {
   function renderHistorial() {
     const n = state.history.length;
     $("view-historial").innerHTML = `
-      <div class="bar"><span class="bar-t">${n} ${n === 1 ? "consulta guardada" : "consultas guardadas"} en este navegador</span><span class="bx-spacer"></span>
-        ${btn("Descargar CSV", "csv", "", n ? "" : " disabled")}${btn("Descargar JSON", "json")}
-        ${moreMenu([["Borrar historial", "clear-history", true]])}</div>
-      <section class="bx-card">${n ? historyTable(state.history) : '<p class="empty">Aún no hay consultas. Solicita una evaluación o prueba «¿Y si…?» y guarda el resultado.</p>'}</section>`;
+      ${walletHead(
+        "historial",
+        `${btn("Descargar CSV", "csv", "", n ? "" : " disabled")}${btn("Descargar JSON", "json")}
+        ${moreMenu([["Borrar historial", "clear-history", true]])}`,
+      )}
+      <section class="bx-card">${cardHead(`${n} ${n === 1 ? "consulta guardada" : "consultas guardadas"}`, "Se guardan en este navegador; descárgalas para conservarlas")}
+        ${n ? historyTable(state.history) : '<p class="empty">Aún no hay consultas. Solicita una evaluación o usa la calculadora y guarda el resultado.</p>'}</section>`;
   }
   function viewRecord(id: string) {
     const r = state.history.find((x) => x.id === id);
@@ -469,21 +495,14 @@ export function mountPortal(ctx: PortalContext): void {
     balanceChip();
     $("mini").innerHTML = miniCard();
     if (route === "cartera") renderCartera();
-    if (route === "y-si") renderYsi();
+    if (route === "calculadora") renderCalc();
     if (route === "historial") renderHistorial();
   }
   function go() {
-    const r = location.hash.replace(/^#\/?/, "") as Route;
     const prev = route;
-    route = ROUTES.includes(r) ? r : "mercado";
+    route = HASH[location.hash.replace(/^#\/?/, "")] ?? "mercado";
     document.querySelectorAll<HTMLElement>("[data-view]").forEach((v) => {
       v.hidden = v.dataset.view !== route;
-    });
-    document.querySelectorAll<HTMLElement>("[data-route]").forEach((a) => {
-      const on = a.dataset.route === route;
-      a.classList.toggle("is-active", on);
-      if (on) a.setAttribute("aria-current", "page");
-      else a.removeAttribute("aria-current");
     });
     closeModal();
     renderAll();
