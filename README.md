@@ -200,7 +200,7 @@ oil-rnn/
 - [x] Evaluación final en test
 - [x] Modelos exportados y aplicación publicada (Sonda, primera versión)
 - [x] Decisiones documentadas, cuadernos del proceso y explorador local
-- [ ] Rediseño de la aplicación
+- [ ] Rediseño de la aplicación y portal con dinero ficticio (hecho en la rama `feat/web-redesign`, sin fusionar)
 - [ ] Página explicativa
 - [ ] Actualización de datos y reentrenamiento periódicos
 
