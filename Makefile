@@ -33,7 +33,7 @@ CALIB ?=
 
 .PHONY: help setup pending check-env install install-mac install-cpu install-cuda install-rocm \
         backend-mac backend-cpu backend-cuda backend-rocm lock test lint format device \
-        data prepare cv sweep compare train evaluate runs pack unpack mlflow-ui export-web web-install web-dev web-test web-build web-release
+        data prepare cv sweep compare train evaluate runs pack unpack mlflow-ui explore-install explore export-web web-install web-dev web-test web-build web-release
 
 
 help:
@@ -62,6 +62,9 @@ help:
 	@echo "  make web-test         paridad TypeScript frente a Python"
 	@echo "  make web-build        compila web/dist"
 	@echo "  make web-release      sube los h<h>.onnx a la Release RELEASE=model-v1 para GitHub Pages"
+	@echo "== Explorador =="
+	@echo "  make explore-install  instala Streamlit (grupo opcional explore)"
+	@echo "  make explore          abre el explorador del proceso en http://localhost:8501"
 	@echo "== Calidad =="
 	@echo "  make test / lint / format / lock"
 
@@ -140,6 +143,14 @@ unpack: check-env
 
 mlflow-ui: check-env
 	$(PYTHON) -m $(PKG).runs_cli --mlflow-ui
+
+
+# ── Explorador (Streamlit, local) ──────────────────────────
+explore-install: check-env
+	$(POETRY) install --with $(POETRY_GROUPS),explore
+
+explore: check-env
+	$(PYTHON) -m streamlit run app/explorador.py
 
 
 # ── Web ────────────────────────────────────────────────────
