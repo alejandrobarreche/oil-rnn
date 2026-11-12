@@ -80,7 +80,16 @@ Cambios mínimos sobre lo existente:
 | 63 | GRU | 128, 2, 0,3, 1e-4 | `20261112-012653_g1-gru-h63-…` | `skill_rmse` +4,8 % ± 0,6 % en 3 semillas |
 | 252 | RNN | 256, 2, 0,3, 1e-4 | `20261111-225050_g1-rnn-h252-…` | Peor que la persistencia (−4,3 %); intervalo sobrecubre (90 %) |
 
-- La aplicación muestra la red elegida en los cuatro horizontes y dice en el texto dónde no mejora a la persistencia (21 y 252).
+- Resultado en test (12/11, runs `final-*`, una sola evaluación): ninguna red supera a la persistencia (`skill_rmse` −3,6 %, −8,1 %, −61 %, −45 %). Tablas y conclusión en `README.md`. Mejora de RMSE por año de test:
+
+| h | 2023 | 2024 | 2025 | 2026 |
+|---|---|---|---|---|
+| 5 | −2,3 % | −4,1 % | +0,2 % | −4,3 % |
+| 21 | −5,8 % | +4,0 % | −12,7 % | −9,0 % |
+| 63 | −58 % | −70 % | −93 % | −59 % |
+| 252 | −112 % | −47 % | −22 % | +9,2 % |
+
+- La aplicación muestra la red elegida en los cuatro horizontes y dice en el texto que, medida en 2023–2026, no mejora a la persistencia; el dato más fiable es el intervalo a 5 días.
 - `make evaluate` una sola vez sobre test: métricas, cobertura real del intervalo, error por régimen. Contraste de Diebold-Mariano frente a persistencia si queda tiempo (requiere añadir la referencia a Zotero).
 - Tabla definitiva en `README.md`.
 
