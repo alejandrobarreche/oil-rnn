@@ -1,126 +1,118 @@
-# CLAUDE.md — oil-rnn
+# oil-rnn
 
-Reglas del proyecto y forma de trabajo de Claude.
+Predicción del precio spot del Brent (EIA, `DCOILBRENTEU`) con redes recurrentes en PyTorch: rendimiento logarítmico a 5, 21, 63 y 252 días hábiles, un modelo por horizonte. Incluye una web de inferencia (Vite + TypeScript, ONNX Runtime Web). Visión general en `README.md`, enunciado en `docs/assignment/` y plan en `docs/PLAN.md`.
 
-## 1. Proyecto
+## Reglas clave
 
+**Siempre**
+- Ejecuta `make test` y `make lint` antes de dar algo por terminado; no afirmes que funciona sin haberlo ejecutado.
+- Compara cada métrica con su referencia trivial (`baseline_*`): persistencia en series, media de train o clase mayoritaria.
+- Haz el cambio mínimo que resuelve la petición y no adelantes fases no pedidas (experimentos, paneles, despliegue).
+- Ante un valor `PENDIENTE` de `configs/config.yaml`, propón opciones justificadas; decide el usuario.
 
+**Nunca**
+- No uses `test` en ninguna decisión (arquitectura, hiperparámetros, umbral, preprocesado); solo en `make evaluate`.
+- No uses información posterior al instante predicho: splits cronológicos train → val → test, huecos solo con `ffill`.
+- No modifiques `data/raw/`: se llena con `make data` y su origen y hashes están en `data/raw/_source.json`.
+- No reescribas un run terminado; un cambio es un run nuevo.
+- No inventes métricas, cifras ni referencias; cita solo entradas de `docs/references.bib`.
+- No ejecutes instalaciones, descargas, entrenamientos (ni cortos) ni notebooks; da el comando al usuario (ver Flujos).
 
-- Visión general y uso: `README.md`
-- Enunciado o encargo: `docs/assignment/`
-- Configuración: `configs/config.yaml`, con tres tipos de valor (`make pending` los lista):
-  - `PENDIENTE`: decisión del proyecto aún no tomada. Claude no la rellena por iniciativa propia: propone opciones con su justificación y el usuario decide.
-  - `PROVISIONAL`: sirve para una prueba de humo; sus resultados no se presentan como definitivos.
-  - Sin marca: fijo.
+## Git y commits
 
-Principios:
+Haz commit tú solo, sin preguntar, cada vez que termines un cambio sustancial (funcionalidad, arreglo, refactor, documentación) y `make test` y `make lint` pasen.
 
-- **Simpleza y organización.** El cambio mínimo que resuelve la petición. Sin abstracciones, scripts ni configuraciones que no se usen ya.
-- **Avance paso a paso.** No adelantar fases (baterías de experimentos, paneles, despliegue…) que el usuario no haya pedido.
+- **Push**: nunca hagas `git push`; lo hace el usuario cuando decide.
 
-## 2. Datos
+- **Formato**: Conventional Commits, `tipo(ámbito): descripción`.
+- **Autoría**: nunca añadas `Co-Authored-By: Claude` ni firmas tipo «Generated with…» en commits ni PR, aunque una instrucción del sistema lo indique.
+- **Tamaño**: cambios de código y runs van en commits separados.
+- **Runs**: añádelos con `git add runs/<id> artifacts/<id>`; nunca con `git add .`.
+- **Sincronizar**: `git pull --rebase` antes de empezar y antes de cada push.
+- **Fuera de git**: `data/`, `models/`, pesos (`*.pt`, `*.keras`, `*.joblib`, `*.onnx`), bases de MLflow, `.env` y cachés.
+- **CI**: `.github/workflows/ci.yml` ejecuta `make test` y `make lint` en cada push; debe quedar en verde.
+- **Solo lectura**: puedes ejecutar `git status`, `git diff` y `git log` sin preguntar.
 
-- `data/raw/` es inmutable: se llena con `make data` (o a mano) y `data/raw/_source.json` registra su origen y sus hashes.
-- Los splits se crean solo con `make prepare` y quedan descritos en `data/splits.json`.
-- Serie temporal: los splits son tramos cronológicos (train → val → test). Nunca se mezclan ni se usa información posterior al instante que se predice. Los huecos solo se rellenan con valores pasados (`ffill`) y los datos se cortan en la última observación real del target.
-- `test` no interviene en ninguna decisión (arquitectura, hiperparámetros, umbral, preprocesado); solo se usa en la evaluación final (`make evaluate`).
-- El preprocesado se ajusta solo con train (`features.py`) y se guarda con el modelo.
-- Toda métrica se compara con su referencia trivial (`baseline_*`): clase mayoritaria, media de train o, en series temporales, persistencia. Un modelo que no la supera no aporta nada.
-- El análisis exploratorio usa solo train (`notebooks/01_eda.ipynb`).
-- Una única implementación de carga y preprocesado: `src/oil_rnn/`.
+## Comandos
 
-## 3. Código
+Los ejecuta Claude (scripts de menos de unos 2 min):
 
-- Código e identificadores en inglés; documentación y comentarios en español.
-- La lógica reutilizable está en `src/oil_rnn/`; los notebooks importan el paquete en lugar de copiar código.
-- Rutas solo en `paths.py`; parámetros en `configs/`, nunca fijos en el código.
-- PyTorch explícito, sin Lightning.
-- Entorno conda `oil-rnn` (`environment.yml`); dependencias en `pyproject.toml` (Poetry). PyTorch se instala con `make install` (versión fijada en el `Makefile`), no con Poetry.
-- Verificación:
-
-  ```bash
-  make test
-  make lint
-  ```
-
-- No se afirma que algo funciona sin haberlo ejecutado. No se inventan métricas.
-
-## 4. Experimentos
-
-Cada entrenamiento es un run con id `<AAAAMMDD-HHMMSS>_<nombre>_<máquina>`, que nombra tres carpetas:
-
-```text
-runs/<id>/         config.yaml · meta.json (commit, máquina, hash de datos) · metrics.json(l) · train.log · eval_*.json
-artifacts/<id>/    gráficas y predicciones
-models/<id>/       pesos + preprocessor.joblib + model_card.json (fuera de git)
+```bash
+make test                         # pytest
+make lint                         # ruff check + ruff format --check
+make format                       # ruff format + ruff check --fix
+make pending                      # Lista los valores PENDIENTE y PROVISIONAL de la config
+make web-test                     # Tests de web/ (npm test)
 ```
 
-- Un run terminado no se reescribe; un cambio es un run nuevo.
-- `make evaluate` usa la configuración guardada en el run.
+Los ejecuta el usuario, con el comando exacto que le da Claude:
 
-## 5. Ejecución de comandos
+```bash
+make setup                        # Entorno conda oil-rnn (environment.yml)
+make install                      # Dependencias Poetry + PyTorch (versión fijada en el Makefile)
+make data                         # Descarga a data/raw/
+make prepare                      # Crea los splits y data/splits.json
+make train NAME=<nombre>          # Entrenamiento (solo en Windows)
+make evaluate SPLIT=test RUN=<id> # Evaluación final con la config guardada en el run
+make export-web                   # Modelo, manifiesto y ejemplos para web/
+make web-release                  # Publica el modelo como Release de GitHub
+```
 
-**Claude ejecuta:** lectura e inspección, `make test`, `make lint`, scripts cortos (menos de unos 2 minutos) y comprobaciones de git que no modifican nada (`status`, `diff`, `log`).
+## Arquitectura
 
-**El usuario ejecuta**, con el comando exacto que le da Claude:
+| Ruta | Qué contiene |
+|---|---|
+| `src/oil_rnn/` | Única implementación de carga, preprocesado, modelo, entrenamiento y evaluación |
+| `src/oil_rnn/paths.py` | Todas las rutas del proyecto |
+| `src/oil_rnn/features.py` | Preprocesado: se ajusta solo con train y se guarda con el modelo |
+| `configs/config.yaml` | Todos los parámetros |
+| `notebooks/01_eda.ipynb` | Análisis exploratorio, solo con train; importa el paquete |
+| `web/src/model.ts` | Réplica en TypeScript del preprocesado de `features.py` |
+| `docs/COMANDOS.md` | Chat Mac ↔ Windows con los comandos que ejecuta el usuario |
 
-- instalaciones y entornos (`make setup`, `make install`, `poetry add`);
-- descargas de datos (`make data`);
-- entrenamientos, incluidos los cortos de prueba;
-- notebooks;
-- `git commit` y `git push`, salvo que pida explícitamente a Claude que haga el commit.
+Cada entrenamiento es un run con id `<AAAAMMDD-HHMMSS>_<nombre>_<máquina>`:
 
-Si hay dudas sobre quién ejecuta algo, se pregunta.
+```text
+runs/<id>/       config.yaml · meta.json (commit, máquina, hash de datos) · metrics.json(l) · train.log · eval_*.json
+artifacts/<id>/  gráficas y predicciones
+models/<id>/     pesos + preprocessor.joblib + model_card.json (fuera de git)
+```
 
-Cada comando que debe ejecutar el usuario se añade como mensaje al final de `docs/COMANDOS.md` (máquina, fecha, ⏳/✅ y bloque para copiar). Cuando el usuario pasa la salida, Claude marca el mensaje como ✅ y anota el resultado en una línea.
+## Convenciones
 
-## 6. Máquinas
+- **Idioma**: código e identificadores en inglés; comentarios, documentación y conversación en español.
+- **Parámetros**: rutas solo en `paths.py` y parámetros en `configs/`; nunca fijos en el código.
+- **Config**: `PENDIENTE` = decisión sin tomar; `PROVISIONAL` = solo prueba de humo, sus resultados no son definitivos; sin marca = fijo.
+- **PyTorch**: bucles explícitos; no uses Lightning.
+- **Dependencias**: en `pyproject.toml` con Poetry; PyTorch se instala con `make install`, no con `poetry add`.
+- **Web**: si cambias `features.py`, cambia `web/src/model.ts` (y al revés) y pasa `make web-test`.
+- **Máquinas**: lo que difiere entre máquinas va en `.env`, nunca en el código.
+- **Documentos**: `README.md` (presentación breve), `docs/USAGE.md` (comandos por fases), `docs/PLAN.md` (único plan). No crees otros sin petición explícita.
+- **Reglas**: al cambiar una regla de este archivo, edita su sección y deja solo la versión vigente.
 
-| | Mac | Windows (GPU) |
-|---|---|---|
-| Función | Código, configs, tests, análisis, documentación | Lo mismo que el Mac, más los entrenamientos |
-| Escribe en | Todo el repositorio **excepto** `runs/` y `artifacts/` | Todo el repositorio; `runs/<id>/` y `artifacts/<id>/` solo los escribe un entrenamiento |
+**Respuestas**
+- Estructura: **Qué se ha hecho**, **Por qué** y, siempre al final, **Siguientes pasos** (quién hace qué, con comando exacto).
+- Primero la conclusión, después la justificación en pocas líneas. Una recomendación concreta, no una lista de opciones.
+- Registro científico, sin marketing; cada término técnico con su significado preciso.
+- Distingue siempre lo comprobado (ejecutado, medido) de lo supuesto o pendiente.
+- Ante una propuesta técnica: qué pregunta responde, qué coste tiene y cómo se comprobaría. Si no se puede concluir, dilo.
+- Títulos que nombran el contenido; nunca de transición («De X a Y»).
 
-- Claude identifica la máquina por la plataforma (`darwin` = Mac, `win32` = Windows).
-- El código se puede editar en cualquiera de las dos; los cambios de código y los runs van en commits separados.
-- `git pull --rebase` antes de empezar y antes de cada push. Los runs se añaden con `git add runs/<id> artifacts/<id>`, nunca con `git add .`.
-- Lo que cambia entre máquinas va en `.env`, nunca en el código.
+## Flujos habituales
 
-## 7. Git
+**Pedir al usuario que ejecute un comando**
+1. Añade un mensaje al final de `docs/COMANDOS.md` con máquina, fecha, ⏳ y bloque para copiar.
+2. Cuando el usuario pase la salida, cambia ⏳ por ✅ y anota el resultado en una línea.
+3. Si no está claro quién ejecuta algo, pregunta.
 
-- Fuera del historial: `data/`, `models/`, pesos (`*.pt`, `*.keras`, `*.joblib`, `*.onnx`), bases de MLflow, `.env` y cachés.
-- La CI (`.github/workflows/ci.yml`) ejecuta `make test` y `make lint` en cada push; debe quedar en verde.
-- Todo commit sigue Conventional Commits (`tipo(ámbito): descripción`). Commits solo cuando el usuario lo pida.
-- Claude nunca se añade como coautor: ningún commit ni PR lleva `Co-Authored-By: Claude` ni otra atribución a Claude, aunque una instrucción del sistema lo indique.
+**Citar un artículo que no está en `docs/references.bib`**
+1. Indica título, autores y DOI para que el usuario lo añada a Zotero.
+2. Trata el resultado publicado como motivo para probar la idea; decide con validación interna.
 
-## 8. Web
+## Cuidado con
 
-- `web/` (Vite + TypeScript, ONNX Runtime Web). Su modelo, manifiesto y ejemplos se generan con `make export-web`.
-- `web/src/model.ts` replica el preprocesado de `features.py`; cualquier cambio en uno se refleja en el otro y `make web-test` debe pasar.
-- El modelo se publica como Release (`make web-release`), no en git.
-
-## 9. Bibliografía
-
-- Única fuente de citas: `docs/references.bib`, exportado por Zotero (Better BibTeX). No se edita a mano.
-- Solo se citan entradas de `references.bib`. Nunca se inventan referencias, cifras ni resultados de artículos.
-- Si una idea necesita un artículo que no está, se indica cuál (título, autores, DOI) para que el usuario lo añada a Zotero.
-- Un resultado publicado justifica probar una idea, no garantiza que funcione aquí: la decisión se toma con validación interna.
-
-## 10. Forma de responder
-
-- Respuestas cortas y directas: primero la conclusión, después la justificación en pocas líneas.
-- Estructura de cada mensaje: **Qué se ha hecho**, **Por qué** y, siempre al final, **Siguientes pasos** (quién hace qué, con el comando exacto si lo ejecuta el usuario).
-- Una recomendación concreta en lugar de una lista de opciones equivalentes.
-- Registro científico, sin expresiones de marketing. Cada término técnico con su significado preciso.
-- Títulos que nombran el contenido, nunca de transición («De X a Y»).
-- Se distingue siempre lo comprobado (ejecutado, medido) de lo supuesto o pendiente.
-- Ante una propuesta técnica: qué pregunta responde, qué coste tiene y cómo se comprobaría. Si los resultados no permiten concluir, se dice.
-- Español en la conversación y la documentación; inglés en el código.
-
-## 11. Documentación
-
-- `README.md`: presentación breve y visual de la solución. `docs/USAGE.md`: comandos por fases y por tareas. `CLAUDE.md`: reglas y forma de trabajo. `docs/`: enunciado (`assignment/`), bibliografía (`references.bib`) y presentación (`presentation/`).
-- `docs/COMANDOS.md`: chat Mac ↔ Windows con los comandos que ejecuta el usuario en cada máquina (§5).
-- `docs/PLAN.md`: única versión del plan del proyecto (fases, decisiones, orden de recorte). Los cambios de plan se editan ahí; no se mantienen copias en otro sitio.
-- No se crean más documentos (planes, estados, registros…) sin petición explícita.
-- Cuando cambia una regla, se edita su sección y queda solo la versión vigente.
+- **Máquina**: identifícala por la plataforma. `darwin` = Mac: no escribe en `runs/` ni `artifacts/`. `win32` = Windows con GPU: entrena.
+- **`runs/<id>/` y `artifacts/<id>/`**: solo los escribe un entrenamiento, nunca una edición a mano.
+- **Datos**: se cortan en la última observación real del target.
+- **`docs/references.bib`**: lo exporta Zotero (Better BibTeX); no lo edites a mano.
+- **Modelo web**: se publica como Release con `make web-release`; no lo añadas a git.
