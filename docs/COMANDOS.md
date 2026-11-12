@@ -314,6 +314,7 @@ git reset --hard origin/main
 
 - **Cuando todo esté bien en las dos máquinas**: `git branch -D backup/pre-coauthor-rewrite`.
 - **Resultado (12/11)**: push forzado hecho en Windows; ningún commit de `main` lleva ya `Co-Authored-By`. Falta el `reset` en el Mac.
+- **Cierre (12/11)**: Mac con `main` al día tras el `reset` y rama `backup/pre-coauthor-rewrite` borrada en Windows (según el usuario).
 
 ## 13. Windows GPU · 12/11/2026 · ✅: fase 5, pasos 3–5, revisar la interfaz con Sonda
 

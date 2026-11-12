@@ -25,8 +25,6 @@
 | 7 · Actualización y reentrenamiento | Sin empezar | — |
 
 - **Orden acordado con el usuario**: rediseño de la interfaz de Sonda (fase 5) en otra sesión; después, fase 6 y fase 7.
-- **Cabo suelto, Mac**: `git fetch origin && git reset --hard origin/main` (historial reescrito el 12/11 para quitar la atribución a Claude).
-- **Cabo suelto, Windows**: después del anterior, borrar la rama local `backup/pre-coauthor-rewrite`.
 
 ### 0.3 Decisiones del usuario
 - **Aplicación**: web estática + GitHub Actions para datos y reentrenamiento.
