@@ -140,7 +140,7 @@ make web-test
 make web-dev
 ```
 
-`make export-web` genera `web/public/model/` (`model.onnx`, `manifest.json`, `examples.json`) a partir del último run. `make web-test` comprueba que TypeScript y Python dan la misma salida. `make web-dev` sirve la web en `http://localhost:5173`.
+`make export-web` exporta los modelos de `web.models` en `configs/config.yaml` (uno por horizonte): `web/public/model/` (`h<h>.onnx`, `manifest.json`, `examples.json`) y `web/public/data/` (`market.json` con el histórico y las últimas filas, `quality.json` con las métricas de test y el backtest). `make web-test` comprueba que TypeScript y Python dan la misma salida. `make web-dev` sirve la web en `http://localhost:5173`.
 
 Compilar:
 

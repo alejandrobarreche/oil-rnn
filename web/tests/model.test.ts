@@ -3,6 +3,7 @@ import { fileURLToPath } from "node:url";
 import * as ort from "onnxruntime-node";
 import { describe, expect, it } from "vitest";
 import {
+  type Bundle,
   calibrate,
   type Manifest,
   parseCsv,
@@ -15,7 +16,10 @@ import {
 
 const modelDir = new URL("../public/model/", import.meta.url);
 const file = (name: string) => fileURLToPath(new URL(name, modelDir));
-const exported = existsSync(file("model.onnx")) && existsSync(file("manifest.json"));
+const bundle: Bundle | null = existsSync(file("manifest.json"))
+  ? JSON.parse(readFileSync(file("manifest.json"), "utf8"))
+  : null;
+const exported = bundle !== null && bundle.models.every((m) => existsSync(file(m.model_file)));
 
 describe("utilidades", () => {
   it("softmax suma 1", () => {
@@ -86,16 +90,17 @@ describe("utilidades", () => {
 
 // Paridad: misma entrada → misma salida en TypeScript (ONNX) que en Python (PyTorch).
 describe.skipIf(!exported)("paridad con Python (examples.json)", () => {
-  it("reproduce las salidas exportadas", async () => {
-    const m: Manifest = JSON.parse(readFileSync(file("manifest.json"), "utf8"));
-    const examples = JSON.parse(readFileSync(file("examples.json"), "utf8"));
-    const session = await ort.InferenceSession.create(file("model.onnx"));
-    for (const ex of examples) {
-      const out = await predict(ort, session, m, ex.rows);
-      out.forEach((v, i) => {
-        const expected = ex.expected[i];
-        expect(Math.abs(v - expected)).toBeLessThanOrEqual(1e-4 * Math.max(1, Math.abs(expected)));
-      });
-    }
-  });
+  const examples = exported ? JSON.parse(readFileSync(file("examples.json"), "utf8")) : {};
+  for (const m of bundle?.models ?? []) {
+    it(`reproduce las salidas exportadas a ${m.horizon} días`, async () => {
+      const session = await ort.InferenceSession.create(file(m.model_file));
+      for (const ex of examples[String(m.horizon)]) {
+        const out = await predict(ort, session, m, ex.rows);
+        out.forEach((v, i) => {
+          const expected = ex.expected[i];
+          expect(Math.abs(v - expected)).toBeLessThanOrEqual(1e-4 * Math.max(1, Math.abs(expected)));
+        });
+      }
+    });
+  }
 });

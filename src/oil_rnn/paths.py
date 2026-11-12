@@ -53,6 +53,8 @@ MODELS_DIR = ROOT / "models"
 ARTIFACTS_DIR = ROOT / "artifacts"
 LATEST_FILE = MODELS_DIR / "LATEST"  # contiene el run_id del último run terminado con éxito
 WEB_DIR = ROOT / "web"
+WEB_MODEL_DIR = WEB_DIR / "public" / "model"  # ONNX, manifiesto y ejemplos (make export-web)
+WEB_DATA_DIR = WEB_DIR / "public" / "data"  # mercado y calidad en la forma del contrato de Sonda
 
 
 def run_paths(run_id: str) -> dict[str, Path]:

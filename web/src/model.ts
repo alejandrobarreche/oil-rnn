@@ -1,8 +1,16 @@
 // Preprocesado e inferencia: réplica de src/<paquete>/features.py con los parámetros del manifiesto.
 // No depende del navegador, así que la prueba de paridad (tests/) lo ejecuta en Node.
 
+/** manifest.json de make export-web: un modelo por horizonte. */
+export interface Bundle {
+  release: string;
+  asset: string;
+  models: Manifest[];
+}
+
 export interface Manifest {
   run_id: string;
+  cell?: "rnn" | "lstm" | "gru";
   task: "classification" | "regression";
   data_kind: "tabular" | "time_series";
   target: string;

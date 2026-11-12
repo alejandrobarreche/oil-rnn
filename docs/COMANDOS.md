@@ -229,3 +229,25 @@ make train NAME=final-rnn-h252 CALIB=20261111-225050_g1-rnn-h252-n256-l2-d0-3-lr
 Si un `make train` falla (por ejemplo, por un bloqueo de Smart App Control al importar), su `make evaluate` no se ejecuta: repite solo esa línea. No repitas un `make evaluate` que ya terminó. Al acabar, avisa a Claude: lee los `eval_test.json` directamente de `runs/`.
 
 Resultado (12/11): los 4 runs `final-*` terminados y evaluados una vez en test (2023-01-25 a 2026-11-03). Ningún modelo supera a la persistencia: `skill_rmse` −3,6 % (h=5), −8,1 % (h=21), −61 % (h=63), −45 % (h=252). Cobertura del 80 %: 78 %, 86 %, 68 % y 92 %.
+
+---
+
+**🖥️ Windows GPU · 12/11/2026 · ✅**
+Fase 5, paso 1: Claude ya ejecutó `make export-web` (4 ONNX, `manifest.json`, `examples.json`, `market.json`, `quality.json`). Falta la prueba de paridad TypeScript ↔ Python, que necesita Node.js, y no está instalado. Instálalo, **cierra y vuelve a abrir la terminal** y ejecuta:
+
+```powershell
+winget install OpenJS.NodeJS.LTS
+```
+
+En la terminal nueva:
+
+```powershell
+conda activate oil-rnn
+node --version
+make web-test
+make web-dev
+```
+
+`make web-test` debe pasar las 4 pruebas de paridad (una por horizonte). `make web-dev` abre la página provisional en http://localhost:5173: debe listar los 4 horizontes. Pásale a Claude la salida de `make web-test` y las cifras de la página (se para con Ctrl+C).
+
+Resultado (12/11): Node instalado; `make web-test` pasa 9/9, con las 4 pruebas de paridad. La página provisional da las mismas cifras que Python (h=5: 111,39; h=21: 116,89; h=63: 174,48; h=252: 174,75 $/bbl).

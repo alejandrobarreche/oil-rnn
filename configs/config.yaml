@@ -87,6 +87,13 @@ sweep:                           # comparativa de la fase 3 (make sweep · make 
   learning_rate: [0.001, 0.0003, 0.0001]
   select_by: pinball             # métrica cv_<select_by> (media de pliegues) que elige la mejor; menor = mejor
 
+web:                             # make export-web: modelo de cada horizonte (decisión de la fase 4, docs/PLAN.md)
+  models:
+    5: 20261112-125213_final-gru-h5_omen-pc
+    21: 20261112-125257_final-lstm-h21_omen-pc
+    63: 20261112-125335_final-gru-h63_omen-pc
+    252: 20261112-125438_final-rnn-h252_omen-pc
+
 mlflow:
   experiment: oil-rnn
   tracking_uri: local            # local = runs/mlflow.db · o http://servidor:5000

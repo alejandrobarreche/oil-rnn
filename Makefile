@@ -55,11 +55,11 @@ help:
 	@echo "  make pack RUN=id      empaqueta un run con sus pesos, y make unpack ZIP=archivo lo restaura"
 	@echo "  make mlflow-ui        interfaz de MLflow"
 	@echo "== Web =="
-	@echo "  make export-web       exporta el ultimo modelo a ONNX para web/"
+	@echo "  make export-web       exporta los modelos de web.models (configs) a ONNX para web/"
 	@echo "  make web-dev          servidor de desarrollo en http://localhost:5173"
 	@echo "  make web-test         paridad TypeScript frente a Python"
 	@echo "  make web-build        compila web/dist"
-	@echo "  make web-release      sube model.onnx a la Release RELEASE=model-v1 para GitHub Pages"
+	@echo "  make web-release      sube los h<h>.onnx a la Release RELEASE=model-v1 para GitHub Pages"
 	@echo "== Calidad =="
 	@echo "  make test / lint / format / lock"
 
@@ -142,7 +142,7 @@ mlflow-ui: check-env
 
 # ── Web ────────────────────────────────────────────────────
 export-web: check-env
-	$(PYTHON) -m $(PKG).export_web --release $(RELEASE) $(if $(RUN),--run $(RUN),)
+	$(PYTHON) -m $(PKG).export_web --release $(RELEASE)
 
 web-install:
 	cd web && npm install
@@ -157,7 +157,7 @@ web-build: web-install
 	cd web && npm run build
 
 web-release:
-	gh release create $(RELEASE) web/public/model/model.onnx --title $(RELEASE) --notes "Modelo para la web"
+	gh release create $(RELEASE) web/public/model/*.onnx --title $(RELEASE) --notes "Modelos para la web"
 
 
 # ── Calidad ────────────────────────────────────────────────

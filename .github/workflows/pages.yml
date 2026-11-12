@@ -1,6 +1,6 @@
 # Publica web/ en GitHub Pages en cada push a main que toque web/.
-# El modelo no está en git: se descarga de la Release indicada en web/public/model/manifest.json
-# y se comprueba su SHA-256 antes de compilar.
+# Los modelos no están en git: se descargan de la Release indicada en web/public/model/manifest.json
+# y se comprueba el SHA-256 de cada uno antes de compilar.
 # Activar una vez: Settings → Pages → Source: GitHub Actions.
 name: Publicar web
 
@@ -32,13 +32,13 @@ jobs:
           node-version: 22
           cache: npm
           cache-dependency-path: web/package-lock.json
-      - name: Descargar y verificar el modelo
+      - name: Descargar y verificar los modelos
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           TAG=$(node -p "require('./public/model/manifest.json').release")
-          gh release download "$TAG" --repo "${{ github.repository }}" --pattern model.onnx --dir public/model --clobber
-          echo "$(node -p "require('./public/model/manifest.json').sha256")  public/model/model.onnx" | sha256sum --check
+          gh release download "$TAG" --repo "${{ github.repository }}" --pattern "*.onnx" --dir public/model --clobber
+          node -e "require('./public/model/manifest.json').models.forEach(m => console.log(m.sha256 + '  public/model/' + m.model_file))" | sha256sum --check
       - run: npm ci
       - run: npm test
       - run: npm run build
