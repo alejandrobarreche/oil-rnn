@@ -1,0 +1,24 @@
+# Tema del explorador local (make explore). Solo afecta a Streamlit; la web Sonda no lo usa.
+[theme]
+base = "light"
+primaryColor = "#0E5A6B"
+backgroundColor = "#EEF1EF"
+secondaryBackgroundColor = "#E2E7E5"
+textColor = "#1A2226"
+linkColor = "#0E5A6B"
+borderColor = "#CDD5D2"
+baseRadius = "0.375rem"
+font = "'Archivo':https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,300..800&display=swap, sans-serif"
+headingFont = "'Archivo':https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,300..800&display=swap, sans-serif"
+baseFontSize = 16
+showSidebarBorder = false
+
+[theme.sidebar]
+backgroundColor = "#E2E7E5"
+secondaryBackgroundColor = "#D7DEDB"
+
+[client]
+toolbarMode = "minimal"
+
+[browser]
+gatherUsageStats = false

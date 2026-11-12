@@ -9,20 +9,30 @@ todas las figuras; magnitudes en un solo tono; valores con signo en dos tonos co
 
 from __future__ import annotations
 
+import matplotlib
 import numpy as np
 import pandas as pd
+from matplotlib import font_manager
 from matplotlib.colors import LinearSegmentedColormap
 from matplotlib.figure import Figure
 from matplotlib.patches import Patch
 
-INK, MUTED, GRID, SURFACE = "#0b0b0b", "#52514e", "#e4e3df", "#fcfcfb"
+# Tinta, gris y fondo: los del explorador (app/estilo.css), para que las figuras no desentonen.
+INK, MUTED, GRID, SURFACE = "#1a2226", "#4a575c", "#e3e8e6", "#ffffff"
 BLUE, ORANGE, AQUA = "#2a78d6", "#eb6834", "#1baf7a"
 CELL_COLOR = {"rnn": BLUE, "lstm": ORANGE, "gru": AQUA}
 CELL_LABEL = {"rnn": "RNN", "lstm": "LSTM", "gru": "GRU"}
-ROLE = {"real": INK, "red": BLUE, "persistencia": "#8d8c86", "parada": ORANGE, "eval": AQUA}
+ROLE = {"real": INK, "red": BLUE, "persistencia": "#8a9599", "parada": ORANGE, "eval": AQUA}
 SEQUENTIAL = LinearSegmentedColormap.from_list("magnitud", ["#eef4fc", BLUE, "#0d3a75"])
-DIVERGING = LinearSegmentedColormap.from_list("signo", [ORANGE, "#e9e8e4", BLUE])
+DIVERGING = LinearSegmentedColormap.from_list("signo", [ORANGE, "#e6eae8", BLUE])
 HORIZON_LABEL = {5: "1 semana", 21: "1 mes", 63: "3 meses", 252: "1 año"}
+
+# Tipografía: la del explorador si está instalada; si no, la primera sans disponible.
+_FONTS = ("Archivo", "Avenir Next", "Helvetica Neue", "Arial", "DejaVu Sans")
+_INSTALLED = {f.name for f in font_manager.fontManager.ttflist}
+matplotlib.rcParams["font.family"] = next(
+    f for f in _FONTS if f in _INSTALLED or f == "DejaVu Sans"
+)
 
 
 def _figure(rows: int = 1, cols: int = 1, size=(10, 3.2), **kwargs):
@@ -32,7 +42,7 @@ def _figure(rows: int = 1, cols: int = 1, size=(10, 3.2), **kwargs):
         ax.set_facecolor(SURFACE)
         ax.grid(True, color=GRID, linewidth=0.8)
         ax.set_axisbelow(True)
-        ax.tick_params(colors=MUTED, labelsize=9, length=0)
+        ax.tick_params(colors=MUTED, labelsize=10, length=0)
         for side in ("top", "right", "left"):
             ax.spines[side].set_visible(False)
         ax.spines["bottom"].set_color(GRID)
@@ -40,7 +50,7 @@ def _figure(rows: int = 1, cols: int = 1, size=(10, 3.2), **kwargs):
 
 
 def _title(ax, text: str) -> None:
-    ax.set_title(text, loc="left", fontsize=11, color=INK, fontweight="bold")
+    ax.set_title(text, loc="left", fontsize=12, color=INK, fontweight="semibold", pad=10)
 
 
 def _heatmap(ax, table: pd.DataFrame, cmap, vmin=None, vmax=None, fmt: str | None = None):
@@ -74,7 +84,7 @@ def missing_map(table: pd.DataFrame, title: str = "Valores vacíos por año y co
     ax = axes[0, 0]
     image = _heatmap(ax, table.T * 100, SEQUENTIAL, vmin=0, vmax=100)
     ax.set_xticks(range(len(table.index)), table.index, rotation=90)
-    fig.colorbar(image, ax=ax, label="% de filas sin dato", pad=0.01)
+    fig.colorbar(image, ax=ax, label="% de filas sin dato", pad=0.01, fraction=0.04)
     _title(ax, title)
     return fig
 
@@ -115,7 +125,7 @@ def input_forms(stages: dict[str, pd.DataFrame], column: str, clip: float | None
         if clip and name in ("estandarizada", "recortada"):
             for limit in (-clip, clip):
                 ax.axhline(limit, color=ORANGE, linewidth=1, linestyle="--")
-        _title(ax, f"{column} · {labels[name]}")
+        _title(ax, f"{column}: {labels[name].lower()}")
     return fig
 
 
@@ -186,7 +196,7 @@ def splits_timeline(df: pd.DataFrame, time_col: str, target: str, ranges: dict) 
     handles = [Patch(color=c, alpha=0.4, label=n) for n, c in colors.items()]
     ax.legend(handles=handles, frameon=False, fontsize=9, ncols=3)
     ax.set_ylabel("$/barril", color=MUTED, fontsize=9)
-    _title(ax, "Tres tramos consecutivos: train → val → test")
+    _title(ax, "Tres tramos consecutivos: train, val y test")
     return fig
 
 
@@ -252,15 +262,15 @@ def bars_by_group(
 def gates_heatmap(trace: dict[str, np.ndarray], cell: str) -> Figure:
     """Estado oculto y puertas de explore.cell_trace a lo largo de la ventana."""
     names = {
-        "h": "h · estado oculto (−1 a 1)",
-        "c": "c · memoria",
-        "i": "i · puerta de entrada",
-        "f": "f · puerta de olvido",
-        "g": "g · candidato",
-        "o": "o · puerta de salida",
-        "r": "r · puerta de reinicio",
-        "z": "z · puerta de actualización",
-        "n": "n · candidato",
+        "h": "h, estado oculto (−1 a 1)",
+        "c": "c, memoria",
+        "i": "i, puerta de entrada",
+        "f": "f, puerta de olvido",
+        "g": "g, candidato",
+        "o": "o, puerta de salida",
+        "r": "r, puerta de reinicio",
+        "z": "z, puerta de actualización",
+        "n": "n, candidato",
     }
     keys = list(trace)
     fig, axes = _figure(len(keys), 1, size=(10, 1.5 * len(keys) + 0.4), sharex=True)

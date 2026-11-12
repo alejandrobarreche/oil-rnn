@@ -1,0 +1,292 @@
+/* Estilo del explorador (make explore). Lo que el tema de .streamlit/config.toml no cubre:
+   el carril del proceso en la barra lateral, la cabecera de cada página y las láminas de las
+   figuras. Los selectores data-testid son los de Streamlit 1.67. */
+
+:root {
+  --paper: #eef1ef;
+  --plate: #ffffff;
+  --ink: #1a2226;
+  --ink-soft: #4a575c;
+  --petrol: #0e5a6b;
+  --petrol-wash: #d9e7e9;
+  --crude: #a8700f;
+  --crude-wash: #f3e7cf;
+  --rule: #cdd5d2;
+}
+
+html,
+body,
+[data-testid="stAppViewContainer"] {
+  font-variant-numeric: tabular-nums;
+}
+
+[data-testid="stMainBlockContainer"] {
+  max-width: 1180px;
+  padding-top: 2.5rem;
+  padding-bottom: 4rem;
+}
+
+/* ── Títulos: Archivo estrecha, sin el ancla de Streamlit ───────────────── */
+h1,
+h2,
+h3 {
+  font-stretch: 70%;
+  letter-spacing: -0.01em;
+  color: var(--ink);
+}
+
+h2 {
+  font-size: 1.75rem !important;
+  font-weight: 650 !important;
+  margin-top: 2.75rem !important;
+  padding-top: 1rem !important;
+  border-top: 1px solid var(--rule);
+}
+
+h3 {
+  font-size: 1.25rem !important;
+  font-weight: 600 !important;
+}
+
+[data-testid="stHeaderActionElements"] {
+  display: none;
+}
+
+/* ── Cabecera de página ─────────────────────────────────────────────────── */
+.page-head {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  column-gap: 1.75rem;
+  align-items: end;
+  padding-bottom: 1.5rem;
+  border-bottom: 2px solid var(--ink);
+  margin-bottom: 0.5rem;
+}
+
+.page-head__step {
+  font-stretch: 62%;
+  font-weight: 800;
+  font-size: clamp(5rem, 11vw, 8.5rem);
+  line-height: 0.78;
+  color: var(--petrol);
+}
+
+.page-head__title {
+  margin: 0;
+  font-stretch: 62%;
+  font-weight: 700;
+  font-size: clamp(2.25rem, 4.5vw, 3.5rem);
+  line-height: 0.95;
+  color: var(--ink);
+}
+
+.page-head__question {
+  margin: 0.75rem 0 0;
+  max-width: 62ch;
+  font-size: 1.125rem;
+  line-height: 1.45;
+  color: var(--ink-soft);
+}
+
+.page-head--plain {
+  grid-template-columns: 1fr;
+}
+
+/* ── Notas: lo que hay que leer en cada figura ──────────────────────────── */
+[data-testid="stCaptionContainer"] {
+  max-width: 78ch;
+  padding: 0.125rem 0 0.125rem 0.875rem;
+  border-left: 3px solid var(--petrol);
+  font-size: 0.9375rem;
+  line-height: 1.5;
+  color: var(--ink-soft);
+}
+
+/* ── Láminas de las figuras ─────────────────────────────────────────────── */
+[data-testid="stImage"] img,
+[data-testid="stFullScreenFrame"] img {
+  background: var(--plate);
+  border: 1px solid var(--rule);
+  border-radius: 6px;
+}
+
+[data-testid="stDataFrame"] {
+  border: 1px solid var(--rule);
+  border-radius: 6px;
+  background: var(--plate);
+}
+
+/* ── Cifras ─────────────────────────────────────────────────────────────── */
+[data-testid="stMetric"] {
+  padding: 0.875rem 1rem;
+  background: var(--plate);
+  border-left: 3px solid var(--ink);
+}
+
+[data-testid="stMetricValue"] {
+  font-stretch: 70%;
+  font-weight: 700;
+  font-size: 2.25rem !important;
+}
+
+[data-testid="stMetricLabel"] p {
+  font-size: 0.875rem;
+  color: var(--ink-soft);
+}
+
+/* ── Avisos: test va siempre en ámbar ───────────────────────────────────── */
+[data-testid="stAlertContentWarning"],
+[data-testid="stAlertContainer"]:has([data-testid="stAlertContentWarning"]) {
+  background: var(--crude-wash);
+  color: var(--ink);
+}
+
+[data-testid="stAlertContainer"]:has([data-testid="stAlertContentWarning"]) {
+  border-left: 3px solid var(--crude);
+}
+
+[data-testid="stAlertContainer"]:has([data-testid="stAlertContentInfo"]) {
+  background: var(--petrol-wash);
+  border-left: 3px solid var(--petrol);
+  color: var(--ink);
+}
+
+/* ── Barra lateral: el carril del proceso ───────────────────────────────── */
+[data-testid="stSidebar"] [data-testid="stSidebarContent"] {
+  padding-top: 0.5rem;
+}
+
+.rail-title {
+  margin: 0 0 0.25rem;
+  font-stretch: 62%;
+  font-weight: 800;
+  font-size: 2.5rem;
+  line-height: 1;
+  color: var(--ink);
+}
+
+.rail-sub {
+  margin: 0 0 1.75rem;
+  font-size: 0.9375rem;
+  line-height: 1.4;
+  color: var(--ink-soft);
+}
+
+[data-testid="stSidebar"] [data-testid="stRadio"] [data-testid="stWidgetLabel"] {
+  display: none; /* «Página»: el carril ya lo dice */
+}
+
+[data-testid="stSidebar"] [role="radiogroup"] {
+  position: relative;
+  gap: 0;
+  counter-reset: step;
+}
+
+/* La línea vertical que une los cinco pasos */
+[data-testid="stSidebar"] [role="radiogroup"]::before {
+  content: "";
+  position: absolute;
+  left: 0.9375rem;
+  top: 1.25rem;
+  height: calc(5 * 3rem - 2.5rem);
+  width: 2px;
+  background: var(--rule);
+}
+
+/* Cada opción: [role=radiogroup] > div > label[data-testid=stRadioOption] > (span>input, div) */
+[data-testid="stSidebar"] [data-testid="stRadioOption"] {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 100%;
+  min-height: 3rem;
+  margin: 0;
+  padding: 0 0.5rem 0 2.75rem;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+/* El círculo de Streamlit se sustituye por el número del paso */
+[data-testid="stSidebar"] [data-testid="stRadioOption"] > div > div:first-child {
+  display: none;
+}
+
+[data-testid="stSidebar"] [data-testid="stRadioOption"]::before {
+  counter-increment: step;
+  content: counter(step);
+  position: absolute;
+  left: 0.25rem;
+  width: 1.5rem;
+  height: 1.5rem;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--paper);
+  border: 2px solid var(--rule);
+  font-size: 0.8125rem;
+  font-weight: 700;
+  color: var(--ink-soft);
+}
+
+/* «Decisiones» no es un paso: va aparte, sin número */
+[data-testid="stSidebar"] [role="radiogroup"] > div:last-child {
+  margin-top: 1.25rem;
+  padding-top: 0.5rem;
+  border-top: 1px solid var(--rule);
+}
+
+[data-testid="stSidebar"] [role="radiogroup"] > div:last-child [data-testid="stRadioOption"] {
+  padding-left: 0.5rem;
+}
+
+[data-testid="stSidebar"] [role="radiogroup"] > div:last-child [data-testid="stRadioOption"]::before {
+  display: none;
+}
+
+[data-testid="stSidebar"] [data-testid="stRadioOption"] p {
+  font-size: 1.0625rem;
+  font-weight: 500;
+  color: var(--ink-soft);
+}
+
+[data-testid="stSidebar"] [data-testid="stRadioOption"]:hover p {
+  color: var(--ink);
+}
+
+[data-testid="stSidebar"] [data-testid="stRadioOption"]:has(input:checked) p {
+  font-weight: 700;
+  color: var(--ink);
+}
+
+[data-testid="stSidebar"] [data-testid="stRadioOption"]:has(input:checked)::before {
+  background: var(--petrol);
+  border-color: var(--petrol);
+  color: var(--plate);
+}
+
+/* Foco de teclado: subrayado en el nombre, sin el recuadro de Streamlit */
+[data-testid="stSidebar"] [data-testid="stRadioOption"]:has(input:focus-visible) p {
+  text-decoration: underline;
+  text-decoration-thickness: 2px;
+  text-underline-offset: 4px;
+}
+
+[data-testid="stSidebar"] [data-testid="stRadioOption"],
+[data-testid="stSidebar"] [data-testid="stRadioOption"]:focus-within {
+  outline: none;
+  box-shadow: none;
+}
+
+.rail-foot {
+  margin-top: 2.5rem;
+  font-size: 0.8125rem;
+  line-height: 1.5;
+  color: var(--ink-soft);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    transition: none !important;
+    animation: none !important;
+  }
+}

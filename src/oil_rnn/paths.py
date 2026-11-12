@@ -55,6 +55,7 @@ LATEST_FILE = MODELS_DIR / "LATEST"  # contiene el run_id del último run termin
 DOCS_DIR = ROOT / "docs"
 DECISIONS_FILE = DOCS_DIR / "DECISIONES.md"  # lo muestra el explorador (make explore)
 EXPLORER_APP = ROOT / "app" / "explorador.py"
+EXPLORER_CSS = ROOT / "app" / "estilo.css"  # estilo propio; el tema está en .streamlit/
 WEB_DIR = ROOT / "web"
 WEB_MODEL_DIR = WEB_DIR / "public" / "model"  # ONNX, manifiesto y ejemplos (make export-web)
 WEB_DATA_DIR = WEB_DIR / "public" / "data"  # mercado y calidad en la forma del contrato de Sonda

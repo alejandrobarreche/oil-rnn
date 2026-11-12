@@ -26,10 +26,10 @@ from .paths import RUNS_DIR, run_paths
 
 STAGES = ("bruto", "corte", "relleno", "inicio")
 STAGE_LABELS = {
-    "bruto": "1 · Archivo descargado",
-    "corte": "2 · Hasta el último target real",
-    "relleno": "3 · Huecos rellenados (ffill)",
-    "inicio": "4 · Desde la primera fila completa",
+    "bruto": "1. Archivo descargado",
+    "corte": "2. Hasta el último target real",
+    "relleno": "3. Huecos rellenados (ffill)",
+    "inicio": "4. Desde la primera fila completa",
 }
 GATES = {"rnn": (), "lstm": ("i", "f", "g", "o"), "gru": ("r", "z", "n")}  # orden de PyTorch
 _NAME = re.compile(
