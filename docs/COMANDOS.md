@@ -358,3 +358,17 @@ python -m jupyter nbconvert --to notebook --execute --inplace notebooks/02_proce
 
 - **Si `jupyter` no está instalado**: ábrelos desde PyCharm; no hace falta instalar nada.
 - **Qué revisar**: que cada figura se entiende con su texto. Pásale a Claude las dudas.
+
+## 16. Mac · 12/11/2026 · ⏳: descargar los modelos ONNX para `make web-dev`
+
+- **Causa comprobada por Claude**: `web/public/model/` tiene `manifest.json` y `examples.json`, pero no `h5.onnx`, `h21.onnx`, `h63.onnx` ni `h252.onnx` (están fuera de git; los crea `make export-web` en Windows). Vite responde a `model/h5.onnx` con `index.html` (200, `text/html`) y ONNX Runtime no puede leerlo, así que la página no carga.
+- **Arreglo**: bajar los cuatro modelos de la Release `model-v1`, igual que hace `pages.yml`. `gh` no está instalado en el Mac; se usa `curl`.
+
+```bash
+for h in 5 21 63 252; do curl -fL -o web/public/model/h$h.onnx https://github.com/alejandrobarreche/oil-rnn/releases/download/model-v1/h$h.onnx; done
+ls -la web/public/model/*.onnx
+make web-dev
+```
+
+- **Si `curl` da 404**: la Release no existe o el repo es privado. Alternativa: copiar los `web/public/model/*.onnx` de Windows al Mac.
+- **Qué pasarle a Claude**: la salida de `ls` y lo que muestre la consola del navegador si sigue fallando.
