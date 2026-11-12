@@ -1,0 +1,91 @@
+2026-11-11 22:47:17,207 INFO Run 20261111-224712_g1-rnn-h252-n256-l1-d0-lr0-0003_omen-pc iniciado
+2026-11-11 22:47:19,024 INFO Entrenando RNNRegressor (rnn, 70915 parámetros) en cuda · 2307 ejemplos de train, 252 de val
+2026-11-11 22:47:19,763 INFO Época   1  train_loss=0.2461  val_loss=0.1204
+2026-11-11 22:47:19,961 INFO Época   2  train_loss=0.2302  val_loss=0.1458
+2026-11-11 22:47:20,141 INFO Época   3  train_loss=0.2204  val_loss=0.1737
+2026-11-11 22:47:20,319 INFO Época   4  train_loss=0.2112  val_loss=0.2157
+2026-11-11 22:47:20,501 INFO Época   5  train_loss=0.2048  val_loss=0.2078
+2026-11-11 22:47:20,685 INFO Época   6  train_loss=0.2079  val_loss=0.2557
+2026-11-11 22:47:20,865 INFO Época   7  train_loss=0.1999  val_loss=0.2586
+2026-11-11 22:47:21,036 INFO Época   8  train_loss=0.2089  val_loss=0.1690
+2026-11-11 22:47:21,219 INFO Época   9  train_loss=0.2072  val_loss=0.2104
+2026-11-11 22:47:21,389 INFO Época  10  train_loss=0.1962  val_loss=0.1829
+2026-11-11 22:47:21,566 INFO Época  11  train_loss=0.1966  val_loss=0.2075
+2026-11-11 22:47:21,566 INFO Early stopping en la época 11 (mejor val_loss=0.1204)
+2026-11-11 22:47:21,710 INFO Entrenando RNNRegressor (rnn, 70915 parámetros) en cuda · 2811 ejemplos de train, 252 de val
+2026-11-11 22:47:21,929 INFO Época   1  train_loss=0.2401  val_loss=0.8048
+2026-11-11 22:47:22,159 INFO Época   2  train_loss=0.2262  val_loss=0.8039
+2026-11-11 22:47:22,394 INFO Época   3  train_loss=0.2223  val_loss=0.9252
+2026-11-11 22:47:22,596 INFO Época   4  train_loss=0.2162  val_loss=0.8227
+2026-11-11 22:47:22,798 INFO Época   5  train_loss=0.2120  val_loss=0.7569
+2026-11-11 22:47:23,023 INFO Época   6  train_loss=0.2086  val_loss=0.7880
+2026-11-11 22:47:23,224 INFO Época   7  train_loss=0.2048  val_loss=0.8777
+2026-11-11 22:47:23,429 INFO Época   8  train_loss=0.2074  val_loss=0.6819
+2026-11-11 22:47:23,655 INFO Época   9  train_loss=0.2035  val_loss=0.8789
+2026-11-11 22:47:23,865 INFO Época  10  train_loss=0.1968  val_loss=0.8196
+2026-11-11 22:47:24,073 INFO Época  11  train_loss=0.1911  val_loss=0.8178
+2026-11-11 22:47:24,281 INFO Época  12  train_loss=0.1896  val_loss=0.8249
+2026-11-11 22:47:24,487 INFO Época  13  train_loss=0.1854  val_loss=0.8110
+2026-11-11 22:47:24,697 INFO Época  14  train_loss=0.2122  val_loss=0.7900
+2026-11-11 22:47:24,896 INFO Época  15  train_loss=0.1908  val_loss=0.6159
+2026-11-11 22:47:25,122 INFO Época  16  train_loss=0.2281  val_loss=0.8181
+2026-11-11 22:47:25,325 INFO Época  17  train_loss=0.2250  val_loss=0.7250
+2026-11-11 22:47:25,530 INFO Época  18  train_loss=0.2207  val_loss=0.7602
+2026-11-11 22:47:25,733 INFO Época  19  train_loss=0.2121  val_loss=0.8298
+2026-11-11 22:47:25,938 INFO Época  20  train_loss=0.1956  val_loss=0.6330
+2026-11-11 22:47:26,150 INFO Época  21  train_loss=0.1857  val_loss=0.7363
+2026-11-11 22:47:26,347 INFO Época  22  train_loss=0.2197  val_loss=0.7726
+2026-11-11 22:47:26,560 INFO Época  23  train_loss=0.2141  val_loss=0.7537
+2026-11-11 22:47:26,768 INFO Época  24  train_loss=0.2009  val_loss=0.7728
+2026-11-11 22:47:26,970 INFO Época  25  train_loss=0.1826  val_loss=0.7033
+2026-11-11 22:47:26,970 INFO Early stopping en la época 25 (mejor val_loss=0.6159)
+2026-11-11 22:47:27,081 INFO Entrenando RNNRegressor (rnn, 70915 parámetros) en cuda · 3315 ejemplos de train, 252 de val
+2026-11-11 22:47:27,352 INFO Época   1  train_loss=0.2463  val_loss=0.1138
+2026-11-11 22:47:27,621 INFO Época   2  train_loss=0.2193  val_loss=0.1116
+2026-11-11 22:47:27,898 INFO Época   3  train_loss=0.2163  val_loss=0.1294
+2026-11-11 22:47:28,173 INFO Época   4  train_loss=0.2058  val_loss=0.1417
+2026-11-11 22:47:28,430 INFO Época   5  train_loss=0.2030  val_loss=0.1106
+2026-11-11 22:47:28,722 INFO Época   6  train_loss=0.2251  val_loss=0.1333
+2026-11-11 22:47:28,952 INFO Época   7  train_loss=0.2184  val_loss=0.1268
+2026-11-11 22:47:29,194 INFO Época   8  train_loss=0.2189  val_loss=0.1303
+2026-11-11 22:47:29,440 INFO Época   9  train_loss=0.2176  val_loss=0.1310
+2026-11-11 22:47:29,677 INFO Época  10  train_loss=0.2168  val_loss=0.1151
+2026-11-11 22:47:29,915 INFO Época  11  train_loss=0.2219  val_loss=0.1263
+2026-11-11 22:47:30,157 INFO Época  12  train_loss=0.2158  val_loss=0.1222
+2026-11-11 22:47:30,398 INFO Época  13  train_loss=0.2134  val_loss=0.1328
+2026-11-11 22:47:30,640 INFO Época  14  train_loss=0.2188  val_loss=0.1140
+2026-11-11 22:47:30,881 INFO Época  15  train_loss=0.2061  val_loss=0.0977
+2026-11-11 22:47:31,149 INFO Época  16  train_loss=0.2078  val_loss=0.1201
+2026-11-11 22:47:31,398 INFO Época  17  train_loss=0.2059  val_loss=0.1053
+2026-11-11 22:47:31,631 INFO Época  18  train_loss=0.2097  val_loss=0.1091
+2026-11-11 22:47:31,863 INFO Época  19  train_loss=0.2103  val_loss=0.0973
+2026-11-11 22:47:32,125 INFO Época  20  train_loss=0.2055  val_loss=0.1027
+2026-11-11 22:47:32,357 INFO Época  21  train_loss=0.2064  val_loss=0.1477
+2026-11-11 22:47:32,588 INFO Época  22  train_loss=0.2103  val_loss=0.1096
+2026-11-11 22:47:32,824 INFO Época  23  train_loss=0.2077  val_loss=0.1047
+2026-11-11 22:47:33,064 INFO Época  24  train_loss=0.2076  val_loss=0.0991
+2026-11-11 22:47:33,303 INFO Época  25  train_loss=0.2017  val_loss=0.1110
+2026-11-11 22:47:33,538 INFO Época  26  train_loss=0.2067  val_loss=0.1025
+2026-11-11 22:47:33,776 INFO Época  27  train_loss=0.2023  val_loss=0.1183
+2026-11-11 22:47:34,011 INFO Época  28  train_loss=0.2118  val_loss=0.1050
+2026-11-11 22:47:34,251 INFO Época  29  train_loss=0.2149  val_loss=0.1156
+2026-11-11 22:47:34,251 INFO Early stopping en la época 29 (mejor val_loss=0.0973)
+2026-11-11 22:47:34,352 INFO Entrenando RNNRegressor (rnn, 70915 parámetros) en cuda · 3819 ejemplos de train, 252 de val
+2026-11-11 22:47:34,652 INFO Época   1  train_loss=0.2429  val_loss=0.1668
+2026-11-11 22:47:34,954 INFO Época   2  train_loss=0.2191  val_loss=0.1601
+2026-11-11 22:47:35,258 INFO Época   3  train_loss=0.2157  val_loss=0.1818
+2026-11-11 22:47:35,530 INFO Época   4  train_loss=0.2130  val_loss=0.1585
+2026-11-11 22:47:35,822 INFO Época   5  train_loss=0.2089  val_loss=0.1791
+2026-11-11 22:47:36,090 INFO Época   6  train_loss=0.2094  val_loss=0.1377
+2026-11-11 22:47:36,385 INFO Época   7  train_loss=0.2096  val_loss=0.1693
+2026-11-11 22:47:36,657 INFO Época   8  train_loss=0.2083  val_loss=0.1790
+2026-11-11 22:47:36,925 INFO Época   9  train_loss=0.2054  val_loss=0.1766
+2026-11-11 22:47:37,191 INFO Época  10  train_loss=0.2035  val_loss=0.1680
+2026-11-11 22:47:37,458 INFO Época  11  train_loss=0.2023  val_loss=0.1899
+2026-11-11 22:47:37,739 INFO Época  12  train_loss=0.2009  val_loss=0.1478
+2026-11-11 22:47:38,004 INFO Época  13  train_loss=0.2042  val_loss=0.2099
+2026-11-11 22:47:38,273 INFO Época  14  train_loss=0.2011  val_loss=0.1971
+2026-11-11 22:47:38,535 INFO Época  15  train_loss=0.2003  val_loss=0.2140
+2026-11-11 22:47:38,810 INFO Época  16  train_loss=0.2000  val_loss=0.2003
+2026-11-11 22:47:38,810 INFO Early stopping en la época 16 (mejor val_loss=0.1377)
+2026-11-11 22:47:39,039 INFO Run 20261111-224712_g1-rnn-h252-n256-l1-d0-lr0-0003_omen-pc terminado

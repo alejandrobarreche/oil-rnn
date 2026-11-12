@@ -1,0 +1,39 @@
+{
+  "run_id": "20261112-014240_g1-gru-h252-n64-l2-d0-3-lr0-0001_omen-pc",
+  "name": "g1-gru-h252-n64-l2-d0.3-lr0.0001",
+  "status": "finished",
+  "started_at": "2026-11-12T00:42:40+00:00",
+  "finished_at": "2026-11-12T00:43:01+00:00",
+  "machine": {
+    "name": "omen-pc",
+    "platform": "Windows-11-10.0.26200-SP0",
+    "python": "3.12.16"
+  },
+  "git": {
+    "commit": "f96050135140341c18cd482b449b8d03099ec6f0",
+    "dirty": true
+  },
+  "data": {
+    "manifest": "data/splits.json",
+    "source": {
+      "file": "data/raw/dataset.csv",
+      "sha256": "fa54aa0a5eaa494c52d4ca2764c7b46961391cdf7e9c0e6e826ace7eb72cf377",
+      "rows": 6501
+    },
+    "splits": {
+      "train": "20e06c5e329445d70c31a2e0e911fee43911e76b5841044ecc2f43a34ac476b5",
+      "val": "7cd87d7905d17299207c3a3367c30a6071f4a32ce28b483f479c730ea62fab24",
+      "test": "5932a5a560a343930e8cf0f7a3d9dcc94a143134e60556bdc9bb117b2dd4662a"
+    }
+  },
+  "paths": {
+    "run": "runs/20261112-014240_g1-gru-h252-n64-l2-d0-3-lr0-0001_omen-pc",
+    "model": "models/20261112-014240_g1-gru-h252-n64-l2-d0-3-lr0-0001_omen-pc",
+    "artifacts": "artifacts/20261112-014240_g1-gru-h252-n64-l2-d0-3-lr0-0001_omen-pc"
+  },
+  "mlflow": {
+    "run_id": "784476ccb69b4ec9b2ee142e04ba43ac",
+    "experiment_id": "1",
+    "tracking_uri": "sqlite:///C:/Users/alexb/projects/oil-rnn/runs/mlflow.db"
+  }
+}

@@ -1,0 +1,115 @@
+seed: 42
+task: regression
+data_kind: time_series
+data:
+  source:
+    type: code
+    filename: dataset.csv
+    start: '2000-01-01'
+    end: '2026-11-11'
+    calendar: brent
+    fred:
+      brent: DCOILBRENTEU
+      wti: DCOILWTICO
+      henry_hub: DHHNGSP
+      ecb_deposit_rate: ECBDFR
+      usd_per_eur: DEXUSEU
+      cny_per_usd: DEXCHUS
+      vix: VIXCLS
+    yahoo_ohlcv:
+      brent_fut: BZ=F
+      wti_fut: CL=F
+    yahoo_close:
+      copper: HG=F
+      gold: GC=F
+      dollar_index: DX-Y.NYB
+  na_values: []
+  target: brent
+  features:
+  - brent
+  - wti
+  - henry_hub
+  - ecb_deposit_rate
+  - usd_per_eur
+  - cny_per_usd
+  - vix
+  - wti_fut_open
+  - wti_fut_high
+  - wti_fut_low
+  - wti_fut_close
+  - wti_fut_volume
+  - copper
+  - gold
+  - dollar_index
+  time_column: date
+  fill_missing: ffill
+  window: 60
+  horizon: 5
+  inputs:
+    transform: returns
+    diff:
+    - ecb_deposit_rate
+    log1p_diff:
+    - wti_fut_volume
+    floor:
+      wti: 1.0
+      wti_fut_open: 1.0
+      wti_fut_high: 1.0
+      wti_fut_low: 1.0
+      wti_fut_close: 1.0
+    volatility: 21
+    clip: 5
+  target_mode: log_return
+  val_size: 0.15
+  test_size: 0.15
+model:
+  quantiles:
+  - 0.1
+  - 0.5
+  - 0.9
+  cell: rnn
+  hidden_size: 32
+  num_layers: 1
+  dropout: 0.0
+train:
+  epochs: 60
+  batch_size: 64
+  learning_rate: 0.0001
+  patience: 10
+  min_epochs: 10
+cv:
+  folds: 4
+  block: 504
+  holdout: 252
+sweep:
+  prefix: g1
+  cells:
+  - rnn
+  - lstm
+  - gru
+  horizons:
+  - 5
+  - 21
+  - 63
+  - 252
+  hidden_size:
+  - 32
+  - 64
+  - 128
+  - 256
+  depth:
+  - - 1
+    - 0.0
+  - - 2
+    - 0.0
+  - - 2
+    - 0.3
+  learning_rate:
+  - 0.001
+  - 0.0003
+  - 0.0001
+  select_by: pinball
+mlflow:
+  experiment: oil-rnn
+  tracking_uri: local
+  log_models: true

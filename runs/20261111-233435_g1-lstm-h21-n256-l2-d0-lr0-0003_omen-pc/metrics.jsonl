@@ -1,0 +1,60 @@
+{"step": 1, "time": "2026-11-11T22:34:42+00:00", "fold1_train_loss": 0.26467500714461006, "fold1_val_loss": 0.2816107888070364}
+{"step": 2, "time": "2026-11-11T22:34:43+00:00", "fold1_train_loss": 0.23133674093087514, "fold1_val_loss": 0.2803580988021124}
+{"step": 3, "time": "2026-11-11T22:34:44+00:00", "fold1_train_loss": 0.22072942467530568, "fold1_val_loss": 0.2629271565921723}
+{"step": 4, "time": "2026-11-11T22:34:44+00:00", "fold1_train_loss": 0.21267634125550589, "fold1_val_loss": 0.284130749248323}
+{"step": 5, "time": "2026-11-11T22:34:45+00:00", "fold1_train_loss": 0.2027703231970469, "fold1_val_loss": 0.30934945080015397}
+{"step": 6, "time": "2026-11-11T22:34:46+00:00", "fold1_train_loss": 0.19600545744101205, "fold1_val_loss": 0.34032324098405387}
+{"step": 7, "time": "2026-11-11T22:34:46+00:00", "fold1_train_loss": 0.1863342266480128, "fold1_val_loss": 0.32956346349110677}
+{"step": 8, "time": "2026-11-11T22:34:47+00:00", "fold1_train_loss": 0.17706303795178732, "fold1_val_loss": 0.3507244937003605}
+{"step": 9, "time": "2026-11-11T22:34:48+00:00", "fold1_train_loss": 0.1625597918430964, "fold1_val_loss": 0.39068654983762713}
+{"step": 10, "time": "2026-11-11T22:34:49+00:00", "fold1_train_loss": 0.1423838606675466, "fold1_val_loss": 0.4765215979682075}
+{"step": 11, "time": "2026-11-11T22:34:49+00:00", "fold1_train_loss": 0.13033459560076396, "fold1_val_loss": 0.41513789267767043}
+{"step": 12, "time": "2026-11-11T22:34:50+00:00", "fold1_train_loss": 0.12500000802675884, "fold1_val_loss": 0.5872579245340257}
+{"step": 13, "time": "2026-11-11T22:34:51+00:00", "fold1_train_loss": 0.11534916079044343, "fold1_val_loss": 0.5388678671821715}
+{"step": null, "time": "2026-11-11T22:34:51+00:00", "fold1_n_params": 807683.0, "fold1_train_seconds": 9.657323298975825, "fold1_epochs_run": 13.0, "fold1_best_epoch": 3.0}
+{"step": null, "time": "2026-11-11T22:34:51+00:00", "fold1_mse": 35.559927080332386, "fold1_rmse": 5.963214492229203, "fold1_mae": 4.793823123843613, "fold1_r2": 0.514680614362649, "fold1_baseline_mse": 30.35660932539683, "fold1_baseline_rmse": 5.509683232763643, "fold1_baseline_mae": 4.582996031746031, "fold1_skill_vs_baseline": -0.08231530567285805, "fold1_direction_accuracy": 0.5376984126984127, "fold1_baseline_direction_accuracy": 0.49603174603174605, "fold1_coverage": 0.6825396825396826, "fold1_interval_width": 12.777382062678221, "fold1_pinball": 1.4582256458773917, "fold1_coverage_nominal": 0.8, "fold1_baseline_coverage": 0.6785714285714286, "fold1_baseline_interval_width": 12.431074232807903, "fold1_baseline_pinball": 1.4533966304897175, "fold1_pinball_skill": -0.0033225723015795072}
+{"step": 1, "time": "2026-11-11T22:34:52+00:00", "fold2_train_loss": 0.2693918673279079, "fold2_val_loss": 0.26428841125397456}
+{"step": 2, "time": "2026-11-11T22:34:53+00:00", "fold2_train_loss": 0.23550951780249538, "fold2_val_loss": 0.24322150671292866}
+{"step": 3, "time": "2026-11-11T22:34:53+00:00", "fold2_train_loss": 0.22738158539549946, "fold2_val_loss": 0.24744294512839543}
+{"step": 4, "time": "2026-11-11T22:34:54+00:00", "fold2_train_loss": 0.22073216280436406, "fold2_val_loss": 0.24464919453575498}
+{"step": 5, "time": "2026-11-11T22:34:55+00:00", "fold2_train_loss": 0.2154908965439557, "fold2_val_loss": 0.24693053629663256}
+{"step": 6, "time": "2026-11-11T22:34:56+00:00", "fold2_train_loss": 0.20493869122849206, "fold2_val_loss": 0.28204335106743705}
+{"step": 7, "time": "2026-11-11T22:34:57+00:00", "fold2_train_loss": 0.19622482066829455, "fold2_val_loss": 0.26323402921358746}
+{"step": 8, "time": "2026-11-11T22:34:58+00:00", "fold2_train_loss": 0.1844346584522561, "fold2_val_loss": 0.2594798670874702}
+{"step": 9, "time": "2026-11-11T22:34:58+00:00", "fold2_train_loss": 0.1637962617694515, "fold2_val_loss": 0.2971660293756969}
+{"step": 10, "time": "2026-11-11T22:34:59+00:00", "fold2_train_loss": 0.14995832707239612, "fold2_val_loss": 0.3571892614875521}
+{"step": 11, "time": "2026-11-11T22:35:00+00:00", "fold2_train_loss": 0.13501683908374343, "fold2_val_loss": 0.3459377716931086}
+{"step": 12, "time": "2026-11-11T22:35:01+00:00", "fold2_train_loss": 0.12169394761187845, "fold2_val_loss": 0.37675996787018246}
+{"step": null, "time": "2026-11-11T22:35:01+00:00", "fold2_n_params": 807683.0, "fold2_train_seconds": 9.770400799810886, "fold2_epochs_run": 12.0, "fold2_best_epoch": 2.0}
+{"step": null, "time": "2026-11-11T22:35:01+00:00", "fold2_mse": 30.98058395375516, "fold2_rmse": 5.566020477302896, "fold2_mae": 4.283067789198968, "fold2_r2": 0.7176888004205471, "fold2_baseline_mse": 31.366799206349203, "fold2_baseline_rmse": 5.600607039093995, "fold2_baseline_mae": 4.317420634920634, "fold2_skill_vs_baseline": 0.006175502324957671, "fold2_direction_accuracy": 0.5555555555555556, "fold2_baseline_direction_accuracy": 0.5873015873015873, "fold2_coverage": 0.8571428571428571, "fold2_interval_width": 16.16770644919573, "fold2_pinball": 1.3384413096993282, "fold2_coverage_nominal": 0.8, "fold2_baseline_coverage": 0.8888888888888888, "fold2_baseline_interval_width": 16.50690013491005, "fold2_baseline_pinball": 1.3646731544501494, "fold2_pinball_skill": 0.019222071354800252}
+{"step": 1, "time": "2026-11-11T22:35:02+00:00", "fold3_train_loss": 0.2586188023675702, "fold3_val_loss": 0.21707507684117272}
+{"step": 2, "time": "2026-11-11T22:35:03+00:00", "fold3_train_loss": 0.23125567508790784, "fold3_val_loss": 0.22541843425659908}
+{"step": 3, "time": "2026-11-11T22:35:04+00:00", "fold3_train_loss": 0.2216962960189926, "fold3_val_loss": 0.2323683202266693}
+{"step": 4, "time": "2026-11-11T22:35:05+00:00", "fold3_train_loss": 0.2188883197759678, "fold3_val_loss": 0.23472442466115195}
+{"step": 5, "time": "2026-11-11T22:35:06+00:00", "fold3_train_loss": 0.20847499430060626, "fold3_val_loss": 0.23412192340881105}
+{"step": 6, "time": "2026-11-11T22:35:06+00:00", "fold3_train_loss": 0.20055778981920727, "fold3_val_loss": 0.25339186286169385}
+{"step": 7, "time": "2026-11-11T22:35:07+00:00", "fold3_train_loss": 0.18284765263636432, "fold3_val_loss": 0.2592306960196722}
+{"step": 8, "time": "2026-11-11T22:35:08+00:00", "fold3_train_loss": 0.16571839656420573, "fold3_val_loss": 0.2627082258935959}
+{"step": 9, "time": "2026-11-11T22:35:09+00:00", "fold3_train_loss": 0.1500982395903079, "fold3_val_loss": 0.2971769486154829}
+{"step": 10, "time": "2026-11-11T22:35:10+00:00", "fold3_train_loss": 0.13975512850546312, "fold3_val_loss": 0.3025697616357652}
+{"step": 11, "time": "2026-11-11T22:35:11+00:00", "fold3_train_loss": 0.12334762225132026, "fold3_val_loss": 0.326035479704539}
+{"step": null, "time": "2026-11-11T22:35:11+00:00", "fold3_n_params": 807683.0, "fold3_train_seconds": 10.01225670054555, "fold3_epochs_run": 11.0, "fold3_best_epoch": 1.0}
+{"step": null, "time": "2026-11-11T22:35:11+00:00", "fold3_mse": 71.0957850119913, "fold3_rmse": 8.431831652256305, "fold3_mae": 5.668186627068098, "fold3_r2": 0.6560334093824489, "fold3_baseline_mse": 74.64549523809524, "fold3_baseline_rmse": 8.639762452642737, "fold3_baseline_mae": 5.879007936507937, "fold3_skill_vs_baseline": 0.024066726547884443, "fold3_direction_accuracy": 0.5972222222222222, "fold3_baseline_direction_accuracy": 0.5892857142857143, "fold3_coverage": 0.753968253968254, "fold3_interval_width": 14.456786498052175, "fold3_pinball": 2.036036711680625, "fold3_coverage_nominal": 0.8, "fold3_baseline_coverage": 0.751984126984127, "fold3_baseline_interval_width": 14.118827080180855, "fold3_baseline_pinball": 2.1167744252139498, "fold3_pinball_skill": 0.038141859884368357}
+{"step": 1, "time": "2026-11-11T22:35:12+00:00", "fold4_train_loss": 0.2597738665046421, "fold4_val_loss": 0.8071865926659296}
+{"step": 2, "time": "2026-11-11T22:35:13+00:00", "fold4_train_loss": 0.22758272839776167, "fold4_val_loss": 0.7652390575598157}
+{"step": 3, "time": "2026-11-11T22:35:14+00:00", "fold4_train_loss": 0.2219315065559766, "fold4_val_loss": 0.8042440606015069}
+{"step": 4, "time": "2026-11-11T22:35:15+00:00", "fold4_train_loss": 0.21902977141505436, "fold4_val_loss": 0.7876772007771901}
+{"step": 5, "time": "2026-11-11T22:35:16+00:00", "fold4_train_loss": 0.21226963654477546, "fold4_val_loss": 0.8331436926410312}
+{"step": 6, "time": "2026-11-11T22:35:17+00:00", "fold4_train_loss": 0.20154125290982267, "fold4_val_loss": 0.8860705546916477}
+{"step": 7, "time": "2026-11-11T22:35:18+00:00", "fold4_train_loss": 0.1893386589297166, "fold4_val_loss": 0.9922023020566456}
+{"step": 8, "time": "2026-11-11T22:35:19+00:00", "fold4_train_loss": 0.17609554698281255, "fold4_val_loss": 1.022469276000583}
+{"step": 9, "time": "2026-11-11T22:35:20+00:00", "fold4_train_loss": 0.17132526371918672, "fold4_val_loss": 1.0618813943768304}
+{"step": 10, "time": "2026-11-11T22:35:21+00:00", "fold4_train_loss": 0.15138749492929338, "fold4_val_loss": 1.0755415577737113}
+{"step": 11, "time": "2026-11-11T22:35:22+00:00", "fold4_train_loss": 0.14306625607588613, "fold4_val_loss": 1.0722848550667838}
+{"step": 12, "time": "2026-11-11T22:35:23+00:00", "fold4_train_loss": 0.13437819681691784, "fold4_val_loss": 1.133471962005373}
+{"step": null, "time": "2026-11-11T22:35:23+00:00", "fold4_n_params": 807683.0, "fold4_train_seconds": 12.290359700098634, "fold4_epochs_run": 12.0, "fold4_best_epoch": 2.0}
+{"step": null, "time": "2026-11-11T22:35:24+00:00", "fold4_mse": 123.85096531993538, "fold4_rmse": 11.128834859046808, "fold4_mae": 8.533270243985585, "fold4_r2": 0.6084076187691403, "fold4_baseline_mse": 99.88041587301589, "fold4_baseline_rmse": 9.994019005035756, "fold4_baseline_mae": 7.9272222222222215, "fold4_skill_vs_baseline": -0.11354949929945546, "fold4_direction_accuracy": 0.5615079365079365, "fold4_baseline_direction_accuracy": 0.5813492063492064, "fold4_coverage": 0.7083333333333334, "fold4_interval_width": 22.47183096940105, "fold4_pinball": 2.661309360198134, "fold4_coverage_nominal": 0.8, "fold4_baseline_coverage": 0.7658730158730159, "fold4_baseline_interval_width": 22.048844807815975, "fold4_baseline_pinball": 2.396083881991714, "fold4_pinball_skill": -0.11069123255649749}
+{"step": null, "time": "2026-11-11T22:35:24+00:00", "fold2_coverage_cqr": 0.9404761904761905, "fold2_width_cqr": 19.39632272217836}
+{"step": null, "time": "2026-11-11T22:35:24+00:00", "fold3_coverage_cqr": 0.7678571428571429, "fold3_width_cqr": 15.321615639046605}
+{"step": null, "time": "2026-11-11T22:35:24+00:00", "fold4_coverage_cqr": 0.753968253968254, "fold4_width_cqr": 24.309953557350692}
+{"step": null, "time": "2026-11-11T22:35:24+00:00", "cv_mse": 65.37181534150355, "cv_rmse": 7.772475370208803, "cv_mae": 5.819586946024067, "cv_r2": 0.6242026107336963, "cv_baseline_mse": 59.06232991071429, "cv_baseline_rmse": 7.436017932384033, "cv_baseline_mae": 5.676661706349206, "cv_skill_vs_baseline": -0.04140564402486785, "cv_direction_accuracy": 0.5629960317460319, "cv_baseline_direction_accuracy": 0.5634920634920636, "cv_coverage": 0.7504960317460317, "cv_interval_width": 16.468426494831796, "cv_pinball": 1.8735032568638696, "cv_coverage_nominal": 0.8, "cv_baseline_coverage": 0.7713293650793651, "cv_baseline_interval_width": 16.276411563928697, "cv_baseline_pinball": 1.8327320230363826, "cv_pinball_skill": -0.014162468404727097, "cv_coverage_cqr": 0.8207671957671958, "cv_interval_width_cqr": 19.675963972858554, "cv_conformal_correction": 0.013048065095951245}
