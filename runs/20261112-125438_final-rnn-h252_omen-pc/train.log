@@ -1,0 +1,17 @@
+2026-11-12 12:54:45,615 INFO Run 20261112-125438_final-rnn-h252_omen-pc iniciado
+2026-11-12 12:54:49,475 INFO Entrenando RNNRegressor (rnn, 202499 parámetros) en cuda · 4323 ejemplos de train, 252 de val
+2026-11-12 12:54:51,119 INFO Época   1  train_loss=0.2425  val_loss=0.3316
+2026-11-12 12:54:52,011 INFO Época   2  train_loss=0.2220  val_loss=0.3461
+2026-11-12 12:54:52,879 INFO Época   3  train_loss=0.2186  val_loss=0.3376
+2026-11-12 12:54:53,698 INFO Época   4  train_loss=0.2133  val_loss=0.4007
+2026-11-12 12:54:54,515 INFO Época   5  train_loss=0.2099  val_loss=0.3952
+2026-11-12 12:54:55,337 INFO Época   6  train_loss=0.2085  val_loss=0.3327
+2026-11-12 12:54:56,138 INFO Época   7  train_loss=0.2082  val_loss=0.3344
+2026-11-12 12:54:56,928 INFO Época   8  train_loss=0.2082  val_loss=0.3979
+2026-11-12 12:54:57,717 INFO Época   9  train_loss=0.2049  val_loss=0.3444
+2026-11-12 12:54:58,525 INFO Época  10  train_loss=0.2051  val_loss=0.3766
+2026-11-12 12:54:59,318 INFO Época  11  train_loss=0.2018  val_loss=0.3755
+2026-11-12 12:54:59,318 INFO Early stopping en la época 11 (mejor val_loss=0.3316)
+2026-11-12 12:54:59,768 INFO Run 20261112-125438_final-rnn-h252_omen-pc terminado
+2026-11-12 12:55:08,064 INFO Run 20261112-125438_final-rnn-h252_omen-pc reabierto
+2026-11-12 12:55:08,672 INFO Run 20261112-125438_final-rnn-h252_omen-pc terminado

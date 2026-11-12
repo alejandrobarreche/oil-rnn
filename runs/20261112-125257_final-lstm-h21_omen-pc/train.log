@@ -1,0 +1,27 @@
+2026-11-12 12:53:04,222 INFO Run 20261112-125257_final-lstm-h21_omen-pc iniciado
+2026-11-12 12:53:08,288 INFO Entrenando RNNRegressor (lstm, 21187 parámetros) en cuda · 5016 ejemplos de train, 252 de val
+2026-11-12 12:53:09,600 INFO Época   1  train_loss=0.3205  val_loss=0.3374
+2026-11-12 12:53:10,208 INFO Época   2  train_loss=0.2771  val_loss=0.2994
+2026-11-12 12:53:10,783 INFO Época   3  train_loss=0.2282  val_loss=0.2920
+2026-11-12 12:53:11,233 INFO Época   4  train_loss=0.2236  val_loss=0.2862
+2026-11-12 12:53:11,688 INFO Época   5  train_loss=0.2206  val_loss=0.2804
+2026-11-12 12:53:12,172 INFO Época   6  train_loss=0.2177  val_loss=0.2741
+2026-11-12 12:53:12,626 INFO Época   7  train_loss=0.2158  val_loss=0.2711
+2026-11-12 12:53:13,094 INFO Época   8  train_loss=0.2139  val_loss=0.2695
+2026-11-12 12:53:13,557 INFO Época   9  train_loss=0.2121  val_loss=0.2691
+2026-11-12 12:53:14,030 INFO Época  10  train_loss=0.2105  val_loss=0.2675
+2026-11-12 12:53:14,491 INFO Época  11  train_loss=0.2084  val_loss=0.2658
+2026-11-12 12:53:14,961 INFO Época  12  train_loss=0.2069  val_loss=0.2673
+2026-11-12 12:53:15,433 INFO Época  13  train_loss=0.2051  val_loss=0.2681
+2026-11-12 12:53:15,922 INFO Época  14  train_loss=0.2042  val_loss=0.2685
+2026-11-12 12:53:16,362 INFO Época  15  train_loss=0.2027  val_loss=0.2703
+2026-11-12 12:53:16,823 INFO Época  16  train_loss=0.2013  val_loss=0.2724
+2026-11-12 12:53:17,281 INFO Época  17  train_loss=0.1992  val_loss=0.2747
+2026-11-12 12:53:17,734 INFO Época  18  train_loss=0.1979  val_loss=0.2780
+2026-11-12 12:53:18,173 INFO Época  19  train_loss=0.1958  val_loss=0.2791
+2026-11-12 12:53:18,640 INFO Época  20  train_loss=0.1937  val_loss=0.2775
+2026-11-12 12:53:19,119 INFO Época  21  train_loss=0.1932  val_loss=0.2789
+2026-11-12 12:53:19,119 INFO Early stopping en la época 21 (mejor val_loss=0.2658)
+2026-11-12 12:53:19,515 INFO Run 20261112-125257_final-lstm-h21_omen-pc terminado
+2026-11-12 12:53:27,995 INFO Run 20261112-125257_final-lstm-h21_omen-pc reabierto
+2026-11-12 12:53:28,485 INFO Run 20261112-125257_final-lstm-h21_omen-pc terminado

@@ -214,7 +214,7 @@ Resultado (12/11): 24/24 runs. Con 3 semillas, solo GRU h=63 mejora a la persist
 
 ---
 
-**🖥️ Windows GPU · 12/11/2026 · ⏳**
+**🖥️ Windows GPU · 12/11/2026 · ✅**
 Fase 4, modelos finales y evaluación única en test. Primero se sube la decisión (`docs/PLAN.md`), para que quede registrada antes de ver test. Cada `make train` entrena con train + val la configuración elegida (semilla 42) y aplica la calibración de su run de cv; `make evaluate` evalúa en test el run que se acaba de entrenar, solo si el entrenamiento terminó bien. Unos 5 min en total, sin medir.
 
 ```powershell
@@ -227,3 +227,5 @@ make train NAME=final-rnn-h252 CALIB=20261111-225050_g1-rnn-h252-n256-l2-d0-3-lr
 ```
 
 Si un `make train` falla (por ejemplo, por un bloqueo de Smart App Control al importar), su `make evaluate` no se ejecuta: repite solo esa línea. No repitas un `make evaluate` que ya terminó. Al acabar, avisa a Claude: lee los `eval_test.json` directamente de `runs/`.
+
+Resultado (12/11): los 4 runs `final-*` terminados y evaluados una vez en test (2023-01-25 a 2026-11-03). Ningún modelo supera a la persistencia: `skill_rmse` −3,6 % (h=5), −8,1 % (h=21), −61 % (h=63), −45 % (h=252). Cobertura del 80 %: 78 %, 86 %, 68 % y 92 %.

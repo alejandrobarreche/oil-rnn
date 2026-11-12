@@ -1,0 +1,19 @@
+2026-11-12 12:52:20,481 INFO Run 20261112-125213_final-gru-h5_omen-pc iniciado
+2026-11-12 12:52:24,400 INFO Entrenando RNNRegressor (gru, 211203 parámetros) en cuda · 5064 ejemplos de train, 252 de val
+2026-11-12 12:52:26,402 INFO Época   1  train_loss=0.2245  val_loss=0.2850
+2026-11-12 12:52:27,640 INFO Época   2  train_loss=0.2113  val_loss=0.2861
+2026-11-12 12:52:28,856 INFO Época   3  train_loss=0.2071  val_loss=0.2814
+2026-11-12 12:52:30,094 INFO Época   4  train_loss=0.2049  val_loss=0.2845
+2026-11-12 12:52:31,313 INFO Época   5  train_loss=0.2016  val_loss=0.2909
+2026-11-12 12:52:32,503 INFO Época   6  train_loss=0.1954  val_loss=0.3041
+2026-11-12 12:52:33,756 INFO Época   7  train_loss=0.1851  val_loss=0.2997
+2026-11-12 12:52:34,997 INFO Época   8  train_loss=0.1724  val_loss=0.3305
+2026-11-12 12:52:36,212 INFO Época   9  train_loss=0.1609  val_loss=0.3702
+2026-11-12 12:52:37,408 INFO Época  10  train_loss=0.1464  val_loss=0.3642
+2026-11-12 12:52:38,629 INFO Época  11  train_loss=0.1310  val_loss=0.3849
+2026-11-12 12:52:39,836 INFO Época  12  train_loss=0.1207  val_loss=0.3815
+2026-11-12 12:52:41,031 INFO Época  13  train_loss=0.1105  val_loss=0.3920
+2026-11-12 12:52:41,031 INFO Early stopping en la época 13 (mejor val_loss=0.2814)
+2026-11-12 12:52:41,568 INFO Run 20261112-125213_final-gru-h5_omen-pc terminado
+2026-11-12 12:52:50,089 INFO Run 20261112-125213_final-gru-h5_omen-pc reabierto
+2026-11-12 12:52:50,673 INFO Run 20261112-125213_final-gru-h5_omen-pc terminado

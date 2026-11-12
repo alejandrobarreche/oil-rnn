@@ -1,0 +1,25 @@
+{
+  "split": "test",
+  "evaluated_at": "2026-11-12T11:55:08+00:00",
+  "data": "5932a5a560a343930e8cf0f7a3d9dcc94a143134e60556bdc9bb117b2dd4662a",
+  "metrics": {
+    "test_mse": 1091.2781613682405,
+    "test_rmse": 33.0344995628546,
+    "test_mae": 23.615490347230704,
+    "test_r2": -4.222285137461399,
+    "test_baseline_mse": 515.7386736125654,
+    "test_baseline_rmse": 22.70988052836398,
+    "test_baseline_mae": 16.717497382198953,
+    "test_skill_vs_baseline": -0.45463114707254726,
+    "test_direction_accuracy": 0.44293193717277485,
+    "test_baseline_direction_accuracy": 0.32774869109947646,
+    "test_coverage": 0.9214659685863874,
+    "test_interval_width": 125.63228248626321,
+    "test_pinball": 8.706049528052258,
+    "test_coverage_nominal": 0.8,
+    "test_baseline_coverage": 0.9151832460732985,
+    "test_baseline_interval_width": 84.87330171194162,
+    "test_baseline_pinball": 6.513838893945655,
+    "test_pinball_skill": -0.33654664627093744
+  }
+}
