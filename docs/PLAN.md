@@ -137,7 +137,7 @@ Se desarrolla en paralelo, con datos simulados.
 - **Paridad**: `web/src/model.ts` replica `features.py`; `make web-test` en verde.
 
 ### 6.2 Decisiones de la interfaz (12/11)
-- **Motor**: `bundle.js` de Sonda sin modificar (motor de gráficos, iconos y clases `bx-*`), alimentado con los datos exportados.
+- **Motor**: `bundle.js` de Sonda (motor de gráficos, iconos y clases `bx-*`), alimentado con los datos exportados; desde el rediseño lleva cambios locales (6.6).
 - **Vistas de dominio** (cabecera, tarjetas, medidor, factores, rendimiento): se construyen en `web/src/main.ts` con sus clases.
 - **Fuera**: columna de activos, alertas, curva de futuros, comparador de modelos e intradía.
 - **Medidor de dirección**: con zona «Sin sesgo claro» (probabilidad de subida entre 45 % y 55 %). Al lado, el acierto de dirección en test frente a la dirección constante más frecuente.
@@ -154,7 +154,7 @@ Se desarrolla en paralelo, con datos simulados.
 Comprobados con `make test`, `make lint`, `make web-test` (15/15), compilación, capturas de la vista de 1 semana y despliegue en GitHub Pages.
 
 ### 6.4 Cómo está construida la web, para el rediseño
-- **`web/src/sonda/`**: `bundle.js` y `bundle.css` copiados tal cual del sistema de diseño; `tokens.css` generado desde su `tokens.json`. Si el sistema de diseño cambia, se vuelven a copiar.
+- **`web/src/sonda/`**: `bundle.js` y `bundle.css` copiados del sistema de diseño (Sonda 2); `tokens.css` generado desde su `tokens.json`. `bundle.js` lleva cambios locales (6.6): si el sistema de diseño cambia, hay que volver a aplicarlos.
 - **`web/src/main.ts`**: carga los datos, ejecuta los 4 modelos y construye las vistas.
 - **`web/src/style.css`**: composición (dos columnas, apilado por debajo de 1100 px). **`web/index.html`**: estructura.
 - **`web/src/explain.ts`** (tests en `web/tests/explain.test.ts`): abanico interpolado en log-precio, P(subida) suponiendo log-precio normal, factores por oclusión (entrada fijada a su media de train) y sesgo del backtest.
@@ -165,6 +165,16 @@ Comprobados con `make test`, `make lint`, `make web-test` (15/15), compilación,
 - **Predicción**: +4,1 % a 1 semana, +9,2 % a 1 mes y +63 % a 3 meses y a 1 año.
 - **Texto**: el de cada horizonte sale de las métricas de test (no mejora a la persistencia, sesgo alcista, intervalo a un solo lado), no de frases fijas.
 - **Sin revisar**: no se han visto en captura las vistas de 1 mes, 3 meses y 1 año.
+
+### 6.6 Rediseño y portal con dinero ficticio (rama `feat/web-redesign`, 12/11)
+- **Rediseño**: Sonda 2 (temas claro y oscuro). El gráfico va arriba y ocupa el alto de la pantalla; el horizonte se elige con un control segmentado.
+- **Cambios locales en `bundle.js`**: sin los datos de ejemplo, selector Línea | Velas (velas de cierres: el Brent spot solo tiene un precio al día), degradado bajo la línea, fecha objetivo en las tarjetas y herramienta de medir corregida (un clic sin arrastrar no guarda nada, solo queda la última medición y vuelve al cursor).
+- **Portal** (`web/src/portal/`): cartera simulada (icono en la cabecera) con pestañas Posiciones, Calculadora e Historial, evaluaciones en recuadro modal e historial descargable en CSV y JSON; decisión en `DECISIONES.md` 10.4.
+  - `sim.ts` y `store.ts` son lógica pura con pruebas.
+  - `modal.ts` usa `<dialog>`.
+  - `index.ts` contiene rutas y vistas.
+  - Los tipos de Sonda se comparten en `web/src/sonda.ts`.
+- **Comprobado**: `make web-test` (25/25) y recorrido en Chrome (1288×800 y 1900×1000, temas claro y oscuro).
 
 ## 7. Fase 6 · Página explicativa (días 6–8): el elemento diferencial
 

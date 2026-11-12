@@ -6,63 +6,54 @@
     <title>Sonda · Brent</title>
     <link rel="icon" href="data:," />
   </head>
-  <body class="bx-paper">
-    <header class="top bx-glass">
-      <div id="logo"></div>
-      <span class="title">Brent · predicción del precio</span>
-      <div id="tabs"></div>
-      <div class="spacer"></div>
-      <span id="status"></span>
-    </header>
+  <body class="bx-page">
+    <div class="bx-ws">
+      <header class="bx-top">
+        <a class="home" href="#/mercado" aria-label="Mercado">
+          <span id="logo"></span>
+          <span class="title"><h1>Brent</h1><span class="bx-muted">Spot · $/bbl</span></span>
+        </a>
+        <span class="bx-spacer"></span>
+        <span class="bx-pill bx-pill-solid asof" id="asof"></span>
+        <a class="wallet" id="wallet" href="#/cartera" title="Mi cartera" aria-label="Mi cartera"></a>
+        <span id="theme"></span>
+      </header>
 
-    <p id="loading" class="loading">Calculando las predicciones en el navegador…</p>
+      <p id="loading" class="loading">Calculando las predicciones en el navegador…</p>
 
-    <div class="grid">
-      <main class="col bx-enter">
-        <section class="bx-glass hero">
-          <div class="bx-watermark wm" id="wm"></div>
-          <div id="ph"></div>
-          <div class="bar">
-            <div class="bx-legend">
-              <span class="bx-legend-item"><i class="bx-key bx-actual"></i>Real</span>
-              <span class="bx-legend-item"><i class="bx-key bx-fc"></i>Previsto</span>
-              <span class="bx-legend-item"><i class="bx-key bx-band80"></i>80 %</span>
-              <span class="bx-muted bx-body-sm" id="model-note"></span>
-            </div>
-          </div>
-          <div class="chart"><div id="chart"></div></div>
-        </section>
-
-        <div class="hz" id="cards"></div>
-
-        <section>
-          <div class="bx-section-h"><h3>Histórico y ciclo económico</h3><span class="bx-muted bx-body-sm">Brent spot desde 2000</span></div>
-          <div id="cycle"></div>
-          <div id="cycle-list"></div>
-        </section>
+      <main class="view" data-view="mercado">
+        <div class="bx-ws-main">
+          <section class="bx-card chart-card">
+            <div class="chart-h"><div id="ph"></div><nav id="tabs" class="hz" aria-label="Horizonte de la previsión"></nav></div>
+            <div id="chart"></div>
+          </section>
+          <aside class="side">
+            <section class="bx-card bx-ws-panel" id="panel"></section>
+            <section class="bx-card mini" id="mini"></section>
+          </aside>
+        </div>
+        <div class="ch section-h">
+          <div><div class="ch-t">Todos los horizontes</div><div class="ch-s">Pulsa uno para verlo en el gráfico</div></div>
+          <div class="legend"><span><i class="lg-last"></i>Precio hoy</span><span><i class="lg-mid"></i>Previsto</span><span><i class="lg-band"></i>Rango probable (80 %)</span></div>
+        </div>
+        <div id="cards"></div>
+        <div class="bx-ws-pair">
+          <section class="bx-card">
+            <div class="ch"><div><div class="ch-t">Fiabilidad de los modelos</div><div class="ch-s" id="perf-s"></div></div></div>
+            <div id="metrics"></div>
+            <div class="bt-h" id="bt-t"></div>
+            <div id="bt"></div>
+          </section>
+          <section class="bx-card">
+            <div class="ch"><div><div class="ch-t" id="drv-t">Qué mira el modelo</div><div class="ch-s">Cuánto cambiaría la previsión, en $ por barril, si el modelo no viera cada dato</div></div></div>
+            <div id="drv"></div>
+          </section>
+        </div>
       </main>
-
-      <aside class="col bx-enter">
-        <section id="dm"></section>
-        <section>
-          <div class="bx-section-h"><h3>Qué dice la predicción</h3></div>
-          <div id="text" class="text"></div>
-        </section>
-        <section>
-          <div class="bx-section-h"><h3>Qué variables usa el modelo</h3><span class="bx-muted bx-body-sm" id="drv-h"></span></div>
-          <div id="drv"></div>
-        </section>
-        <section class="bx-field perf">
-          <div class="bx-row perf-h"><b>Rendimiento</b><span class="bx-muted bx-body-sm" id="perf-h"></span></div>
-          <div id="met"></div>
-          <div id="bt"></div>
-        </section>
-      </aside>
+      <main class="view" data-view="cartera" id="view-cartera" hidden></main>
+      <main class="view" data-view="calculadora" id="view-calculadora" hidden></main>
+      <main class="view" data-view="historial" id="view-historial" hidden></main>
     </div>
-
-    <footer>
-      Los modelos se ejecutan en tu navegador con los datos de FRED y Yahoo Finance hasta la última descarga. Uso educativo: Sonda informa, no recomienda.
-    </footer>
     <script type="module" src="./src/main.ts"></script>
   </body>
 </html>

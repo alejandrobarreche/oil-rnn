@@ -349,7 +349,7 @@
 - **Qué**: Sonda muestra el último precio (03/11) y cuenta el horizonte desde ese día.
 - **Por qué**: es coherente con cómo se entrenó (2.4).
 - **Alternativa**: Brentcast pronostica desde hoy, con el spot actualizado por futuros.
-- **Comprobado**: `nextTradingDays(mk.ts, H)` en `web/src/main.ts`.
+- **Comprobado**: `Sonda.fan(market.last, forecasts, sel, market.ts)` en `web/src/main.ts`; la fecha objetivo del panel sale de `Sonda.tradingDays(m.ts, h)`.
 - **Valoración**: Regular. El texto dice la fecha del último precio, pero el pronóstico a 1 semana ya ha vencido al publicarse.
 
 ### 10.3 Actualización y reentrenamiento: sin hacer
@@ -358,6 +358,21 @@
 - **Alternativa**: Brentcast ejecuta su flujo cada mañana laborable con GitHub Actions.
 - **Comprobado**: no existe el workflow.
 - **Valoración**: Mal hasta que se haga: es un requisito del enunciado.
+
+### 10.4 Portal con dinero ficticio
+- **Qué**: vista Mercado y, tras el icono de cartera de la cabecera, pestañas Posiciones, Calculadora e Historial.
+  - Cartera simulada de 10.000 $ con solo posiciones largas, abiertas y cerradas al último precio exportado.
+  - «Si hubiera invertido» un día desde 2000.
+  - «Si hubiera seguido al modelo» en test: tramos de `h` días sin solape; invierte si la previsión supera al precio del origen.
+  - Evaluaciones en un recuadro modal.
+  - Historial descargable en CSV o JSON.
+- **Por qué**: el usuario quiere un portal completo; traducir la previsión a dólares de una posición hace visible lo que vale (o no) el modelo.
+- **Alternativa**: servidor con cuentas y precios en vivo; descartado porque la web es estática (10.1).
+- **Comprobado**: 10 pruebas de `web/tests/portal.test.ts` (cálculos, CSV, exportar e importar); en el navegador, 1.000 $ el 21/04/2020 valen 11.735,75 $ (9,12 → 107,03 $/bbl).
+- **Valoración**: Regular.
+  - Los precios están congelados en la última exportación: no hay evolución diaria hasta la fase 7.
+  - El estado vive solo en el navegador; sin el JSON exportado se pierde al borrar los datos del sitio.
+  - «Seguir al modelo» usa el backtest de test solo para mostrarlo, nunca para decidir.
 
 ## 11. Comparación con Brentcast: en qué acierta cada uno
 
