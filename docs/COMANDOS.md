@@ -163,12 +163,12 @@ Resultado (11/11): los tres runs (`211209_humo-rnn-h5`, `211237_humo-gru-h5`, `2
 
 ---
 
-**🖥️ Windows GPU · 11/11/2026 · ⏳**
+**🖥️ Windows GPU · 11/11/2026 · ✅**
 Fase 3, rejilla de la comparativa: 432 runs de `make cv` (3 celdas × 4 horizontes × 36 configuraciones, 60 épocas con paciencia 10). Estimación sin medir: 6–8 h de GPU; mejor de noche y con el portátil enchufado y sin suspensión. Si se corta, se repite `make sweep` y salta las terminadas.
 
-```bash
+```powershell
 git pull --rebase
-make sweep ARGS="--dry-run" | head -3
+make sweep ARGS="--dry-run" | Select-Object -First 3
 make sweep
 make compare
 ```
@@ -178,3 +178,34 @@ Pásale a Claude la salida de `make compare` (y la lista de fallidas, si `make s
 ```bash
 git add runs/*_g1-* artifacts/*_g1-*
 ```
+
+Resultado (12/11): 432/432 runs `finished` (un apagado a mitad y un bloqueo puntual de Smart App Control al reanudar, repetidos con `make sweep`). Queda una carpeta huérfana sin terminar (`20261112-001010_g1-lstm-h252-n128-l1-d0-lr0-0001`) que no se sube. Predicción puntual: ninguna red supera a la persistencia de forma estable en ningún horizonte (`skill_rmse` mediano < 0 en 11 de 12 grupos; el mejor, GRU h=63 con +5,4 %, sale casi todo de un pliegue). Intervalo: a h=5 los cuantiles de la red mejoran a los históricos en los 4 pliegues (`pinb_skill` +2–3 %).
+
+---
+
+**🖥️ Windows GPU · 12/11/2026 · ⏳**
+Fase 3, finalistas con 3 semillas: las 12 configuraciones ganadoras de la rejilla `g1` (mínimo `cv_pinball` por red y horizonte) con las semillas 7 y 123; la 42 ya está en `g1`. 24 runs de `make cv`, unos 30 min sin medir. Primero, el commit de la rejilla (la carpeta a medias del apagado ya está borrada):
+
+```powershell
+git add runs/*_g1-* artifacts/*_g1-*
+git commit -m "chore(runs): rejilla g1 de la comparativa (432 runs de cv)"
+```
+
+Después, los finalistas:
+
+```powershell
+$finalistas = @(
+  @("gru", 5, 256, 1, 0, 0.001), @("lstm", 5, 256, 2, 0, 0.001), @("rnn", 5, 32, 2, 0, 0.0001),
+  @("gru", 21, 128, 2, 0, 0.001), @("lstm", 21, 64, 1, 0, 0.0001), @("rnn", 21, 128, 2, 0.3, 0.0001),
+  @("gru", 63, 128, 2, 0.3, 0.0001), @("lstm", 63, 128, 2, 0.3, 0.0001), @("rnn", 63, 256, 1, 0, 0.0001),
+  @("gru", 252, 256, 1, 0, 0.001), @("lstm", 252, 64, 2, 0, 0.001), @("rnn", 252, 256, 2, 0.3, 0.0001)
+)
+foreach ($seed in 7, 123) { foreach ($f in $finalistas) {
+  $cell, $h, $n, $l, $d, $lr = $f
+  python -m oil_rnn.cv --name "g1s$seed-$cell-h$h-n$n-l$l-d$d-lr$lr" --set seed=$seed --set model.cell=$cell --set data.horizon=$h --set model.hidden_size=$n --set model.num_layers=$l --set model.dropout=$d --set train.learning_rate=$lr
+} }
+make compare ARGS="--set sweep.prefix=g1s7"
+make compare ARGS="--set sweep.prefix=g1s123"
+```
+
+Cada `make compare` debe listar 12 filas; el aviso «Grupos incompletos: …: 1/36» es esperable (solo hay un run por grupo). Si falta alguna fila (por ejemplo, por un bloqueo de Smart App Control al importar), pásale a Claude la salida y se repite solo esa.

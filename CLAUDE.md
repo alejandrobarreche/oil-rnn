@@ -108,6 +108,7 @@ Cada comando que debe ejecutar el usuario se añade como mensaje al final de `do
 ## 10. Forma de responder
 
 - Respuestas cortas y directas: primero la conclusión, después la justificación en pocas líneas.
+- Estructura de cada mensaje: **Qué se ha hecho**, **Por qué** y, siempre al final, **Siguientes pasos** (quién hace qué, con el comando exacto si lo ejecuta el usuario).
 - Una recomendación concreta en lugar de una lista de opciones equivalentes.
 - Registro científico, sin expresiones de marketing. Cada término técnico con su significado preciso.
 - Títulos que nombran el contenido, nunca de transición («De X a Y»).
