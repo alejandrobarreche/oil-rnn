@@ -91,21 +91,20 @@ function forecastPanel(m: SondaMarket, f: Forecast): Html {
   const target = S.tradingDays(m.ts, f.h)[f.h - 1];
   const q = f.quality;
   const rows: [string, string, string][] = [
-    ["Precio actual", `${num(m.last)} $`, `Último cierre publicado, ${longDate(m.ts)}`],
-    [
-      "Rango probable",
-      `${num(f.lo)} – ${num(f.hi)} $`,
-      "Según el modelo, el precio queda dentro 8 de cada 10 veces",
-    ],
-    ["Modelo", f.model ?? "—", "Red recurrente entrenada para este horizonte"],
+    ["Precio hoy", `${num(m.last)} $`, `Último cierre publicado, ${longDate(m.ts)}`],
+    ["Rango probable (80 %)", `${num(f.lo)} – ${num(f.hi)} $`, "8 de cada 10 veces el precio debería quedar dentro"],
   ];
-  const better = q ? q.metrics.mae < q.baseline.mae : false;
-  return `<div class="bx-card-t">Previsión · ${label(f.h)}</div>
+  if (q)
+    rows.push([
+      "Error medio",
+      `${num(q.metrics.mae)} $<span>si no cambiara ${num(q.baseline.mae)} $</span>`,
+      "Cuánto se equivocó de media en datos que no vio, frente a suponer que el precio no cambia",
+    ]);
+  return `<div class="ch"><div><div class="ch-t">Previsión a ${label(f.h)}</div><div class="ch-s">Para el ${longDate(target)} · modelo ${f.model ?? ""}</div></div></div>
     <div class="bx-fc-big"><span class="bx-fc-v">${num(f.mid)} $</span>${S.ui.chg(f.mid - m.last, f.mid / m.last - 1)}</div>
-    <div class="bx-fc-when">${longDate(target)}</div>
+    <div style="height:14px"></div>
     ${S.ui.directionMeter(S.probUp(m.last, f))}
-    <dl class="bx-kv" style="margin-top:6px">${rows.map(([k, v, t]) => `<div><dt title="${t}">${k}</dt><dd>${v}</dd></div>`).join("")}</dl>
-    ${q ? `<div style="padding-top:14px">${S.ui.badge(better ? "Más preciso que «sin cambios»" : "Orientativo · falla más que «sin cambios»", better ? "up" : "warn", true)}</div>` : ""}`;
+    <dl class="bx-kv" style="margin-top:6px">${rows.map(([k, v, t]) => `<div><dt title="${t}">${k}</dt><dd>${v}</dd></div>`).join("")}</dl>`;
 }
 
 /** Fiabilidad de los cuatro modelos en el test, cada cifra junto a su referencia trivial. */
@@ -120,9 +119,9 @@ function reliability(fs: Forecast[], sel: number): Html {
       const always = b.best_constant === "up" ? "sube" : "baja";
       return `<tr data-h="${f.h}" class="${f.h === sel ? "is-active" : ""}" aria-selected="${f.h === sel}">
         <td><div class="v">${label(f.h)}</div><div class="model">${f.model ?? ""}</div></td>
-        ${cell(pct(m.hit_rate), `Siempre «${always}»: ${pct(b.hit_rate_best_constant)}`, m.hit_rate > b.hit_rate_best_constant)}
-        ${cell(`${num(m.mae)} $`, `Sin cambios: ${num(b.mae)} $`, m.mae < b.mae)}
-        ${cell(pct(m.coverage80), "Esperado: 80 %", Math.abs(m.coverage80 - 0.8) <= 0.05)}
+        ${cell(pct(m.hit_rate), `Diciendo siempre «${always}»: ${pct(b.hit_rate_best_constant)}`, m.hit_rate > b.hit_rate_best_constant)}
+        ${cell(`${num(m.mae)} $`, `Si el precio no cambiara: ${num(b.mae)} $`, m.mae < b.mae)}
+        ${cell(pct(m.coverage80), "Debería ser 80 %", Math.abs(m.coverage80 - 0.8) <= 0.05)}
       </tr>`;
     })
     .join("");
@@ -173,11 +172,11 @@ async function init() {
     $("panel").innerHTML = forecastPanel(market, f);
     $("cards").innerHTML = S.ui.forecastCards(market, forecasts, sel);
     $("metrics").innerHTML = reliability(forecasts, sel);
-    $("drv-t").textContent = `Variables del modelo · ${label(sel)}`;
+    $("drv-t").textContent = `Qué mira el modelo a ${label(sel)}`;
     $("drv").innerHTML = S.ui.drivers(f.drivers);
     if (f.quality) {
       const [a, b] = f.quality.period;
-      $("perf-t").textContent = `Fiabilidad · ${S.fmt.monthYear(a)} – ${S.fmt.monthYear(b)}`;
+      $("perf-s").textContent = `Comprobada con datos que los modelos no vieron al entrenar (${S.fmt.monthYear(a)} – ${S.fmt.monthYear(b)}). En verde, lo que mejora a la referencia`;
       $("bt-t").textContent = `Real frente a previsto · ${label(sel)}`;
       S.charts.backtest($("bt"), { points: f.quality.backtest, height: 190 });
     }

@@ -39,17 +39,20 @@
             <section class="bx-card mini" id="mini"></section>
           </aside>
         </div>
-        <h2 class="bx-ws-h2">Todos los horizontes</h2>
+        <div class="ch section-h">
+          <div><div class="ch-t">Todos los horizontes</div><div class="ch-s">Pulsa uno para verlo en el gráfico</div></div>
+          <div class="legend"><span><i class="lg-last"></i>Precio hoy</span><span><i class="lg-mid"></i>Previsto</span><span><i class="lg-band"></i>Rango probable (80 %)</span></div>
+        </div>
         <div id="cards"></div>
         <div class="bx-ws-pair">
           <section class="bx-card">
-            <div class="bx-card-t" id="perf-t">Fiabilidad</div>
+            <div class="ch"><div><div class="ch-t">Fiabilidad de los modelos</div><div class="ch-s" id="perf-s"></div></div></div>
             <div id="metrics"></div>
             <div class="bt-h" id="bt-t"></div>
             <div id="bt"></div>
           </section>
           <section class="bx-card">
-            <div class="bx-card-t" id="drv-t">Variables del modelo</div>
+            <div class="ch"><div><div class="ch-t" id="drv-t">Qué mira el modelo</div><div class="ch-s">Cuánto cambiaría la previsión, en $ por barril, si el modelo no viera cada dato</div></div></div>
             <div id="drv"></div>
           </section>
         </div>

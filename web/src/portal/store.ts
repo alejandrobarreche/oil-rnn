@@ -60,7 +60,7 @@ export function emptyState(initial = INITIAL_CASH): PortalState {
 /** Abre una posición de `amount` $ al precio `price`. Lanza un error si no hay saldo. */
 export function openPosition(s: PortalState, amount: number, price: number, dataDate: string, now: string): PortalState {
   if (!(amount > 0)) throw new Error("El importe debe ser mayor que cero.");
-  if (amount > s.cash + 1e-9) throw new Error("No hay saldo ficticio suficiente.");
+  if (amount > s.cash + 1e-9) throw new Error("No hay efectivo suficiente: el saldo no alcanza.");
   const barrels = amount / price;
   const id = newId();
   return {

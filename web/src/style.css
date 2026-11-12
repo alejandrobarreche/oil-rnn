@@ -127,7 +127,7 @@
   color: var(--up-text);
 }
 .rel .v.is-worse {
-  color: var(--warn);
+  color: var(--ink);
 }
 .rel .r {
   font-size: 12px;
@@ -221,18 +221,6 @@
   opacity: 0.45;
   cursor: default;
   pointer-events: none;
-}
-.fake {
-  display: inline-flex;
-  align-items: center;
-  height: 22px;
-  padding: 0 8px;
-  border-radius: 6px;
-  font-size: 12px;
-  font-weight: 500;
-  background: var(--warn-tint);
-  color: var(--warn);
-  white-space: nowrap;
 }
 .lead {
   margin: 0 0 var(--space-3);
@@ -579,4 +567,243 @@
   .kv2 {
     grid-template-columns: minmax(0, 1fr);
   }
+}
+
+/* ── títulos, botones y cabecera ───────────────────── */
+/* Cabecera con más aire */
+.bx-ws {
+  padding-top: 18px;
+  gap: 16px;
+}
+.bx-top {
+  min-height: 48px;
+  gap: 16px;
+  padding-bottom: 10px;
+  margin-bottom: 4px;
+  border-bottom: 1px solid var(--line);
+}
+.bx-top .title h1 {
+  font-size: 24px;
+  line-height: 30px;
+}
+.nav {
+  margin-left: var(--space-6);
+  gap: 4px;
+}
+.nav .bx-pill {
+  height: 36px;
+  padding: 0 14px;
+}
+.chip,
+.asof {
+  height: 36px;
+  padding: 0 14px;
+}
+
+/* Títulos de tarjeta discretos con una línea que dice qué muestran */
+.bx-card-t {
+  font-size: 15px;
+  line-height: 22px;
+  font-weight: 600;
+}
+.ch {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-3);
+  margin-bottom: var(--space-4);
+}
+.ch-t {
+  font-size: 15px;
+  line-height: 22px;
+  font-weight: 600;
+}
+.ch-s {
+  margin-top: 2px;
+  font-size: 13px;
+  line-height: 18px;
+  color: var(--ink-3);
+}
+.ch-a {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex: none;
+}
+.section-h {
+  margin: var(--space-4) 0 0;
+  align-items: flex-end;
+}
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 16px;
+  font-size: 13px;
+  color: var(--ink-3);
+}
+.legend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.legend i {
+  display: inline-block;
+}
+.lg-last {
+  width: 2px;
+  height: 12px;
+  border-radius: 1px;
+  background: var(--ink);
+}
+.lg-mid {
+  width: 4px;
+  height: 12px;
+  border-radius: 2px;
+  background: var(--forecast);
+}
+.lg-band {
+  width: 18px;
+  height: 8px;
+  border-radius: 4px;
+  background: var(--forecast-band);
+}
+.link {
+  color: var(--forecast);
+  text-decoration: none;
+  font-size: 13px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+.link:hover {
+  text-decoration: underline;
+}
+
+/* Botones: uno principal (azul) y los demás en gris, todos con la misma forma */
+.btn {
+  font: inherit;
+  font-size: 14px;
+  font-weight: 500;
+  height: 36px;
+  padding: 0 16px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  border: 0;
+  border-radius: var(--radius-pill);
+  background: var(--pill);
+  color: var(--ink);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background var(--dur-fast) var(--ease-out), filter var(--dur-fast) var(--ease-out);
+}
+.btn:hover {
+  background: var(--pill-active);
+}
+.btn:disabled {
+  opacity: 0.45;
+  cursor: default;
+  pointer-events: none;
+}
+.btn.btn-primary {
+  background: var(--forecast);
+  color: var(--on-forecast);
+  font-weight: 600;
+}
+.btn.btn-primary:hover {
+  filter: brightness(1.08);
+}
+.btn-sm {
+  height: 30px;
+  padding: 0 12px;
+  font-size: 13px;
+}
+.btn-icon {
+  width: 36px;
+  padding: 0;
+}
+.acts {
+  display: flex;
+  gap: 6px;
+  justify-content: flex-end;
+}
+.tbl td.acts {
+  display: table-cell;
+}
+.tbl td.acts .btn + .btn {
+  margin-left: 6px;
+}
+
+/* Barra superior de cada sección y menú «⋯» */
+.bar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  min-height: 36px;
+}
+.bar-t {
+  color: var(--ink-3);
+}
+.more {
+  position: relative;
+}
+.more-menu {
+  display: none;
+  position: absolute;
+  right: 0;
+  top: calc(100% + 6px);
+  z-index: 30;
+  min-width: 220px;
+  padding: 6px;
+  border-radius: var(--radius-md);
+  background: var(--tip-bg);
+  box-shadow: var(--shadow-pop);
+}
+.more.is-open .more-menu {
+  display: block;
+}
+.more-menu button {
+  display: block;
+  width: 100%;
+  text-align: left;
+  font: inherit;
+  padding: 9px 10px;
+  border: 0;
+  border-radius: 8px;
+  background: none;
+  color: var(--ink);
+  cursor: pointer;
+}
+.more-menu button:hover {
+  background: var(--pill);
+}
+.more-menu .danger {
+  color: var(--down-text);
+}
+
+/* Tarjeta «Tu cartera» */
+.mini-actions .btn {
+  flex: 1;
+}
+.res-note {
+  color: var(--ink-2);
+  font-weight: 500;
+  padding-top: 4px;
+}
+
+/* Medición en el gráfico: verde si sube, rojo si baja */
+.bx-measure.is-up {
+  fill: var(--up-tint);
+  stroke: var(--up);
+}
+.bx-measure.is-down {
+  fill: var(--down-tint);
+  stroke: var(--down);
+}
+.bx-measure-l.is-up text {
+  fill: var(--up-text);
+}
+.bx-measure-l.is-down text {
+  fill: var(--down-text);
 }

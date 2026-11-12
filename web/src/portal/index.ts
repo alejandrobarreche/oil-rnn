@@ -1,4 +1,4 @@
-// Portal con dinero ficticio: rutas (#/mercado, #/cartera, #/y-si, #/historial), cartera simulada,
+// Portal de inversión simulada: rutas (#/mercado, #/cartera, #/y-si, #/historial), cartera simulada,
 // «¿y si…?», evaluaciones en un recuadro e historial descargable. La lógica está en sim.ts y store.ts;
 // aquí solo se construye el HTML con las clases de Sonda y se enlazan los eventos.
 import { probUp } from "../explain";
@@ -48,7 +48,15 @@ const kv = (rows: [string, string][]) =>
 const twoCols = (params: [string, string][], result: [string, string][]) =>
   `<div class="kv2"><div><h3 class="sec">Consulta</h3>${kv(params)}</div><div><h3 class="sec">Resultado</h3>${kv(result)}</div></div>`;
 const tone = (v: number) => (v > 0 ? "bx-up-text" : v < 0 ? "bx-down-text" : "bx-muted");
-const fakeBadge = '<span class="fake">Dinero ficticio</span>';
+/** Cabecera de tarjeta: título, una línea que dice qué muestra y acciones a la derecha. */
+const cardHead = (title: string, sub = "", actions = "") =>
+  `<div class="ch"><div><div class="ch-t">${title}</div>${sub ? `<div class="ch-s">${sub}</div>` : ""}</div>${actions ? `<div class="ch-a">${actions}</div>` : ""}</div>`;
+const btn = (label: string, act: string, kind: "primary" | "" | "sm" = "", extra = "") =>
+  `<button type="button" class="btn${kind === "primary" ? " btn-primary" : kind === "sm" ? " btn-sm" : ""}" data-act="${act}"${extra}>${label}</button>`;
+/** Menú «⋯» con acciones secundarias: [etiqueta, data-act, peligrosa]. */
+const moreMenu = (items: [string, string, boolean?][]) =>
+  `<div class="more"><button type="button" class="btn btn-icon" data-act="more" aria-label="Más opciones" aria-expanded="false"><svg width="18" height="18" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><circle cx="3.5" cy="8" r="1.4"/><circle cx="8" cy="8" r="1.4"/><circle cx="12.5" cy="8" r="1.4"/></svg></button>
+    <div class="more-menu" role="menu">${items.map(([l, a, danger]) => `<button type="button" role="menuitem" data-act="${a}"${danger ? ' class="danger"' : ""}>${l}</button>`).join("")}</div></div>`;
 
 function download(name: string, text: string, type: string) {
   const url = URL.createObjectURL(new Blob([text], { type }));
@@ -61,7 +69,7 @@ function download(name: string, text: string, type: string) {
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 const amountInput = (id: string, value: number, max?: number) =>
-  `<label class="field"><span>Importe ficticio ($)</span><input id="${id}" type="number" inputmode="decimal" min="1" step="any" value="${Math.round(value)}"${max != null ? ` max="${max.toFixed(2)}"` : ""}></label>`;
+  `<label class="field"><span>Importe ($)</span><input id="${id}" type="number" inputmode="decimal" min="1" step="any" value="${Math.round(value)}"${max != null ? ` max="${max.toFixed(2)}"` : ""}></label>`;
 const readAmount = (body: HTMLElement, id: string) => Number((body.querySelector(`#${id}`) as HTMLInputElement).value);
 
 export function mountPortal(ctx: PortalContext): void {
@@ -82,23 +90,19 @@ export function mountPortal(ctx: PortalContext): void {
   // ── piezas comunes ─────────────────────────────────────────
   function balanceChip() {
     const sm = summary(state, price);
-    $("balance").innerHTML = `Total ficticio <b>${money(sm.total)}</b>`;
+    $("balance").innerHTML = `Cartera <b>${money(sm.total)}</b>`;
   }
 
   function miniCard(): Html {
     const sm = summary(state, price);
     const rows: [string, string][] = [
       ["Efectivo", money(sm.cash)],
-      ["En Brent", sm.barrels ? `${S.fmt.num(sm.barrels, 2)} bbl · ${money(sm.value)}` : "Sin posición"],
+      ["Posición en Brent", sm.barrels ? `${S.fmt.num(sm.barrels, 2)} barriles · ${money(sm.value)}` : "Ninguna"],
     ];
-    return `<div class="bx-row card-h"><div class="bx-card-t">Cartera simulada</div><span class="bx-spacer"></span>${fakeBadge}</div>
+    return `${cardHead("Tu cartera", `Empezaste con ${money(state.initial)}`, '<a class="link" href="#/cartera">Ver detalle</a>')}
       <div class="mini-total"><span class="mini-v">${money(sm.total)}</span>${S.ui.chg(sm.total - state.initial, sm.ret)}</div>
       ${kv(rows)}
-      <div class="mini-actions">
-        <button type="button" class="bx-pill btn-primary" data-act="open-position">Abrir posición</button>
-        <button type="button" class="bx-pill bx-pill-solid" data-act="evaluate">Solicitar evaluación</button>
-      </div>
-      <a class="mini-link" href="#/cartera">Ver cartera completa</a>`;
+      <div class="mini-actions">${btn("Solicitar evaluación", "evaluate")}${btn("Abrir posición", "open-position", "primary")}</div>`;
   }
 
   // ── Mi cartera ─────────────────────────────────────────────
@@ -107,16 +111,16 @@ export function mountPortal(ctx: PortalContext): void {
     const tile = (l: string, v: string, sub: Html) =>
       `<div class="bx-card tile"><div class="bx-metric-l">${l}</div><div class="tile-v">${v}</div><div class="tile-s">${sub}</div></div>`;
     const positions = state.positions.length
-      ? `<table class="tbl"><thead><tr><th>Abierta</th><th>Barriles</th><th>Entrada</th><th>Valor</th><th>Resultado</th><th></th></tr></thead><tbody>${state.positions
+      ? `<table class="tbl"><thead><tr><th>Abierta</th><th>Barriles</th><th>Precio de entrada</th><th>Valor hoy</th><th>Ganancia</th><th></th></tr></thead><tbody>${state.positions
           .map((p) => {
             const v = p.barrels * price;
             return `<tr><td>${stamp(p.openedAt)}<div class="sub">precio del ${S.fmt.day(p.dataDate)}</div></td><td>${S.fmt.num(p.barrels, 2)}</td><td>${money(p.price)}</td><td>${money(v)}</td>
               <td class="${tone(v - p.cost)}">${signedMoney(v - p.cost)}<div class="sub">${signedPct(v / p.cost - 1)}</div></td>
-              <td><button type="button" class="bx-pill bx-pill-sm bx-pill-solid" data-act="close-position" data-id="${p.id}">Cerrar posición</button></td></tr>`;
+              <td class="acts">${btn("Cerrar", "close-position", "sm", ` data-id="${p.id}"`)}</td></tr>`;
           })
           .join("")}</tbody></table>`
       : `<p class="empty">No hay posiciones abiertas. <button type="button" class="linkbtn" data-act="open-position">Abrir una posición</button></p>`;
-    const expected = `<table class="tbl"><thead><tr><th>Horizonte</th><th>Valor central</th><th>Rango probable (80 %)</th><th>Resultado central</th></tr></thead><tbody>${forecasts
+    const expected = `<table class="tbl"><thead><tr><th>Dentro de</th><th>Valor previsto</th><th>Rango probable (80 %)</th><th>Ganancia prevista</th></tr></thead><tbody>${forecasts
       .map((f) => {
         const mid = sm.cash + sm.barrels * f.mid;
         return `<tr><td>${horizonLabel(f.h)}<div class="sub">${S.fmt.longDate(S.tradingDays(dataDate, f.h)[f.h - 1])}</div></td><td>${money(mid)}</td>
@@ -125,7 +129,7 @@ export function mountPortal(ctx: PortalContext): void {
       })
       .join("")}</tbody></table>`;
     const trades = state.trades.length
-      ? `<table class="tbl"><thead><tr><th>Fecha</th><th>Movimiento</th><th>Barriles</th><th>Precio</th><th>Importe</th><th>Resultado</th></tr></thead><tbody>${state.trades
+      ? `<table class="tbl"><thead><tr><th>Fecha</th><th>Operación</th><th>Barriles</th><th>Precio</th><th>Importe</th><th>Ganancia</th></tr></thead><tbody>${state.trades
           .map(
             (t) =>
               `<tr><td>${stamp(t.at)}</td><td>${t.kind === "open" ? "Apertura" : "Cierre"}</td><td>${S.fmt.num(t.barrels, 2)}</td><td>${money(t.price)}</td><td>${money(t.amount)}</td>
@@ -134,24 +138,20 @@ export function mountPortal(ctx: PortalContext): void {
           .join("")}</tbody></table>`
       : '<p class="empty">Todavía no hay movimientos.</p>';
     $("view-cartera").innerHTML = `
-      <div class="page-h"><h2>Mi cartera</h2>${fakeBadge}<span class="bx-spacer"></span>
-        <button type="button" class="bx-pill btn-primary" data-act="open-position">Abrir posición</button>
-        <button type="button" class="bx-pill bx-pill-solid" data-act="evaluate">Solicitar evaluación</button>
-        <button type="button" class="bx-pill bx-pill-solid" data-act="export">Exportar</button>
-        <button type="button" class="bx-pill bx-pill-solid" data-act="import">Importar</button>
-        <button type="button" class="bx-pill" data-act="reset">Reiniciar</button></div>
+      <div class="bar"><span class="bar-t">Precios del ${S.fmt.longDate(dataDate)}, el último dato publicado</span><span class="bx-spacer"></span>
+        ${btn("Solicitar evaluación", "evaluate")}${btn("Abrir posición", "open-position", "primary")}
+        ${moreMenu([["Exportar cartera (JSON)", "export"], ["Importar cartera", "import"], ["Empezar de cero", "reset", true]])}</div>
       <div class="tiles">
         ${tile("Valor total", money(sm.total), S.ui.chg(sm.total - state.initial, sm.ret))}
-        ${tile("Efectivo", money(sm.cash), `<span class="bx-muted">Capital inicial ${money(state.initial)}</span>`)}
-        ${tile("En Brent", money(sm.value), `<span class="bx-muted">${S.fmt.num(sm.barrels, 2)} barriles a ${money(price)}</span>`)}
-        ${tile("Resultado", signedMoney(sm.unrealized + sm.realized), `<span class="bx-muted">Abierto ${signedMoney(sm.unrealized)} · cerrado ${signedMoney(sm.realized)}</span>`)}
+        ${tile("Efectivo", money(sm.cash), `<span class="bx-muted">De ${money(state.initial)} iniciales</span>`)}
+        ${tile("Invertido en Brent", money(sm.value), `<span class="bx-muted">${S.fmt.num(sm.barrels, 2)} barriles a ${money(price)}</span>`)}
+        ${tile("Ganancia", signedMoney(sm.unrealized + sm.realized), `<span class="bx-muted">Abierta ${signedMoney(sm.unrealized)} · cerrada ${signedMoney(sm.realized)}</span>`)}
       </div>
       <div class="bx-ws-pair">
-        <section class="bx-card"><div class="bx-card-t">Posiciones abiertas</div>${positions}</section>
-        <section class="bx-card"><div class="bx-card-t">Valor esperado de la cartera</div>${expected}</section>
+        <section class="bx-card">${cardHead("Posiciones abiertas", "Barriles comprados y su valor al último precio")}${positions}</section>
+        <section class="bx-card">${cardHead("Previsión de tu cartera", "Efectivo más tus barriles al precio que prevé cada modelo")}${expected}</section>
       </div>
-      <section class="bx-card"><div class="bx-card-t">Movimientos</div>${trades}</section>
-      <p class="foot">Precios del ${S.fmt.longDate(dataDate)}: las posiciones se abren y valoran al último precio exportado y se revalorizan cuando se actualizan los datos.</p>`;
+      <section class="bx-card">${cardHead("Operaciones", "Aperturas y cierres de posiciones")}${trades}</section>`;
   }
 
   // ── ¿Y si…? ───────────────────────────────────────────────
@@ -165,25 +165,23 @@ export function mountPortal(ctx: PortalContext): void {
     const first = ctx.history[0].t;
     const recent = state.history.filter((r) => r.kind === "si-invertido" || r.kind === "seguir-modelo").slice(0, 5);
     $("view-y-si").innerHTML = `
-      <div class="page-h"><h2>¿Y si…?</h2>${fakeBadge}</div>
+      <div class="bar"><span class="bar-t">Simulaciones con precios reales del Brent desde 2000</span></div>
       <div class="bx-ws-pair">
         <section class="bx-card form-card">
-          <div class="bx-card-t">Si hubiera invertido</div>
-          <p class="lead">Qué valdría hoy una inversión en Brent hecha un día del pasado.</p>
+          ${cardHead("Si hubiera invertido", "Qué valdría hoy una inversión en Brent hecha un día del pasado")}
           <div class="form-row">${amountInput("wi-amount", 1000)}
             <label class="field"><span>Fecha</span><input id="wi-date" type="date" min="${first}" max="${dataDate}" value="${shiftYears(dataDate, -1)}"></label></div>
           <div class="bx-pills presets">${PRESETS.map(([l, d]) => S.ui.pill(l, { small: true, data: `data-preset="${d}"` })).join("")}</div>
-          <div class="form-f"><button type="button" class="bx-pill btn-primary" data-act="whatif">Calcular</button></div>
+          <div class="form-f">${btn("Calcular", "whatif", "primary")}</div>
         </section>
         <section class="bx-card form-card">
-          <div class="bx-card-t">Si hubiera seguido al modelo</div>
-          <p class="lead">En el periodo de test, invertir solo cuando el modelo preveía subida, frente a estar siempre invertido.</p>
+          ${cardHead("Si hubiera seguido al modelo", "Invertir solo cuando el modelo preveía subida, en 2023–2026, con datos que no vio al entrenar")}
           <div class="form-row">${amountInput("fm-amount", 1000)}
-            <div class="field"><span>Horizonte</span><div class="bx-pills seg" id="fm-h">${S.horizons.map((x) => S.ui.pill(x.label, { small: true, active: x.h === 21, data: `data-fm-h="${x.h}"` })).join("")}</div></div></div>
-          <div class="form-f"><button type="button" class="bx-pill btn-primary" data-act="follow">Calcular</button></div>
+            <div class="field"><span>Previsión a</span><div class="bx-pills seg" id="fm-h">${S.horizons.map((x) => S.ui.pill(x.label, { small: true, active: x.h === 21, data: `data-fm-h="${x.h}"` })).join("")}</div></div></div>
+          <div class="form-f">${btn("Calcular", "follow", "primary")}</div>
         </section>
       </div>
-      <section class="bx-card"><div class="bx-row card-h"><div class="bx-card-t">Últimas consultas</div><span class="bx-spacer"></span><a class="mini-link" href="#/historial">Ver historial</a></div>
+      <section class="bx-card">${cardHead("Últimas simulaciones guardadas", "", '<a class="link" href="#/historial">Ver historial</a>')}
         ${recent.length ? historyTable(recent) : '<p class="empty">Las consultas que guardes aparecerán aquí.</p>'}</section>`;
   }
 
@@ -197,15 +195,15 @@ export function mountPortal(ctx: PortalContext): void {
     }
     const params: [string, string][] = [
       ["Importe", money(amount)],
-      ["Inicio", S.fmt.longDate(w.start)],
-      ["Precio de inicio", money(w.startPrice)],
+      ["Fecha de compra", S.fmt.longDate(w.start)],
+      ["Precio ese día", `${money(w.startPrice)} por barril`],
     ];
     const result: [string, string][] = [
       [`Valor el ${S.fmt.longDate(w.end)}`, money(w.value)],
-      ["Resultado", `${signedMoney(w.value - amount)} (${signedPct(w.ret)})`],
-      ["Rendimiento anual", signedPct(w.annual)],
-      ["Peor caída intermedia", S.fmt.pct(w.drawdown, 1)],
-      ["Barriles", S.fmt.num(w.barrels, 2)],
+      ["Ganancia", `${signedMoney(w.value - amount)} (${signedPct(w.ret)})`],
+      ["Equivale a, cada año", signedPct(w.annual)],
+      ["Mayor caída por el camino", S.fmt.pct(w.drawdown, 1)],
+      ["Barriles comprados", S.fmt.num(w.barrels, 2)],
     ];
     const title = `${money(amount)} en Brent el ${S.fmt.longDate(w.start)}`;
     openModal({
@@ -237,14 +235,15 @@ export function mountPortal(ctx: PortalContext): void {
     }
     const params: [string, string][] = [
       ["Importe", money(amount)],
-      ["Horizonte", `${horizonLabel(h)} · ${f?.model ?? ""}`],
-      ["Periodo de test", `${S.fmt.longDate(r.start)} – ${S.fmt.longDate(r.end)}`],
+      ["Modelo", `${f?.model ?? ""}, previsión a ${horizonLabel(h)}`],
+      ["Periodo", `${S.fmt.longDate(r.start)} – ${S.fmt.longDate(r.end)}`],
     ];
     const result: [string, string][] = [
       ["Siguiendo al modelo", `${money(amount * r.strategy)} (${signedPct(r.strategy - 1)})`],
       ["Siempre invertido", `${money(amount * r.always)} (${signedPct(r.always - 1)})`],
-      ["Tramos invertido", `${r.invested} de ${r.periods}`],
-      ["Acierta si sube o baja", `${S.fmt.pct(r.hits / r.periods)} de los tramos`],
+      ["Diferencia", signedMoney(amount * (r.strategy - r.always))],
+      ["Veces que invirtió", `${r.invested} de ${r.periods} (cada ${horizonLabel(h)})`],
+      ["Acertó si subía o bajaba", `${S.fmt.pct(r.hits / r.periods)} de las veces`],
     ];
     const beat = r.strategy > r.always;
     const title = `Seguir al modelo a ${horizonLabel(h)} con ${money(amount)}`;
@@ -252,9 +251,9 @@ export function mountPortal(ctx: PortalContext): void {
       title: "Si hubiera seguido al modelo",
       wide: true,
       body: `<div class="res-h"><div><div class="res-l">${esc(title)}</div><div class="res-v">${money(amount * r.strategy)}</div>${S.ui.chg(amount * (r.strategy - 1), r.strategy - 1)}</div>
-          <div class="res-badge">${S.ui.badge(beat ? "Mejor que estar siempre invertido" : "Peor que estar siempre invertido", beat ? "up" : "warn")}</div></div>
+          <div class="res-note">${beat ? "Mejor" : "Peor"} que estar siempre invertido</div></div>
         <div id="m-chart" class="res-chart"></div>${twoCols(params, result)}
-        <p class="foot">Periodo de test: el modelo no se ajustó con estos datos. Tramos de ${h} días hábiles sin solape.</p>`,
+        <p class="foot">Cada ${horizonLabel(h)} decide: si prevé subida, invierte hasta la siguiente decisión; si no, espera en efectivo.</p>`,
       onMount: (b) =>
         lineChart(
           b.querySelector("#m-chart") as HTMLElement,
@@ -281,7 +280,7 @@ export function mountPortal(ctx: PortalContext): void {
           : `${S.fmt.num(amount / price, 2)} barriles a ${money(price)} · quedan ${money(state.cash - amount)}`;
     openModal({
       title: "Abrir posición",
-      body: `<p class="lead">Posición en Brent al último precio (${money(price)}, ${S.fmt.longDate(dataDate)}). ${fakeBadge}</p>
+      body: `<p class="lead">Compras barriles de Brent al último precio publicado: ${money(price)} el ${S.fmt.longDate(dataDate)}.</p>
         ${amountInput("op-amount", initial, state.cash)}
         <p class="hint" id="op-preview">${preview(initial)}</p><p class="err" data-error></p>`,
       onMount: (b) => {
@@ -293,7 +292,7 @@ export function mountPortal(ctx: PortalContext): void {
       actions: [
         { label: "Cancelar" },
         {
-          label: "Abrir posición",
+          label: "Confirmar",
           primary: true,
           run: (b) => {
             const amount = readAmount(b, "op-amount");
@@ -324,7 +323,7 @@ export function mountPortal(ctx: PortalContext): void {
     const next = closePosition(state, id, price, dataDate, nowIso());
     const pnl = p.barrels * price - p.cost;
     const result: [string, string][] = [
-      ["Resultado", `${signedMoney(pnl)} (${signedPct(pnl / p.cost)})`],
+      ["Ganancia", `${signedMoney(pnl)} (${signedPct(pnl / p.cost)})`],
       ["Importe recuperado", money(p.barrels * price)],
     ];
     set(
@@ -342,9 +341,9 @@ export function mountPortal(ctx: PortalContext): void {
   function evaluateModal(amount = 1000, h = 21) {
     openModal({
       title: "Solicitar evaluación",
-      body: `<p class="lead">Cómo podría ir una posición abierta hoy, según la previsión del modelo de cada horizonte. ${fakeBadge}</p>
+      body: `<p class="lead">Cuánto podría valer una inversión hecha hoy, según la previsión del modelo.</p>
         <div class="form-row">${amountInput("ev-amount", amount)}
-          <div class="field"><span>Horizonte</span><div class="bx-pills seg" id="ev-h">${S.horizons.map((x) => S.ui.pill(x.label, { small: true, active: x.h === h, data: `data-ev-h="${x.h}"` })).join("")}</div></div></div>
+          <div class="field"><span>Dentro de</span><div class="bx-pills seg" id="ev-h">${S.horizons.map((x) => S.ui.pill(x.label, { small: true, active: x.h === h, data: `data-ev-h="${x.h}"` })).join("")}</div></div></div>
         <p class="err" data-error></p>`,
       onMount: (b) =>
         b.querySelector("#ev-h")?.addEventListener("click", (e) => {
@@ -375,33 +374,31 @@ export function mountPortal(ctx: PortalContext): void {
     const e = evaluate(price, f, amount, p);
     const target = S.tradingDays(dataDate, h)[h - 1];
     const q = f.quality;
-    const better = q ? q.metrics.mae < q.baseline.mae : false;
     const params: [string, string][] = [
       ["Importe", money(amount)],
-      ["Horizonte", `${horizonLabel(h)} · ${f.model ?? ""}`],
-      ["Precio de entrada", `${money(price)} (${S.fmt.longDate(dataDate)})`],
+      ["Dentro de", `${horizonLabel(h)} (${S.fmt.longDate(target)})`],
+      ["Precio de compra", `${money(price)} por barril`],
+      ["Modelo", f.model ?? "—"],
     ];
     const result: [string, string][] = [
       ["Valor previsto", money(e.value.mid)],
-      ["Resultado previsto", `${signedMoney(e.pnl.mid)} (${signedPct(e.pnl.mid / amount)})`],
+      ["Ganancia prevista", `${signedMoney(e.pnl.mid)} (${signedPct(e.pnl.mid / amount)})`],
       ["Rango probable (80 %)", `${money(e.value.lo)} – ${money(e.value.hi)}`],
-      ["Peor caso del rango", signedMoney(e.pnl.lo)],
-      ["Mejor caso del rango", signedMoney(e.pnl.hi)],
+      ["En el peor caso del rango", signedMoney(e.pnl.lo)],
+      ["En el mejor caso del rango", signedMoney(e.pnl.hi)],
       ["Probabilidad de ganar", S.fmt.pct(p)],
-      ["Fecha objetivo", S.fmt.longDate(target)],
       ["Barriles", S.fmt.num(e.barrels, 2)],
     ];
     if (q)
       result.push([
-        "Fiabilidad del modelo",
-        `${better ? "Más preciso" : "Falla más"} que «sin cambios» (${money(q.metrics.mae)} / ${money(q.baseline.mae)})`,
+        "Error medio del modelo",
+        `${money(q.metrics.mae)} por barril (si el precio no cambiara: ${money(q.baseline.mae)})`,
       ]);
     const title = `${money(amount)} a ${horizonLabel(h)}`;
     openModal({
       title: "Evaluación",
       wide: true,
-      body: `<div class="res-h"><div><div class="res-l">Valor previsto el ${S.fmt.longDate(target)} · ${esc(title)}</div><div class="res-v bx-fc-text">${money(e.value.mid)}</div>${S.ui.chg(e.pnl.mid, e.pnl.mid / amount)}</div>
-          <div class="res-badge">${q ? S.ui.badge(better ? "Más preciso que «sin cambios»" : "Orientativo · falla más que «sin cambios»", better ? "up" : "warn") : ""}</div></div>
+      body: `<div class="res-h"><div><div class="res-l">${esc(money(amount))} invertidos hoy valdrían el ${S.fmt.longDate(target)}</div><div class="res-v bx-fc-text">${money(e.value.mid)}</div>${S.ui.chg(e.pnl.mid, e.pnl.mid / amount)}</div></div>
         ${gainMeter(p)}
         ${twoCols(params, result)}`,
       actions: [
@@ -414,24 +411,21 @@ export function mountPortal(ctx: PortalContext): void {
 
   // ── Historial ─────────────────────────────────────────────
   function historyTable(records: HistoryRecord[]): Html {
-    return `<table class="tbl hist"><thead><tr><th>Fecha</th><th>Tipo</th><th>Consulta</th><th>Resultado</th><th></th></tr></thead><tbody>${records
+    return `<table class="tbl hist"><thead><tr><th>Fecha</th><th>Tipo</th><th>Consulta</th><th>Resultado principal</th><th></th></tr></thead><tbody>${records
       .map(
         (r) => `<tr><td>${stamp(r.at)}</td><td><span class="kind kind-${r.kind}">${KIND_LABEL[r.kind]}</span></td><td>${esc(r.title)}</td>
           <td>${r.result[0] ? `<span class="bx-muted">${esc(r.result[0][0])}</span> ${esc(r.result[0][1])}` : ""}</td>
-          <td class="acts"><button type="button" class="bx-pill bx-pill-sm bx-pill-solid" data-act="rec-view" data-id="${r.id}">Ver</button>
-            <button type="button" class="bx-pill bx-pill-sm" data-act="rec-del" data-id="${r.id}" aria-label="Borrar consulta">Borrar</button></td></tr>`,
+          <td class="acts">${btn("Ver", "rec-view", "sm", ` data-id="${r.id}"`)}${btn("Borrar", "rec-del", "sm", ` data-id="${r.id}" aria-label="Borrar consulta"`)}</td></tr>`,
       )
       .join("")}</tbody></table>`;
   }
   function renderHistorial() {
     const n = state.history.length;
     $("view-historial").innerHTML = `
-      <div class="page-h"><h2>Historial</h2><span class="bx-muted">${n} ${n === 1 ? "consulta" : "consultas"}</span><span class="bx-spacer"></span>
-        <button type="button" class="bx-pill bx-pill-solid" data-act="csv"${n ? "" : " disabled"}>Descargar CSV</button>
-        <button type="button" class="bx-pill bx-pill-solid" data-act="json">Descargar JSON</button>
-        <button type="button" class="bx-pill" data-act="clear-history"${n ? "" : " disabled"}>Borrar historial</button></div>
-      <section class="bx-card">${n ? historyTable(state.history) : '<p class="empty">Aún no hay consultas. Solicita una evaluación o prueba «¿Y si…?» y guarda el resultado.</p>'}</section>
-      <p class="foot">El historial y la cartera se guardan solo en este navegador. Descarga el JSON para conservarlos o llevarlos a otro equipo.</p>`;
+      <div class="bar"><span class="bar-t">${n} ${n === 1 ? "consulta guardada" : "consultas guardadas"} en este navegador</span><span class="bx-spacer"></span>
+        ${btn("Descargar CSV", "csv", "", n ? "" : " disabled")}${btn("Descargar JSON", "json")}
+        ${moreMenu([["Borrar historial", "clear-history", true]])}</div>
+      <section class="bx-card">${n ? historyTable(state.history) : '<p class="empty">Aún no hay consultas. Solicita una evaluación o prueba «¿Y si…?» y guarda el resultado.</p>'}</section>`;
   }
   function viewRecord(id: string) {
     const r = state.history.find((x) => x.id === id);
@@ -505,9 +499,18 @@ export function mountPortal(ctx: PortalContext): void {
     const fm = t.closest<HTMLElement>("[data-fm-h]");
     if (fm) document.querySelectorAll("[data-fm-h]").forEach((x) => x.classList.toggle("is-active", x === fm));
     const b = t.closest<HTMLElement>("[data-act]");
+    document.querySelectorAll(".more.is-open").forEach((m) => {
+      if (!b || b.dataset.act !== "more" || !m.contains(b)) m.classList.remove("is-open");
+    });
     if (!b || b.closest("dialog")) return;
     const id = b.dataset.id as string;
     switch (b.dataset.act) {
+      case "more": {
+        const m = b.closest(".more") as HTMLElement;
+        m.classList.toggle("is-open");
+        b.setAttribute("aria-expanded", String(m.classList.contains("is-open")));
+        return;
+      }
       case "open-position":
         return openPositionModal();
       case "close-position":
@@ -527,9 +530,9 @@ export function mountPortal(ctx: PortalContext): void {
         return download(`sonda-historial-${today()}.csv`, `﻿${historyCsv(state.history)}`, "text/csv;charset=utf-8");
       case "reset":
         return confirm(
-          "Reiniciar la cartera",
-          `Se borran posiciones, movimientos e historial y el efectivo vuelve a ${money(state.initial)}. Descarga antes el JSON si quieres conservarlos.`,
-          "Reiniciar",
+          "Empezar de cero",
+          `Se borran posiciones, operaciones e historial y el efectivo vuelve a ${money(state.initial)}. Exporta antes la cartera si quieres conservarla.`,
+          "Empezar de cero",
           () => set(emptyState(state.initial)),
         );
       case "clear-history":

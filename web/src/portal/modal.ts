@@ -64,7 +64,7 @@ export function openModal(o: ModalOptions): void {
   (d.querySelector(".modal-f") as HTMLElement).innerHTML = actions
     .map(
       (a, i) =>
-        `<button type="button" class="bx-pill ${a.primary ? "btn-primary" : "bx-pill-solid"}" data-modal-act="${i}">${esc(a.label)}</button>`,
+        `<button type="button" class="btn${a.primary ? " btn-primary" : ""}" data-modal-act="${i}">${esc(a.label)}</button>`,
     )
     .join("");
   if (!d.open) d.showModal();

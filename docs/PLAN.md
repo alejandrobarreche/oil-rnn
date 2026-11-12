@@ -168,7 +168,7 @@ Comprobados con `make test`, `make lint`, `make web-test` (15/15), compilación,
 
 ### 6.6 Rediseño y portal con dinero ficticio (rama `feat/web-redesign`, 12/11)
 - **Rediseño**: Sonda 2 (temas claro y oscuro). El gráfico va arriba y ocupa el alto de la pantalla; el horizonte se elige con un control segmentado.
-- **Cambios locales en `bundle.js`**: sin los datos de ejemplo, selector Línea | Velas (velas de cierres: el Brent spot solo tiene un precio al día), degradado bajo la línea y fecha objetivo en las tarjetas.
+- **Cambios locales en `bundle.js`**: sin los datos de ejemplo, selector Línea | Velas (velas de cierres: el Brent spot solo tiene un precio al día), degradado bajo la línea, fecha objetivo en las tarjetas y herramienta de medir corregida (un clic sin arrastrar no guarda nada, solo queda la última medición y vuelve al cursor).
 - **Portal** (`web/src/portal/`): cartera simulada, «¿y si…?», evaluaciones en recuadro modal e historial en CSV y JSON; decisión en `DECISIONES.md` 10.4.
   - `sim.ts` y `store.ts` son lógica pura con pruebas.
   - `modal.ts` usa `<dialog>`.

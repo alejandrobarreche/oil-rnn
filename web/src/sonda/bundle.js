@@ -146,7 +146,7 @@
     return '<div class="bx-ph">' +
       '<div><div class="bx-ph-v">' + num(m.last) + ' $</div><div class="bx-ph-sub">' + chg(m.change, m.change / (m.last - m.change)) + '<span>' + day(m.ts) + '</span></div></div>' +
       '<div class="bx-ph-b bx-ph-fc"><div class="bx-ph-v2">' + num(f.mid) + ' $</div><div class="bx-ph-l">Previsto a ' + H.label + '</div></div>' +
-      '<div class="bx-ph-b"><div class="bx-ph-v2">' + num(f.lo) + ' – ' + num(f.hi) + '</div><div class="bx-ph-l">Intervalo 80 %</div></div>' +
+      '<div class="bx-ph-b"><div class="bx-ph-v2">' + num(f.lo) + ' – ' + num(f.hi) + '</div><div class="bx-ph-l">Rango probable (80 %)</div></div>' +
       '</div>';
   }
   /** P(precio final > último), con log-precio normal y el 80 % como ±1,2816 σ. */
@@ -263,7 +263,7 @@
   /* ── gráfico interactivo del precio ────────────── */
   var RANGES = [['1M', 21], ['3M', 63], ['6M', 126], ['1A', 252], ['5A', 1260], ['Todo', Infinity]];
   var INDICATORS = [['ma20', 'Media 20 días'], ['ma50', 'Media 50 días'], ['vol', 'Banda de volatilidad'], ['wti', 'WTI']];
-  var TOOLS = [['cursor', 'Cursor: arrastra para moverte, rueda para zoom'], ['trend', 'Línea de tendencia: dos clics'], ['level', 'Nivel horizontal: un clic'], ['measure', 'Medir: arrastra entre dos puntos']];
+  var TOOLS = [['cursor', 'Cursor: arrastra para moverte, rueda para zoom'], ['trend', 'Línea de tendencia: dos clics'], ['level', 'Nivel horizontal: un clic'], ['measure', 'Medir: arrastra entre dos puntos para ver la variación']];
 
   /**
    * Monta el gráfico en `host` y devuelve un controlador.
@@ -485,10 +485,11 @@
         [d.p1, d.p2].forEach(function (p) { g.appendChild(el('circle', { class: 'bx-draw-pt', cx: X(p.i), cy: Y(p.v), r: 3.5 })); });
       } else if (d.type === 'measure' && d.p2) {
         var x1 = X(d.p1.i), x2 = X(d.p2.i), y1_ = Y(d.p1.v), y2_ = Y(d.p2.v);
-        g.appendChild(el('rect', { class: 'bx-measure', x: Math.min(x1, x2), y: Math.min(y1_, y2_), width: Math.abs(x2 - x1), height: Math.abs(y2_ - y1_) }));
+        var mdir = d.p2.v >= d.p1.v ? ' is-up' : ' is-down';
+        g.appendChild(el('rect', { class: 'bx-measure' + mdir, x: Math.min(x1, x2), y: Math.min(y1_, y2_), width: Math.abs(x2 - x1), height: Math.abs(y2_ - y1_) }));
         var dv = d.p2.v - d.p1.v, dp = dv / d.p1.v, dd = Math.round(d.p2.i - d.p1.i);
-        var txt = signed(dv) + ' $ · ' + signed(dp * 100, 2, ' %') + ' · ' + Math.abs(dd) + ' días';
-        var lg = el('g', { class: 'bx-measure-l' }), tw = txt.length * 6.6 + 16, lx = Math.min(Math.max(4, (x1 + x2) / 2 - tw / 2), W - R - tw - 4), ly = Math.min(y1_, y2_) - 30;
+        var txt = signed(dv) + ' $ (' + signed(dp * 100, 2, ' %') + ') en ' + Math.abs(dd) + (Math.abs(dd) === 1 ? ' día hábil' : ' días hábiles');
+        var lg = el('g', { class: 'bx-measure-l' + mdir }), tw = txt.length * 6.6 + 16, lx = Math.min(Math.max(4, (x1 + x2) / 2 - tw / 2), W - R - tw - 4), ly = Math.min(y1_, y2_) - 30;
         if (ly < T) ly = Math.max(y1_, y2_) + 6;
         lg.appendChild(el('rect', { x: lx, y: ly, width: tw, height: 24, rx: 8 }));
         var lt = el('text', { x: lx + tw / 2, y: ly + 16, 'text-anchor': 'middle' }); lt.textContent = txt; lg.appendChild(lt);
@@ -503,7 +504,7 @@
         if (i === iNow && path.length) { var pf = path[path.length - 1]; parts.push('<span><i class="bx-key bx-key-fc"></i>Previsto ' + day(pf.t) + ' <b>' + num(pf.mid) + '</b></span>'); }
       } else {
         var p = path[i - nh];
-        parts.push('<span><i class="bx-key bx-key-fc"></i>' + (p.computed ? 'Previsto' : 'Estimado') + ' <b>' + num(p.mid) + '</b></span>');
+        parts.push('<span><i class="bx-key bx-key-fc"></i>' + (p.computed ? 'Previsto' : 'Interpolado') + ' <b>' + num(p.mid) + '</b></span>');
         parts.push('<span><i class="bx-key bx-key-band"></i>80 % <b>' + num(p.lo80) + ' – ' + num(p.hi80) + '</b></span>');
       }
       if (st.ind.ma20 && ma20[i] != null) parts.push('<span><i class="bx-key bx-key-ma20"></i>M20 <b>' + num(ma20[i]) + '</b></span>');
@@ -580,7 +581,13 @@
       delete pointers[e.pointerId];
       if (Object.keys(pointers).length < 2) pinch = null;
       if (drag) { drag = null; plot.classList.remove('is-pan'); }
-      if (st.pending && st.pending.type === 'measure') { var p = at(e); st.pending.p2 = { i: p.i, v: p.v }; st.drawings.push(st.pending); st.pending = null; schedule(); }
+      if (st.pending && st.pending.type === 'measure') {
+        var p = at(e), m = st.pending; m.p2 = { i: p.i, v: p.v }; st.pending = null;
+        var moved = Math.abs(X(m.p2.i) - X(m.p1.i)) + Math.abs(Y(m.p2.v) - Y(m.p1.v)) > 8;
+        st.drawings = st.drawings.filter(function (d) { return d.type !== 'measure'; });
+        if (moved) { st.drawings.push(m); st.tool = 'cursor'; }
+        sync();
+      }
     }
     plot.addEventListener('pointerup', up); plot.addEventListener('pointercancel', up);
     plot.addEventListener('pointerleave', function () { if (!drag) { st.hover = null; schedule(); } });
