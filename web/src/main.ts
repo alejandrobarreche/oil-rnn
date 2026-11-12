@@ -72,14 +72,22 @@ interface PathPoint {
 interface ChartState {
   range: string;
   scale: string;
+  kind: string;
   indicators: Record<string, boolean>;
 }
 
 type Html = string;
 interface SondaApi {
   theme: { init(): void; bind(root?: ParentNode): void };
-  fmt: { longDate(t: string): string };
+  fmt: {
+    num(v: number, dp?: number): string;
+    pct(v: number, dp?: number): string;
+    longDate(t: string): string;
+    monthYear(t: string): string;
+  };
   horizons: { h: number; label: string; short: string }[];
+  tradingDays(from: string, n: number): string[];
+  probUp(last: number, f: Forecast): number;
   fan(last: number, forecasts: Forecast[], H: number, from: string): PathPoint[];
   charts: {
     price(
@@ -91,6 +99,7 @@ interface SondaApi {
         forecast: { path: PathPoint[] };
         range: string;
         scale: string;
+        kind: string;
         indicators: Record<string, boolean>;
         height: number;
       },
@@ -100,11 +109,11 @@ interface SondaApi {
   ui: {
     logo(o?: { size?: number }): Html;
     themeToggle(): Html;
-    horizonTabs(selected: number): Html;
+    chg(abs: number, rel: number): Html;
+    badge(text: string, tone?: "up" | "down" | "warn", block?: boolean): Html;
+    directionMeter(probabilityUp: number): Html;
     priceHeader(m: SondaMarket, f: Forecast): Html;
-    forecastPanel(m: SondaMarket, f: Forecast): Html;
     forecastCards(m: SondaMarket, fs: Forecast[], selected: number): Html;
-    metrics(q: Quality): Html;
     drivers(list: { name: string; value: number }[], n?: number): Html;
   };
 }
@@ -132,6 +141,7 @@ const CELL: Record<string, string> = { rnn: "RNN simple", lstm: "LSTM", gru: "GR
 // Rango del gráfico según el horizonte elegido (Workspace: 1S → 3M, 1M → 6M, 3M → 1A, 1A → 5A)
 const RANGE: Record<number, string> = { 5: "3M", 21: "6M", 63: "1A", 252: "5A" };
 
+const label = (h: number) => S.horizons.find((x) => x.h === h)?.label ?? `${h} días`;
 const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
 const base = import.meta.env.BASE_URL;
 
@@ -154,6 +164,56 @@ function toSonda(mk: Market): SondaMarket {
     wti: j < 0 ? undefined : { t: mk.rows.t, close: mk.rows.values.map((r) => r[j] as number) },
     events: mk.events,
   };
+}
+
+// ── componentes propios de la página ─────────────────────────
+/** Panel de previsión: solo la previsión del horizonte elegido; la fiabilidad va en su tarjeta. */
+function forecastPanel(m: SondaMarket, f: Forecast): Html {
+  const { num, longDate } = S.fmt;
+  const target = S.tradingDays(m.ts, f.h)[f.h - 1];
+  const q = f.quality;
+  const rows: [string, string, string][] = [
+    ["Precio actual", `${num(m.last)} $`, `Último cierre publicado, ${longDate(m.ts)}`],
+    [
+      "Rango probable",
+      `${num(f.lo)} – ${num(f.hi)} $`,
+      "Según el modelo, el precio queda dentro 8 de cada 10 veces",
+    ],
+    ["Modelo", f.model ?? "—", "Red recurrente entrenada para este horizonte"],
+  ];
+  const better = q ? q.metrics.mae < q.baseline.mae : false;
+  return `<div class="bx-card-t">Previsión · ${label(f.h)}</div>
+    <div class="bx-fc-big"><span class="bx-fc-v">${num(f.mid)} $</span>${S.ui.chg(f.mid - m.last, f.mid / m.last - 1)}</div>
+    <div class="bx-fc-when">${longDate(target)}</div>
+    ${S.ui.directionMeter(S.probUp(m.last, f))}
+    <dl class="bx-kv" style="margin-top:6px">${rows.map(([k, v, t]) => `<div><dt title="${t}">${k}</dt><dd>${v}</dd></div>`).join("")}</dl>
+    ${q ? `<div style="margin-top:auto;padding-top:16px">${S.ui.badge(better ? "Más preciso que «sin cambios»" : "Orientativo · falla más que «sin cambios»", better ? "up" : "warn", true)}</div>` : ""}`;
+}
+
+/** Fiabilidad de los cuatro modelos en el test, cada cifra junto a su referencia trivial. */
+function reliability(fs: Forecast[], sel: number): Html {
+  const { num, pct } = S.fmt;
+  const cell = (v: string, ref: string, better: boolean) =>
+    `<td><div class="v ${better ? "is-better" : "is-worse"}">${v}</div><div class="r">${ref}</div></td>`;
+  const rows = fs
+    .filter((f) => f.quality)
+    .map((f) => {
+      const { metrics: m, baseline: b } = f.quality as Quality;
+      const always = b.best_constant === "up" ? "sube" : "baja";
+      return `<tr data-h="${f.h}" class="${f.h === sel ? "is-active" : ""}" aria-selected="${f.h === sel}">
+        <td><div class="v">${label(f.h)}</div><div class="model">${f.model ?? ""}</div></td>
+        ${cell(pct(m.hit_rate), `Siempre «${always}»: ${pct(b.hit_rate_best_constant)}`, m.hit_rate > b.hit_rate_best_constant)}
+        ${cell(`${num(m.mae)} $`, `Sin cambios: ${num(b.mae)} $`, m.mae < b.mae)}
+        ${cell(pct(m.coverage80), "Esperado: 80 %", Math.abs(m.coverage80 - 0.8) <= 0.05)}
+      </tr>`;
+    })
+    .join("");
+  return `<table class="rel">
+    <thead><tr><th>Horizonte</th>
+      <th title="Porcentaje de días en que acierta si el precio sube o baja; la referencia es decir siempre lo mismo">Acierta si sube o baja</th>
+      <th title="Diferencia media, en dólares, entre el precio previsto y el real; la referencia es suponer que el precio no cambia">Error medio</th>
+      <th title="Veces que el precio real quedó dentro del rango probable; debería ser el 80 %">Dentro del rango</th></tr></thead>
+    <tbody>${rows}</tbody></table>`;
 }
 
 // ── página ───────────────────────────────────────────────────
@@ -190,16 +250,16 @@ async function init() {
   let chart: { state(): ChartState } | null = null;
   const render = () => {
     const f = forecasts.find((x) => x.h === sel) as Forecast;
-    const label = S.horizons.find((x) => x.h === sel)?.label ?? `${sel} días`;
-    $("tabs").innerHTML = S.ui.horizonTabs(sel);
     $("ph").innerHTML = S.ui.priceHeader(market, f);
-    $("panel").innerHTML = S.ui.forecastPanel(market, f);
+    $("panel").innerHTML = forecastPanel(market, f);
     $("cards").innerHTML = S.ui.forecastCards(market, forecasts, sel);
-    $("perf-t").textContent = `Fiabilidad · ${label}`;
-    $("drv-t").textContent = `Variables del modelo · ${label}`;
+    $("metrics").innerHTML = reliability(forecasts, sel);
+    $("drv-t").textContent = `Variables del modelo · ${label(sel)}`;
     $("drv").innerHTML = S.ui.drivers(f.drivers);
     if (f.quality) {
-      $("metrics").innerHTML = S.ui.metrics(f.quality);
+      const [a, b] = f.quality.period;
+      $("perf-t").textContent = `Fiabilidad · ${S.fmt.monthYear(a)} – ${S.fmt.monthYear(b)}`;
+      $("bt-t").textContent = `Real frente a previsto · ${label(sel)}`;
       S.charts.backtest($("bt"), { points: f.quality.backtest, height: 190 });
     }
     // Al cambiar de horizonte se conservan escala e indicadores, y el rango se ajusta
@@ -211,6 +271,7 @@ async function init() {
       forecast: { path: S.fan(market.last, forecasts, sel, market.ts) },
       range: RANGE[sel] ?? "1A",
       scale: st?.scale ?? "lin",
+      kind: st?.kind ?? "line",
       indicators: st?.indicators ?? {},
       height: 440,
     });

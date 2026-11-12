@@ -202,7 +202,7 @@
       var H = hz(f.h);
       return '<button type="button" class="bx-fcard' + (f.h === sel ? ' is-active' : '') + '" data-h="' + f.h + '" aria-pressed="' + (f.h === sel) + '">' +
         '<span class="bx-fcard-big" aria-hidden="true">' + H.short + '</span>' +
-        '<span class="bx-fcard-h">' + H.label + '</span>' +
+        '<span class="bx-fcard-h">' + H.label + ' · ' + day(tradingDays(m.ts, f.h)[f.h - 1]) + '</span>' +
         '<span class="bx-fcard-v">' + num(f.mid) + ' $</span>' + chg(f.mid - m.last, f.mid / m.last - 1) +
         intervalBar(m.last, f, min, max) +
         '<span class="bx-fcard-range"><span>' + num(f.lo) + '</span><span>' + num(f.hi) + '</span></span></button>';
@@ -276,7 +276,7 @@
   function priceChart(host, o) {
     o = o || {};
     var st = {
-      range: o.range || '3M', scale: o.scale || 'lin', tool: 'cursor',
+      range: o.range || '3M', scale: o.scale || 'lin', kind: o.kind || 'line', tool: 'cursor',
       ind: Object.assign({ ma20: false, ma50: false, vol: false, wti: false }, o.indicators || {}),
       drawings: [], pending: null, hover: null, a: 0, b: 0
     };
@@ -309,7 +309,8 @@
           '</div>' +
           '<div class="bx-chart-plot" tabindex="0" aria-label="Gráfico del precio. Flechas para moverte, más y menos para zoom."></div>' +
           '<div class="bx-chart-bottom"><div class="bx-pills" data-g="range">' + RANGES.map(function (r) { return pill(r[0], { small: true, data: 'data-range="' + r[0] + '"' }); }).join('') + '</div>' +
-            '<div class="bx-spacer"></div><div class="bx-pills" data-g="scale">' + [['lin', 'Lineal'], ['log', 'Log'], ['pct', '%']].map(function (s) { return pill(s[1], { small: true, data: 'data-scale="' + s[0] + '"' }); }).join('') + '</div></div>' +
+            '<div class="bx-spacer"></div><div class="bx-pills" data-g="kind">' + [['line', 'Línea'], ['candle', 'Velas']].map(function (k) { return pill(k[1], { small: true, data: 'data-kind="' + k[0] + '"' }); }).join('') + '</div>' +
+            '<i class="bx-pills-sep"></i><div class="bx-pills" data-g="scale">' + [['lin', 'Lineal'], ['log', 'Log'], ['pct', '%']].map(function (s) { return pill(s[1], { small: true, data: 'data-scale="' + s[0] + '"' }); }).join('') + '</div></div>' +
         '</div>' +
       '</div>';
     var $ = function (s) { return host.querySelector(s); };
@@ -381,7 +382,8 @@
       while (svg.firstChild) svg.removeChild(svg.firstChild);
       var ids = visIdx(); domain(ids);
       var ph = height - B - T, plotW = W - R;
-      var defs = el('defs', {}); var cp = el('clipPath', { id: clipId }); cp.appendChild(el('rect', { x: 0, y: 0, width: plotW, height: height })); defs.appendChild(cp); svg.appendChild(defs);
+      var defs = el('defs', {}); var cp = el('clipPath', { id: clipId }); cp.appendChild(el('rect', { x: 0, y: 0, width: plotW, height: height })); defs.appendChild(cp);
+      var gr = el('linearGradient', { id: clipId + 'g', x1: 0, y1: 0, x2: 0, y2: 1 }); gr.appendChild(el('stop', { offset: '0%', class: 'bx-area-top' })); gr.appendChild(el('stop', { offset: '100%', class: 'bx-area-bottom' })); defs.appendChild(gr); svg.appendChild(defs);
       // rejilla y eje Y
       var grid = el('g', { class: 'bx-grid' }), ax = el('g', { class: 'bx-axis' });
       var ys = niceStep(y1 - y0, Math.max(3, Math.round(ph / 64)));
@@ -428,7 +430,15 @@
         path.forEach(function (p, k) { if (p.computed) g.appendChild(el('circle', { class: 'bx-dot-fc', cx: X(nh + k), cy: Y(p.mid), r: 4.5 })); });
       }
       // precio real
-      var la = line(ids, close, 'bx-l-actual'); if (la) g.appendChild(la);
+      if (st.kind === 'candle') candles(g, plotW);
+      else {
+        var la = line(ids, close, 'bx-l-actual');
+        if (la) {
+          var real = ids.filter(function (i) { return i <= iNow && close[i] != null; });
+          if (real.length > 1) g.appendChild(el('path', { class: 'bx-area', fill: 'url(#' + clipId + 'g)', d: la.getAttribute('d') + 'L' + X(real[real.length - 1]).toFixed(1) + ' ' + (T + ph) + 'L' + X(real[0]).toFixed(1) + ' ' + (T + ph) + 'Z' }));
+          g.appendChild(la);
+        }
+      }
       // sucesos (rangos largos)
       if (span >= 240) evIdx.forEach(function (x) { if (x.i >= st.a && x.i <= st.b) g.appendChild(el('circle', { class: 'bx-ev bx-' + (x.e.kind === 'max' ? 'up' : 'down'), cx: X(x.i), cy: Y(x.e.price), r: 5 })); });
       // dibujos
@@ -450,6 +460,21 @@
         svg.appendChild(tag(st.hover.y, yLabel(yv), 'bx-tag-x'));
       }
       renderReadout();
+    }
+    /** Velas de cierres: cada vela agrupa k días hábiles terminando en «Hoy»; apertura = cierre anterior,
+     *  máximo y mínimo de los cierres del tramo (el Brent spot solo tiene un precio por día). */
+    function candles(g, plotW) {
+      var pxPer = plotW / (st.b - st.a), k = Math.max(1, Math.ceil(7 / pxPer)), bw = Math.max(1.5, Math.min(14, k * pxPer * 0.7));
+      var lo = Math.max(1, Math.floor(st.a) - k), hi = Math.min(iNow, Math.ceil(st.b));
+      for (var e = iNow; e >= lo; e -= k) {
+        if (e - k + 1 > hi) continue;
+        var s0 = Math.max(0, e - k), op = close[s0], cl = close[e], mx = -Infinity, mn = Infinity;
+        for (var j = s0; j <= e; j++) if (close[j] != null) { mx = Math.max(mx, close[j]); mn = Math.min(mn, close[j]); }
+        if (op == null || cl == null) continue;
+        var cx = X(e - (k - 1) / 2), dir = cl >= op ? 'up' : 'down', yt = Y(Math.max(op, cl)), yb = Y(Math.min(op, cl));
+        g.appendChild(el('line', { class: 'bx-wick bx-' + dir, x1: cx, x2: cx, y1: Y(mx), y2: Y(mn) }));
+        g.appendChild(el('rect', { class: 'bx-candle bx-' + dir, x: cx - bw / 2, y: yt, width: bw, height: Math.max(1, yb - yt), rx: Math.min(2, bw / 4) }));
+      }
     }
     function drawShape(g, d) {
       if (d.type === 'level') {
@@ -492,9 +517,10 @@
     function sync() {
       host.querySelectorAll('[data-range]').forEach(function (b) { var on = b.getAttribute('data-range') === st.range; b.classList.toggle('is-active', on); b.setAttribute('aria-pressed', on); });
       host.querySelectorAll('[data-scale]').forEach(function (b) { var on = b.getAttribute('data-scale') === st.scale; b.classList.toggle('is-active', on); b.setAttribute('aria-pressed', on); });
+      host.querySelectorAll('[data-kind]').forEach(function (b) { var on = b.getAttribute('data-kind') === st.kind; b.classList.toggle('is-active', on); b.setAttribute('aria-pressed', on); });
       host.querySelectorAll('[data-tool]').forEach(function (b) { var on = b.getAttribute('data-tool') === st.tool; b.classList.toggle('is-active', on); b.setAttribute('aria-pressed', on); });
       schedule();
-      if (o.onChange) o.onChange({ range: st.range, scale: st.scale, indicators: Object.assign({}, st.ind) });
+      if (o.onChange) o.onChange({ range: st.range, scale: st.scale, kind: st.kind, indicators: Object.assign({}, st.ind) });
     }
     var raf = 0; function schedule() { if (!raf) raf = requestAnimationFrame(function () { raf = 0; render(); }); }
     var clipId = 'bxclip' + Math.random().toString(36).slice(2, 8);
@@ -572,6 +598,7 @@
       var t = e.target.closest('button'); if (!t || !host.contains(t)) return;
       if (t.hasAttribute('data-range')) setRange(t.getAttribute('data-range'));
       else if (t.hasAttribute('data-scale')) { st.scale = t.getAttribute('data-scale'); sync(); }
+      else if (t.hasAttribute('data-kind')) { st.kind = t.getAttribute('data-kind'); sync(); }
       else if (t.hasAttribute('data-tool')) { st.tool = t.getAttribute('data-tool'); st.pending = null; sync(); }
       else if (t.getAttribute('data-act') === 'clear') { st.drawings = []; st.pending = null; schedule(); }
       else if (t.getAttribute('data-act') === 'reset') setRange(st.range || '3M');
@@ -588,7 +615,7 @@
       setIndicator: function (k, on) { st.ind[k] = !!on; var cb = host.querySelector('[data-ind="' + k + '"]'); if (cb) cb.checked = !!on; sync(); },
       setTool: function (t) { st.tool = t; st.pending = null; sync(); },
       clearDrawings: function () { st.drawings = []; schedule(); },
-      state: function () { return { range: st.range, scale: st.scale, indicators: Object.assign({}, st.ind), view: [st.a, st.b], drawings: st.drawings.slice() }; }
+      state: function () { return { range: st.range, scale: st.scale, kind: st.kind, indicators: Object.assign({}, st.ind), view: [st.a, st.b], drawings: st.drawings.slice() }; }
     };
   }
 

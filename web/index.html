@@ -10,7 +10,10 @@
     <div class="bx-ws">
       <header class="bx-top">
         <span id="logo"></span>
-        <h1>Brent</h1>
+        <div class="title">
+          <h1>Brent</h1>
+          <span class="bx-muted">Spot · $/bbl</span>
+        </div>
         <span class="bx-spacer"></span>
         <span class="bx-pill bx-pill-solid asof" id="asof"></span>
         <span id="theme"></span>
@@ -18,18 +21,17 @@
 
       <p id="loading" class="loading">Calculando las predicciones en el navegador…</p>
 
-      <nav id="tabs"></nav>
+      <nav id="cards" aria-label="Horizonte de la previsión"></nav>
       <div class="bx-ws-main">
         <section class="bx-card"><div id="ph" class="ph"></div><div id="chart"></div></section>
         <aside class="bx-card bx-ws-panel" id="panel"></aside>
       </div>
-      <h2 class="bx-ws-h2">Todos los horizontes</h2>
-      <div id="cards"></div>
       <div class="bx-ws-pair">
         <section class="bx-card">
           <div class="bx-card-t" id="perf-t">Fiabilidad</div>
           <div id="metrics"></div>
-          <div id="bt" class="bt"></div>
+          <div class="bt-h" id="bt-t"></div>
+          <div id="bt"></div>
         </section>
         <section class="bx-card">
           <div class="bx-card-t" id="drv-t">Variables del modelo</div>

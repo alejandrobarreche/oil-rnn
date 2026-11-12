@@ -1,5 +1,22 @@
 /* Ajustes de la página sobre la maqueta Workspace de Sonda 2 (src/sonda/bundle.css).
    Colores y medidas, siempre con los tokens de Sonda (src/sonda/tokens.css). */
+
+/* Redondeado más sobrio en píldoras, botones e insignias */
+:root {
+  --radius-pill: 8px;
+}
+
+/* Página más ancha en pantallas grandes */
+.bx-ws {
+  max-width: 1880px;
+  padding: 24px clamp(16px, 2.5vw, 48px) 40px;
+}
+
+.bx-top .title {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+}
 .asof {
   cursor: default;
 }
@@ -9,10 +26,123 @@
 .ph {
   margin-bottom: 14px;
 }
-.bt {
-  margin-top: var(--space-4);
-}
 .loading {
   margin: 0;
   color: var(--ink-3);
+}
+
+/* Leyenda del gráfico con altura fija: no empuja el gráfico al cambiar de contenido */
+.bx-chart-top {
+  height: 40px;
+  align-items: flex-start;
+}
+.bx-chart-top .bx-readout {
+  max-height: 40px;
+  overflow: hidden;
+  align-content: flex-start;
+}
+.bx-pills-sep {
+  width: 1px;
+  align-self: stretch;
+  margin: 4px 2px;
+  background: var(--line);
+}
+
+/* Línea real con degradado debajo y velas */
+.bx-l-actual {
+  stroke-width: 2;
+}
+.bx-area-top {
+  stop-color: var(--actual);
+  stop-opacity: 0.12;
+}
+.bx-area-bottom {
+  stop-color: var(--actual);
+  stop-opacity: 0;
+}
+.bx-wick {
+  stroke-width: 1;
+}
+.bx-wick.bx-up,
+.bx-candle.bx-up {
+  stroke: var(--up);
+  fill: var(--up);
+}
+.bx-wick.bx-down,
+.bx-candle.bx-down {
+  stroke: var(--down);
+  fill: var(--down);
+}
+
+/* Tarjetas de horizonte como selector superior */
+.bx-fcard:focus-visible {
+  outline: 2px solid var(--forecast);
+  outline-offset: 2px;
+}
+
+/* Panel de previsión */
+.bx-kv dt[title] {
+  cursor: help;
+}
+
+/* Fiabilidad: los cuatro modelos frente a su referencia trivial */
+.rel {
+  width: 100%;
+  border-collapse: collapse;
+}
+.rel th {
+  text-align: right;
+  font-weight: 500;
+  color: var(--ink-2);
+  padding: 0 0 8px 12px;
+  vertical-align: bottom;
+}
+.rel th:first-child,
+.rel td:first-child {
+  text-align: left;
+  padding-left: 12px;
+}
+.rel th[title] {
+  cursor: help;
+}
+.rel td {
+  text-align: right;
+  padding: 10px 12px 10px 12px;
+  border-top: 1px solid var(--line);
+}
+.rel tr[data-h] {
+  cursor: pointer;
+  transition: background var(--dur-fast) var(--ease-out);
+}
+.rel tr[data-h]:hover {
+  background: var(--surface-hover);
+}
+.rel tr.is-active {
+  background: var(--surface-2);
+  box-shadow: inset 2px 0 0 var(--forecast);
+}
+.rel .v {
+  font-size: 17px;
+  line-height: 24px;
+  font-weight: 600;
+}
+.rel .v.is-better {
+  color: var(--up-text);
+}
+.rel .v.is-worse {
+  color: var(--warn);
+}
+.rel .r {
+  font-size: 12px;
+  line-height: 16px;
+  color: var(--ink-3);
+}
+.rel .model {
+  font-size: 12px;
+  line-height: 16px;
+  color: var(--ink-3);
+}
+.bt-h {
+  margin: var(--space-5) 0 var(--space-2);
+  font-weight: 600;
 }
