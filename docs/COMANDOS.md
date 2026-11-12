@@ -183,7 +183,7 @@ Resultado (12/11): 432/432 runs `finished` (un apagado a mitad y un bloqueo punt
 
 ---
 
-**🖥️ Windows GPU · 12/11/2026 · ⏳**
+**🖥️ Windows GPU · 12/11/2026 · ✅**
 Fase 3, finalistas con 3 semillas: las 12 configuraciones ganadoras de la rejilla `g1` (mínimo `cv_pinball` por red y horizonte) con las semillas 7 y 123; la 42 ya está en `g1`. 24 runs de `make cv`, unos 30 min sin medir. Primero, el commit de la rejilla (la carpeta a medias del apagado ya está borrada):
 
 ```powershell
@@ -209,3 +209,21 @@ make compare ARGS="--set sweep.prefix=g1s123"
 ```
 
 Cada `make compare` debe listar 12 filas; el aviso «Grupos incompletos: …: 1/36» es esperable (solo hay un run por grupo). Si falta alguna fila (por ejemplo, por un bloqueo de Smart App Control al importar), pásale a Claude la salida y se repite solo esa.
+
+Resultado (12/11): 24/24 runs. Con 3 semillas, solo GRU h=63 mejora a la persistencia en las tres (`skill_rmse` +4,8 % ± 0,6 %, 9 de 12 pliegues). A h=5 los intervalos de GRU y RNN mejoran a los históricos en las tres semillas (`pinb_skill` +1,3–1,5 %), pero las tres celdas no se distinguen. A h=21 y h=252 ninguna red supera a la persistencia.
+
+---
+
+**🖥️ Windows GPU · 12/11/2026 · ⏳**
+Fase 4, modelos finales y evaluación única en test. Primero se sube la decisión (`docs/PLAN.md`), para que quede registrada antes de ver test. Cada `make train` entrena con train + val la configuración elegida (semilla 42) y aplica la calibración de su run de cv; `make evaluate` evalúa en test el run que se acaba de entrenar, solo si el entrenamiento terminó bien. Unos 5 min en total, sin medir.
+
+```powershell
+git add docs/PLAN.md docs/COMANDOS.md
+git commit -m "docs(plan): modelo elegido por horizonte para la fase 4"
+make train NAME=final-gru-h5 CALIB=20261112-004459_g1-gru-h5-n256-l1-d0-lr0-001_omen-pc ARGS="--set model.cell=gru --set data.horizon=5 --set model.hidden_size=256 --set model.num_layers=1 --set model.dropout=0.0 --set train.learning_rate=0.001"; if ($LASTEXITCODE -eq 0) { make evaluate }
+make train NAME=final-lstm-h21 CALIB=20261111-232334_g1-lstm-h21-n64-l1-d0-lr0-0001_omen-pc ARGS="--set model.cell=lstm --set data.horizon=21 --set model.hidden_size=64 --set model.num_layers=1 --set model.dropout=0.0 --set train.learning_rate=0.0001"; if ($LASTEXITCODE -eq 0) { make evaluate }
+make train NAME=final-gru-h63 CALIB=20261112-012653_g1-gru-h63-n128-l2-d0-3-lr0-0001_omen-pc ARGS="--set model.cell=gru --set data.horizon=63 --set model.hidden_size=128 --set model.num_layers=2 --set model.dropout=0.3 --set train.learning_rate=0.0001"; if ($LASTEXITCODE -eq 0) { make evaluate }
+make train NAME=final-rnn-h252 CALIB=20261111-225050_g1-rnn-h252-n256-l2-d0-3-lr0-0001_omen-pc ARGS="--set model.cell=rnn --set data.horizon=252 --set model.hidden_size=256 --set model.num_layers=2 --set model.dropout=0.3 --set train.learning_rate=0.0001"; if ($LASTEXITCODE -eq 0) { make evaluate }
+```
+
+Si un `make train` falla (por ejemplo, por un bloqueo de Smart App Control al importar), su `make evaluate` no se ejecuta: repite solo esa línea. No repitas un `make evaluate` que ya terminó. Al acabar, avisa a Claude: lee los `eval_test.json` directamente de `runs/`.

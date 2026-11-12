@@ -71,6 +71,16 @@ Cambios mínimos sobre lo existente:
 ## Fase 4 · Selección y evaluación final (día 5)
 
 - Elección del modelo por horizonte con validación; conclusión escrita de dónde aporta valor y dónde no (previsiblemente poco a 252 días; se comprueba, no se supone).
+- Elección decidida (12/11), antes de mirar test: en cada horizonte, la red con menor `cv_pinball` medio en 3 semillas (42, 7, 123), con la configuración ganadora de la rejilla `g1`. Modelo final con semilla 42 y la calibración del run de cv de esa configuración.
+
+| h | Red | Configuración (oculto, capas, dropout, lr) | Calibración (`CALIB`) | Conclusión en cv |
+|---|---|---|---|---|
+| 5 | GRU | 256, 1, 0, 1e-3 | `20261112-004459_g1-gru-h5-…` | Intervalo mejor que el histórico; predicción puntual sin mejora; las tres celdas empatan |
+| 21 | LSTM | 64, 1, 0, 1e-4 | `20261111-232334_g1-lstm-h21-…` | Sin mejora sobre la persistencia |
+| 63 | GRU | 128, 2, 0,3, 1e-4 | `20261112-012653_g1-gru-h63-…` | `skill_rmse` +4,8 % ± 0,6 % en 3 semillas |
+| 252 | RNN | 256, 2, 0,3, 1e-4 | `20261111-225050_g1-rnn-h252-…` | Peor que la persistencia (−4,3 %); intervalo sobrecubre (90 %) |
+
+- La aplicación muestra la red elegida en los cuatro horizontes y dice en el texto dónde no mejora a la persistencia (21 y 252).
 - `make evaluate` una sola vez sobre test: métricas, cobertura real del intervalo, error por régimen. Contraste de Diebold-Mariano frente a persistencia si queda tiempo (requiere añadir la referencia a Zotero).
 - Tabla definitiva en `README.md`.
 
