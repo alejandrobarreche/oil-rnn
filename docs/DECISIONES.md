@@ -349,7 +349,7 @@
 - **Qué**: Sonda muestra el último precio (03/11) y cuenta el horizonte desde ese día.
 - **Por qué**: es coherente con cómo se entrenó (2.4).
 - **Alternativa**: Brentcast pronostica desde hoy, con el spot actualizado por futuros.
-- **Comprobado**: `nextTradingDays(mk.ts, H)` en `web/src/main.ts`.
+- **Comprobado**: `Sonda.fan(market.last, forecasts, sel, market.ts)` en `web/src/main.ts`; la fecha objetivo del panel sale de `Sonda.tradingDays(m.ts, h)`.
 - **Valoración**: Regular. El texto dice la fecha del último precio, pero el pronóstico a 1 semana ya ha vencido al publicarse.
 
 ### 10.3 Actualización y reentrenamiento: sin hacer
