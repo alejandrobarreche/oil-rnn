@@ -4,7 +4,7 @@
 **Cuándo usarlo**: al empezar una sesión, antes de una decisión de proyecto y al cerrar cada fase.
 **Resultado**: repositorio, aplicación funcional y 5 diapositivas, entregados el 20/11/2026.
 **Flujo**: Fase 0 Decisiones → 1 Datos → 2 Pipeline → 3 Comparativa → 4 Evaluación → 5 Sonda → 5b Decisiones y explorador → 6 Página explicativa → 7 Actualización → 8 Presentación
-**Estado**: fases 0–5 y 5b hechas · 6 y 7 sin empezar · Diebold-Mariano e «ingenuo con futuros» hechos (13/11) · siguiente: decidir el resto de mejoras de `docs/DECISIONES.md` (apartado 12).
+**Estado**: fases 0–5 y 5b hechas · 6 y 7 sin empezar · Diebold-Mariano e «ingenuo con futuros» hechos (13/11) · fase 6 definida salvo la estética (apartado 7) · siguiente: dirección visual con las skills del usuario.
 
 ## 0. Antes de empezar: encargo, estado y decisiones del usuario
 
@@ -175,17 +175,34 @@ Comprobados con `make test`, `make lint`, `make web-test` (15/15), compilación,
   - Los tipos de Sonda se comparten en `web/src/sonda.ts`.
 - **Comprobado**: `make web-test` (25/25) y recorrido en Chrome (1288×800 y 1900×1000, temas claro y oscuro).
 
-## 7. Fase 6 · Página explicativa (días 6–8): el elemento diferencial
+## 7. Fase 6 · Página explicativa (días 6–8): definición acordada el 13/11, falta la estética
 
-Segunda ruta de `web/`, con lenguaje visual propio, animación y 3D. El diseño se detalla al empezar la fase (con `frontend-design`), no ahora. Contenido previsto, todo con datos reales exportados en las fases 1–4:
+Segunda página de `web/` (`explica.html`), enlazada desde Sonda, con lenguaje visual propio. Cuenta cómo se construyó la predicción y por qué no bate a «el precio de hoy», solo con datos reales ya medidos: la página no introduce ninguna cifra.
 
-1. La serie y su ciclo económico.
-2. Cómo entra el dato en la red: ventana deslizante y pliegues walk-forward.
-3. Qué hace por dentro una RNN, una LSTM y una GRU.
-4. Por qué la persistencia es difícil de batir y qué gana cada red en cada horizonte.
-5. Qué significa el intervalo y cómo se comprobó.
+### 7.1 Decisiones del usuario (13/11)
+- **Uso**: solo lectura. Página larga con scroll; sin navegación por pasos ni modo presentación.
+- **Nivel**: solo lenguaje sencillo, para el público no técnico del enunciado. Sin fórmulas ni desplegables técnicos: lo técnico queda en el repositorio y los cuadernos.
+- **3D**: una pieza, en el capítulo 3: el recorrido del estado oculto de la RNN, la LSTM y la GRU entrenadas a lo largo de los 60 días de una ventana real, proyectado a 3D y girable.
+- **Estética**: **Pendiente**. El usuario pasa skills con la dirección visual que quiere.
 
-- **Coste**: la rúbrica da un 5 % a «App»; esta página rinde sobre todo en la exposición oral (30 %).
+### 7.2 Hilo y capítulos
+- **Hilo**: el precio de hoy ya contiene casi todo lo que se sabe. Cada capítulo enseña una parte de cómo se comprobó; al final, lo que sí ayuda: los futuros, lo que el mercado ya sabe y la EIA aún no ha publicado.
+
+| Capítulo | Qué enseña, en lenguaje sencillo | Datos |
+|---|---|---|
+| 1. La serie y su ciclo | Brent 2000–2026 y los 6 sucesos; causas solo las del enunciado | `market.json` |
+| 2. Cómo entra el dato | Ventana de 60 días, lo que ve la red y lo que tiene que adivinar; pasado para aprender, futuro para comprobar | `data/splits.json`, `fold_table`, ventanas de unas pocas fechas |
+| 3. Por dentro de la red | Qué recuerda y qué olvida cada celda; recorrido del estado en 3D; tamaño de cada red | Pesos leídos de los ONNX, `cell_trace`, `count_params` |
+| 4. Batir al precio de hoy | Red frente a persistencia por horizonte y por año; las diferencias caben en el azar; los futuros sí ayudan a 5 días | `predictions_test.csv`, `significance`, `futures_naive` |
+| 5. Qué significa el rango | Qué es el rango del 80 %, cuántas veces acertó y por qué falló en 2026 | Runs `final-*`, `skill_by` |
+
+### 7.3 Técnica
+- **Datos**: `make export-explain` (Mac): lee `data/`, `runs/`, `artifacts/` y los ONNX y escribe `web/public/data/explain.json`, en git como `market.json`. Los cálculos van en `explore.py`.
+- **Pesos**: se leen de los ONNX con `onnx` (comprobado: `h5.onnx` contiene `rnn.weight_ih_l0` y `rnn.weight_hh_l0`). Los modelos finales cubren las tres celdas: GRU (h=5), LSTM (h=21) y RNN (h=252).
+- **Web**: Vite multipágina; gráficos propios en SVG/Canvas y 3D con proyección propia en canvas, sin dependencias nuevas.
+- **Fuera de alcance**: métricas nuevas, entrenamientos y cambios en Sonda salvo el enlace. La comparación con Brentcast queda en `docs/DECISIONES.md`.
+- **Comprobación**: test de la exportación, `make web-test`, compilación y revisión en Chrome a 1280 y 390 px, con teclado y movimiento reducido.
+- **Coste**: unos 3 días. Recorte fijado en el apartado 10: los capítulos 4–5 pasan a figuras estáticas.
 
 ## 8. Fase 7 · Actualización, reentrenamiento y repositorio (días 8–9): workflow programado y documentación al día
 
