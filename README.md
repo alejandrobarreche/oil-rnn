@@ -13,84 +13,76 @@
 
 </div>
 
----
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/img/history-dark.svg">
+  <img src="docs/img/history-light.svg" alt="Precio del Brent de 2000 a 2026, con los tramos de entrenamiento, validación y test" width="100%">
+</picture>
 
-## Contenido
+Una RNN simple, una LSTM y una GRU predicen el Brent a **1 semana, 1 mes, 3 meses y 1 año**. Cada una se compara con la referencia más simple: **el precio de hoy**, la persistencia. El modelo elegido se ejecuta en el navegador, sin servidor.
 
-1. [Qué hace](#qué-hace)
-2. [Cómo funciona](#cómo-funciona)
-3. [Decisiones de diseño](#decisiones-de-diseño)
-4. [Resultados](#resultados)
-5. [Inicio rápido](#inicio-rápido)
-6. [Tecnologías](#tecnologías)
-7. [Estructura](#estructura)
-8. [Estado del proyecto](#estado-del-proyecto)
+## Qué predice
 
----
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/img/forecast-dark.svg">
+  <img src="docs/img/forecast-light.svg" alt="Esquema: ventana de 60 días y, para cada horizonte, mediana e intervalo del 80 %" width="100%">
+</picture>
 
-## Qué hace
+La red lee los últimos 60 días de 15 variables de mercado y da, para cada horizonte, la mediana y un intervalo del 80 %. Hay un modelo por horizonte.
 
-Entrena una RNN simple, una LSTM y una GRU con la serie diaria del Brent (desde 2000) y variables de mercado. Cada modelo se compara con la referencia trivial de persistencia: «el precio futuro es el de hoy». El mejor modelo se exporta a ONNX y la página web lo ejecuta en el navegador, sin servidor y sin enviar datos.
+<sub>Esquema: el tamaño de los intervalos es ilustrativo.</sub>
 
-Se predicen cuatro horizontes a partir del último precio conocido, con un modelo por horizonte. Cada modelo da la mediana y un intervalo del 80 % (cuantiles 0,1 y 0,9, calibrados con calibración conforme):
+## Cómo se valida
 
-```mermaid
-flowchart LR
-    P([Último precio]) --> C[5 días hábiles<br/>≈ 1 semana]
-    P --> W[21 días hábiles<br/>≈ 1 mes]
-    P --> M[63 días hábiles<br/>≈ 3 meses]
-    P --> L[252 días hábiles<br/>≈ 12 meses]
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/img/walk-forward-dark.svg">
+  <img src="docs/img/walk-forward-light.svg" alt="Cuatro pliegues walk-forward y el modelo final evaluado en test" width="100%">
+</picture>
+
+Cada pliegue entrena con todo lo anterior y valida los 2 años siguientes. Entre tramos quedan `h` días sin usar, para que ningún dato de entrenamiento mire al futuro. Test se usa una sola vez, al final.
+
+## Resultado
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/img/skill-dark.svg">
+  <img src="docs/img/skill-light.svg" alt="Mejora del RMSE frente a la persistencia por horizonte, en validación y en test" width="100%">
+</picture>
+
+**Prometedor en validación, no se confirma en test.** En 2023–2026 ninguna red supera a la persistencia en ningún horizonte. Ninguna diferencia es significativa al 5 %: la red no la mejora, pero tampoco se puede afirmar que sea peor.
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/img/test-h63-dark.svg">
+  <img src="docs/img/test-h63-light.svg" alt="GRU a 3 meses en test: precio real, mediana prevista, intervalo del 80 % y persistencia" width="100%">
+</picture>
+
+<sub>3 meses (GRU) en test: acierta el signo del cambio el 60 % de los días, pero exagera los movimientos recientes.</sub>
+
+## Inicio rápido
+
+```bash
+make setup
+conda activate oil-rnn
+make data
+make prepare
+make cv NAME=<nombre>
+make train NAME=<nombre> CALIB=<run_id de make cv>
+make web-dev
 ```
 
----
+- **`make pending`**: lista los valores `PENDIENTE` de `configs/config.yaml`; los comandos que los usan se detienen.
+- **Todos los comandos**: en la [guía de uso](docs/USAGE.md). `make help` los resume.
 
-## Cómo funciona
+## Detalles técnicos
 
-**Figura 1. Del dato a la web**
+<details>
+<summary><b>Selección de modelos</b>: rejilla y validación walk-forward</summary>
 
-```mermaid
-flowchart LR
-    A[FRED · Yahoo Finance] -->|make data| B[(data/raw)]
-    B -->|make prepare| C[train → val → test<br/>tramos cronológicos]
-    C -->|make train| D{RNN · LSTM · GRU}
-    D --> E[runs · models · artifacts<br/>MLflow]
-    E -->|make evaluate| F[métricas frente<br/>a persistencia]
-    E -->|make export-web| G[model.onnx]
-    G --> H[Web en el navegador<br/>GitHub Pages]
-```
+- **Rejilla**: 36 configuraciones (tamaño oculto 32–256, 1 o 2 capas, dropout 0 o 0,3, tasa de aprendizaje 1e‑4 a 1e‑3) para las tres celdas y los cuatro horizontes: 432 validaciones walk-forward.
+- **Criterio**: en cada horizonte, la red con menor pérdida pinball media en 3 semillas.
+- **Test**: la elección se fijó antes de evaluar en test, y test se evaluó una sola vez.
+- **Mejora**: 1 − error de la red / error de la referencia. Positiva = la red es mejor.
+- **Referencias**: persistencia para el RMSE; cuantiles históricos del rendimiento a `h` días en train para el pinball.
 
-**Figura 2. División cronológica de los datos**
-
-```mermaid
-flowchart LR
-    T["train + val (2000–2023)<br/>4 pliegues walk-forward:<br/>arquitectura e hiperparámetros"] --> S["test (2023–2026)<br/>solo la evaluación final"]
-```
-
-Cada pliegue entrena con todo lo anterior a un bloque de 2 años (2015–2023) y predice ese bloque. Entre el entrenamiento y el bloque se dejan `horizonte` filas sin usar, para que ningún objetivo de entrenamiento sea posterior al momento de la predicción.
-
----
-
-## Decisiones de diseño
-
-- **Splits cronológicos, sin mezclar fechas.** El modelo nunca entrena con datos posteriores a los que predice.
-- **Preprocesado ajustado solo con train.** La media y la escala de val y test no influyen en el entrenamiento.
-- **`test` solo en la evaluación final.** Ninguna decisión se toma mirando test.
-- **Cada métrica junto a su referencia de persistencia.** Un modelo que no mejora «el último valor conocido» no aporta nada.
-- **Un run por entrenamiento, con id propio.** Fecha, nombre y ordenador identifican la configuración, el commit, el hash de los datos y los pesos.
-- **Inferencia en el navegador.** La web es estática: no hay servidor que mantener y los datos no salen del equipo.
-
----
-
-## Resultados
-
-> [!IMPORTANT]
-> **En test (25/01/2023–03/11/2026), ninguna red supera a la persistencia en ningún horizonte.** La única mejora que se veía en validación (GRU a 63 días, +4,8 %) no se confirma: en test es un 61 % peor. A 5 días el intervalo del 80 % está bien calibrado (cobertura del 78 %), pero no es mejor que el de los cuantiles históricos. Según el contraste de Diebold-Mariano (Tabla 3), ninguna diferencia frente a la persistencia es significativa al 5 %: la red no la mejora, pero tampoco se puede afirmar que sea peor.
-
-**Cómo se eligió cada modelo.** Rejilla de 36 configuraciones (tamaño oculto 32–256, 1 o 2 capas, dropout 0 o 0,3, tasa de aprendizaje 1e‑4 a 1e‑3), igual para las tres celdas y los cuatro horizontes: 432 validaciones walk-forward. En cada horizonte se eligió la red con menor pérdida pinball media en 3 semillas. La elección quedó registrada en `docs/PLAN.md` antes de evaluar en test, y test se evaluó una sola vez.
-
-**Tabla 1. Validación walk-forward (4 pliegues, 2015–2023): mejor configuración de cada red, media ± desviación en 3 semillas**
-
-Mejora = 1 − error de la red / error de la referencia; > 0 significa que la red es mejor. Referencia del RMSE: persistencia. Referencia del pinball: cuantiles históricos del rendimiento a `h` días en train. En negrita, la red elegida.
+Mejor configuración de cada red, media ± desviación en 3 semillas. En negrita, la elegida.
 
 | h | Red | Pinball | Mejora pinball | Mejora RMSE | Pliegues mejores que la persistencia |
 |---|---|---|---|---|---|
@@ -107,9 +99,13 @@ Mejora = 1 − error de la red / error de la referencia; > 0 significa que la re
 | 252 | GRU | 7,60 ± 0,83 | −2,7 % ± 6,5 | −5,3 % ± 3,6 | 6 / 12 |
 | 252 | LSTM | 7,85 ± 0,50 | −8,1 % ± 7,3 | −5,0 % ± 2,4 | 6 / 12 |
 
-**Tabla 2. Evaluación final en test (955 días, 2023–2026)**
+</details>
 
-Modelos entrenados con train + val, semilla 42. Precios en $/barril.
+<details>
+<summary><b>Evaluación en test</b>: 955 días, 25/01/2023–03/11/2026</summary>
+
+- **Modelos**: entrenados con train + val, semilla 42.
+- **Unidades**: precios en $/barril; tiempos en una RTX 3050 Ti Laptop.
 
 | h | Red | Configuración | Parámetros | Entrenamiento | RMSE red / persistencia | Mejora RMSE | MAE red / persistencia | Mejora pinball | Cobertura 80 % (red / histórica) |
 |---|---|---|---|---|---|---|---|---|---|
@@ -118,11 +114,13 @@ Modelos entrenados con train + val, semilla 42. Precios en $/barril.
 | 63 | GRU | 128 · 2 capas · dropout 0,3 · lr 1e‑4 | 155 523 | 29 s | 28,24 / 17,54 | −61 % | 16,94 / 11,44 | −39 % | 68 % / 86 % |
 | 252 | RNN | 256 · 2 capas · dropout 0,3 · lr 1e‑4 | 202 499 | 10 s | 33,03 / 22,71 | −45 % | 23,62 / 16,72 | −34 % | 92 % / 92 % |
 
-Tiempos medidos en una RTX 3050 Ti Laptop.
+</details>
 
-**Tabla 3. Contraste de Diebold-Mariano frente a la persistencia en test (`make dm`)**
+<details>
+<summary><b>Contraste de Diebold-Mariano</b> frente a la persistencia (<code>make dm</code>)</summary>
 
-H0: la red y la persistencia tienen el mismo error esperado. Estadístico > 0: la red tiene más error. Contraste de Diebold y Mariano (1995) con la corrección de Harvey, Leybourne y Newbold (1997): la varianza suma las autocovarianzas hasta el retardo h − 1, porque los pronósticos a h días se solapan, y el estadístico se compara con una t de n − 1 grados de libertad.
+- **H0**: la red y la persistencia tienen el mismo error esperado. Estadístico > 0 = la red tiene más error.
+- **Método**: Diebold y Mariano (1995) con la corrección de Harvey, Leybourne y Newbold (1997). La varianza suma las autocovarianzas hasta el retardo h − 1, porque los pronósticos a h días se solapan, y el estadístico se compara con una t de n − 1 grados de libertad.
 
 | h | Red | Pronósticos (independientes ≈ n/h) | Error cuadrático: estadístico · p | Error absoluto: estadístico · p |
 |---|---|---|---|---|
@@ -131,95 +129,34 @@ H0: la red y la persistencia tienen el mismo error esperado. Estadístico > 0: l
 | 63 | GRU | 955 (15) | +1,10 · 0,27 | +1,72 · 0,087 |
 | 252 | RNN | 955 (3) | +0,83 · 0,40 | +1,05 · 0,29 |
 
-**Figura 3. GRU a 63 días en test: precio real, mediana prevista e intervalo del 80 %**
-
-![GRU h=63 en test](artifacts/20261112-125335_final-gru-h63_omen-pc/series_test.png)
-
-**Conclusión por horizonte**
-
-- **5 días.** La red queda a un 3,6 % de la persistencia en RMSE. En validación, una regla sin red que actualiza el último spot con lo que se ha movido el futuro del Brent desde entonces (en uso real ya se conoce, porque la EIA publica el spot con retraso) mejora a la persistencia un 8,5 % con 1 día de futuros y un 31 % con 3 (`make naive-futures`, `docs/DECISIONES.md` 2.4). Buena parte de la dificultad a 5 días es ese retraso, no la red. Su intervalo cubre el 78 % de los casos, cerca del 80 % nominal, pero es tan bueno como el de los cuantiles históricos, no mejor. En validación las tres celdas no se distinguían: la diferencia de pinball era menor que la variación entre semillas.
-- **21 días.** Sin mejora ni en validación ni en test.
-- **63 días.** En validación mejoraba a la persistencia en las 3 semillas, pero la mejora venía sobre todo del pliegue 2021–2023 (+21 %). En test la red predice de media una subida del 11 % a 63 días, cuando la real fue del 1,7 %, y amplifica los movimientos recientes (Figura 3). La dirección sí lleva algo de información: acierta el signo del cambio en el 60 % de los días y la correlación entre el rendimiento previsto y el real es de 0,27. Lo que falla es la magnitud.
-- **252 días.** Peor que la persistencia en validación y en test. Cada bloque de 2 años contiene unos 2 pronósticos independientes a 252 días, así que la muestra no permite estimar bien el error.
-- **Significación.** Incluso el −61 % a 63 días tiene p = 0,27: test contiene unos 15 pronósticos independientes a 63 días y sus errores están muy correlacionados, así que la diferencia cabe en la variabilidad de la muestra. A 63 y 252 días el contraste tiene poca potencia; «no significativo» no quiere decir «igual».
-- **2026.** En los tres horizontes cortos la cobertura del intervalo cae al 48–58 % en 2026, cuando el precio sube un 16 % a 63 días y un 30 % a 252.
-
-**Qué muestra la aplicación.** El modelo elegido en cada horizonte, junto con el aviso de que, medido en 2023–2026, no mejora a «el precio de hoy». El dato más fiable es el intervalo a 5 días.
-
----
-
-## Inicio rápido
-
-```bash
-make setup
-conda activate oil-rnn
-make data
-make prepare
-make train NAME=baseline
-make web-dev
-```
-
-`make prepare` se detiene si `configs/config.yaml` tiene valores `PENDIENTE`; `make pending` los lista. Todos los comandos, agrupados por fase y por tarea, están en la [guía de uso](docs/USAGE.md). `make help` los resume en la terminal.
-
----
-
-## Tecnologías
-
-<div align="center">
-
-![Python](https://img.shields.io/badge/Python_3.12-3776ab?style=for-the-badge&logo=python&logoColor=white)
-![PyTorch](https://img.shields.io/badge/PyTorch-ee4c2c?style=for-the-badge&logo=pytorch&logoColor=white)
-![MLflow](https://img.shields.io/badge/MLflow-0194e2?style=for-the-badge&logo=mlflow&logoColor=white)
-![ONNX](https://img.shields.io/badge/ONNX_Runtime_Web-005ced?style=for-the-badge&logo=onnx&logoColor=white)
-![TypeScript](https://img.shields.io/badge/TypeScript-3178c6?style=for-the-badge&logo=typescript&logoColor=white)
-![Vite](https://img.shields.io/badge/Vite-646cff?style=for-the-badge&logo=vite&logoColor=white)
-![GitHub Pages](https://img.shields.io/badge/GitHub_Pages-222222?style=for-the-badge&logo=githubpages&logoColor=white)
-
-</div>
-
----
-
-## Estructura
+</details>
 
 <details>
-<summary>Carpetas principales</summary>
+<summary><b>Conclusión por horizonte</b></summary>
 
-```text
-oil-rnn/
-├── configs/config.yaml     configuración; cada run guarda su copia
-├── data/                   no se versiona: raw/, train/, val/, test/, splits.json
-├── runs/<run_id>/          config, meta, métricas y log del run
-├── artifacts/<run_id>/     gráficas y predicciones
-├── models/<run_id>/        pesos y preprocesado (no se versiona)
-├── notebooks/              exploración con train y cuadernos 02–05 del proceso
-├── app/                    explorador Streamlit local (make explore)
-├── src/oil_rnn/            datos, features, modelo, métricas, runs, exportación
-├── web/                    aplicación web (Vite + TypeScript)
-├── docs/                   USAGE.md · DECISIONES.md · enunciado · bibliografía · presentación
-├── tests/
-└── Makefile
-```
+- **5 días**: la red queda un 3,6 % por detrás de la persistencia en RMSE. Su intervalo cubre el 78 % de los casos, tan bien como los cuantiles históricos, no mejor. En validación las tres celdas no se distinguían: la diferencia de pinball era menor que la variación entre semillas.
+- **5 días, retraso de publicación**: la EIA publica el spot con retraso, y el futuro del Brent ya se conoce. Actualizar el último spot con lo que se ha movido el futuro mejora a la persistencia en validación un 8,5 % con 1 día y un 31 % con 3 (`make naive-futures`). Buena parte de la dificultad a 5 días es ese retraso, no la red.
+- **21 días**: sin mejora ni en validación ni en test.
+- **63 días**: la mejora de validación venía sobre todo del pliegue 2021–2023 (+21 %). En test la red predice de media una subida del 11 %, cuando la real fue del 1,7 %. Acierta el signo el 60 % de los días (correlación 0,27): la dirección lleva algo de información; lo que falla es la magnitud.
+- **252 días**: peor que la persistencia en validación y en test. Cada bloque de 2 años tiene unos 2 pronósticos independientes, así que la muestra no permite estimar bien el error.
+- **Significación**: incluso el −61 % a 63 días tiene p = 0,27, porque test tiene unos 15 pronósticos independientes a 63 días. A 63 y 252 días el contraste tiene poca potencia: «no significativo» no quiere decir «igual».
+- **2026**: en los tres horizontes cortos la cobertura del intervalo cae al 48–58 %, cuando el precio sube un 16 % a 63 días y un 30 % a 252.
+- **Aplicación**: muestra el modelo elegido en cada horizonte, con el aviso de que en 2023–2026 no mejora a «el precio de hoy». El dato más fiable es el intervalo a 5 días.
 
 </details>
 
 ---
 
-## Estado del proyecto
+<div align="center">
 
-- [x] Estructura inicial y descarga de datos
-- [x] Decisiones de `config.yaml` (target, variables, ventana, horizonte, splits)
-- [x] Comparación de RNN, LSTM y GRU en validación walk-forward (432 runs + 3 semillas)
-- [x] Evaluación final en test
-- [x] Modelos exportados y aplicación publicada (Sonda, primera versión)
-- [x] Decisiones documentadas, cuadernos del proceso y explorador local
-- [x] Rediseño de la aplicación y portal con dinero ficticio
-- [x] Contraste de Diebold-Mariano frente a la persistencia
-- [x] Referencia «ingenuo con futuros» en validación
-- [ ] Página explicativa
-- [ ] Actualización de datos y reentrenamiento periódicos
+![Python](https://img.shields.io/badge/Python_3.12-3776ab?style=flat-square&logo=python&logoColor=white)
+![PyTorch](https://img.shields.io/badge/PyTorch-ee4c2c?style=flat-square&logo=pytorch&logoColor=white)
+![MLflow](https://img.shields.io/badge/MLflow-0194e2?style=flat-square&logo=mlflow&logoColor=white)
+![ONNX](https://img.shields.io/badge/ONNX_Runtime_Web-005ced?style=flat-square&logo=onnx&logoColor=white)
+![TypeScript](https://img.shields.io/badge/TypeScript-3178c6?style=flat-square&logo=typescript&logoColor=white)
+![Vite](https://img.shields.io/badge/Vite-646cff?style=flat-square&logo=vite&logoColor=white)
+![GitHub Pages](https://img.shields.io/badge/GitHub_Pages-222222?style=flat-square&logo=githubpages&logoColor=white)
 
----
+<sub>Citas: Diebold y Mariano (1995), <i>Comparing Predictive Accuracy</i>; Harvey, Leybourne y Newbold (1997), <i>Testing the equality of prediction mean squared errors</i>. Fuente única: <a href="docs/references.bib"><code>docs/references.bib</code></a>.</sub>
 
-## Bibliografía
-
-`docs/references.bib` es la única fuente de citas y se edita a mano. Citados: Diebold y Mariano (1995), *Comparing Predictive Accuracy*; Harvey, Leybourne y Newbold (1997), *Testing the equality of prediction mean squared errors*.
+</div>
