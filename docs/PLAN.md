@@ -4,7 +4,7 @@
 **Cuándo usarlo**: al empezar una sesión, antes de una decisión de proyecto y al cerrar cada fase.
 **Resultado**: repositorio, aplicación funcional y 5 diapositivas, entregados el 20/11/2026.
 **Flujo**: Fase 0 Decisiones → 1 Datos → 2 Pipeline → 3 Comparativa → 4 Evaluación → 5 Sonda → 5b Decisiones y explorador → 6 Página explicativa → 7 Actualización → 8 Presentación
-**Estado**: fases 0–5 y 5b hechas · 6 y 7 sin empezar · Diebold-Mariano e «ingenuo con futuros» hechos (13/11) · fase 6 definida salvo la estética (apartado 7) · siguiente: dirección visual con las skills del usuario.
+**Estado**: fases 0–5 y 5b hechas · 6 y 7 sin empezar · Diebold-Mariano e «ingenuo con futuros» hechos (13/11) · fase 6 definida salvo la estética (apartado 7) · siguiente: aprobar el plan visual (apartado 7.1).
 
 ## 0. Antes de empezar: encargo, estado y decisiones del usuario
 
@@ -183,7 +183,11 @@ Segunda página de `web/` (`explica.html`), enlazada desde Sonda, con lenguaje v
 - **Uso**: solo lectura. Página larga con scroll; sin navegación por pasos ni modo presentación.
 - **Nivel**: solo lenguaje sencillo, para el público no técnico del enunciado. Sin fórmulas ni desplegables técnicos: lo técnico queda en el repositorio y los cuadernos.
 - **3D**: una pieza, en el capítulo 3: el recorrido del estado oculto de la RNN, la LSTM y la GRU entrenadas a lo largo de los 60 días de una ventana real, proyectado a 3D y girable.
-- **Estética**: **Pendiente**. El usuario pasa skills con la dirección visual que quiere.
+- **Estética**: página inmersiva con parallax ligado al scroll (referencias del usuario: Awwwards «30 webs con efecto parallax» y la skill scroll-world).
+- **Mundo** (13/11): construido en código, con capas ilustradas en SVG y el 3D propio; sin vídeo ni imágenes generadas por IA, sin coste ni cuentas externas.
+- **Recorrido** (13/11): el viaje de un barril de Brent, una escena por capítulo: plataforma en el Mar del Norte → petrolero → sala de control → puerto → faro en la niebla.
+- **Buenas prácticas**: se consulta `modern-web-guidance` (`npx`) al construir cada parte; autorizado por el usuario.
+- **Plan visual** (colores, tipografía, composición): **Pendiente** de aprobación.
 
 ### 7.2 Hilo y capítulos
 - **Hilo**: el precio de hoy ya contiene casi todo lo que se sabe. Cada capítulo enseña una parte de cómo se comprobó; al final, lo que sí ayuda: los futuros, lo que el mercado ya sabe y la EIA aún no ha publicado.
