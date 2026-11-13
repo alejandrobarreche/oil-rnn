@@ -1,20 +1,14 @@
 # Guía de uso
 
-**Finalidad**: todos los comandos del proyecto, por fases y por tareas, listos para copiar.
+**Finalidad**: todos los comandos del proyecto, por fases y por tareas.
 **Cuándo usarla**: para instalar, preparar datos, entrenar, evaluar, publicar la web o resolver una tarea concreta.
 **Resultado**: el comando exacto de cada paso y lo que produce.
 **Flujo**: Instalar → Configurar → Datos → Validar y entrenar → Evaluar → Web → Publicar · Calidad y explorador en cualquier momento
 
-## 0. Antes de empezar: cómo leer los comandos
-
-- **Dónde**: los comandos se ejecutan desde la raíz del repositorio.
-- **Bloques**: sin comentarios; los valores que hay que sustituir van entre `<...>`. Se copian y pegan tal cual.
-- **Resumen**: `make help` lista todos los comandos.
-
 ## 1. Instalar: entorno conda, dependencias y PyTorch
 
 ### 1.1 Instalar desde cero
-- **Requisitos**: conda (Miniconda o Miniforge), `make`, Poetry ≥ 2 y Node.js 22 para la web.
+- **Requisitos**: *conda*, `make`, *Poetry* ≥ 2 y *Node.js* 22 para la web.
 
 ```bash
 git clone https://github.com/alejandrobarreche/oil-rnn.git
@@ -27,15 +21,7 @@ make device
 - **`make setup`**: crea el entorno conda e instala todo; muestra cada paso con su tiempo y guarda la salida completa en `.setup.log`.
 - **`make device`**: indica qué hardware ve PyTorch.
 
-### 1.2 Instalar en un entorno ya creado
-
-```bash
-conda env create -f environment.yml
-conda activate oil-rnn
-make install
-```
-
-### 1.3 Elegir la compilación de PyTorch
+### 1.2 Elegir la compilación de PyTorch
 `make install` detecta el hardware:
 
 | Máquina | Compilación |
@@ -44,8 +30,6 @@ make install
 | Windows o Linux con GPU NVIDIA (`nvidia-smi` disponible) | `cuda` |
 | Windows o Linux sin GPU | `cpu` |
 | Linux con GPU AMD | No se detecta; usar `make install-rocm` |
-
-Para forzarla:
 
 ```bash
 make install-mac
@@ -63,15 +47,13 @@ make install-cpu
 make install-rocm
 ```
 
-- **Por qué PyTorch no está en `poetry.lock`**: cada máquina necesita una compilación distinta. Su versión se fija en el `Makefile` y la instala pip después de `poetry install`.
+## 2. Configurar parámetros del proyecto
 
-## 2. Configurar: valores pendientes, provisionales y fijos
+Todos los parámetros están en `configs/config.yaml`. Cada valor es del tipo:
 
-Todos los parámetros están en `configs/config.yaml`. Cada valor es de uno de estos tipos:
-
-- **`PENDIENTE`**: decisión aún no tomada. El comando que la necesita se detiene y dice cuál falta.
-- **`PROVISIONAL`**: valor de partida para una prueba de humo. Funciona, pero no es definitivo.
-- **Sin marca**: valor fijo.
+- **`PENDIENTE`**: Decisión aún no tomada. El comando que la necesita se detiene y dice cuál falta.
+- **`PROVISIONAL`**: Valor de partida para una prueba de humo. Funciona, pero no es definitivo.
+- **`SIN MARCA`**: Valor fijo.
 
 Listar los valores pendientes y provisionales:
 
@@ -92,9 +74,8 @@ make data
 make prepare
 ```
 
-- **`make data`**: descarga en `data/raw/` y registra origen y hashes en `data/raw/_source.json`.
-- **`make prepare`**: crea `data/train`, `data/val`, `data/test` y `data/splits.json`.
-- **`data/raw/`**: no se modifica a mano.
+- **`make data`**: descarga en *data/raw/* y registra origen y hashes en *data/raw/_source.json*.
+- **`make prepare`**: crea *data/train*, *data/val*, *data/test* y *data/splits.json*.
 
 ## 4. Validar y entrenar: walk-forward, calibración y modelo final
 
@@ -103,21 +84,8 @@ make cv NAME=<nombre>
 make train NAME=<nombre> CALIB=<run_id de make cv>
 ```
 
-### 4.1 Validar con `make cv`
-- **Pliegues**: uno por cada bloque de 2 años de train + val (4 pliegues, 2015–2023).
-- **Cada pliegue**: entrena con todo lo anterior a su bloque, purgado `data.horizon` filas, y usa el último año para early stopping.
-- **Métricas**: por pliegue (`fold<k>_*`) y su media (`cv_*`). Con estas métricas se comparan modelos.
-- **Predicciones**: las de los bloques, en `artifacts/<id>/cv_predictions.csv`.
-- **Calibración conforme del intervalo del 80 %**: mide su cobertura corrigiendo cada pliegue solo con los anteriores (`cv_coverage_cqr`). Guarda la corrección de los cuatro bloques en `runs/<id>/conformal.json`.
-
-### 4.2 Entrenar el modelo final con `make train`
-- **Datos**: train + val, por el mismo procedimiento.
-- **`CALIB=<run de make cv>`**: aplica esa corrección, siempre que la configuración coincida.
-- **Después**: se evalúa en test con `make evaluate`.
-
-### 4.3 Runs
-- **Id**: `<AAAAMMDD-HHMMSS>_<nombre>_<máquina>`, que nombra tres carpetas: `runs/<id>`, `artifacts/<id>` y `models/<id>`.
-- **Inmutables**: un run terminado no se reescribe; un cambio es un run nuevo.
+- **`make cv`**: valida con 4 pliegues walk-forward (2015–2023). Guarda las métricas por pliegue y su media.
+- **`make train`**: entrena el modelo final con train + val. Con CALIB=<run de make cv> aplica esa corrección, siempre que la configuración coincida.
 
 ## 5. Evaluar y comparar: test, tabla de runs y MLflow
 
@@ -153,8 +121,8 @@ make web-build
 
 ## 7. Publicar: GitHub Pages y Release de modelos
 
-- **Dirección**: https://alejandrobarreche.github.io/oil-rnn/ (repositorio público, *Settings → Pages → Source: GitHub Actions*).
-- **Modelos**: no están en git, sino en una Release de GitHub.
+- **Repositorio**: https://alejandrobarreche.github.io/oil-rnn/
+- **Modelos**: Están en una Release de GitHub.
 
 ### 7.1 Publicar modelos nuevos
 Si cambian los modelos (`web.models` en `configs/config.yaml`), con una Release nueva:
@@ -169,10 +137,6 @@ git push
 ```
 
 - **`make web-release`**: necesita el CLI `gh` autenticado (`gh auth login`).
-
-### 7.2 Publicar solo cambios de código
-- **Basta con el push**: cada push a `main` que toque `web/` lanza `.github/workflows/pages.yml`.
-- **Qué hace el workflow**: descarga los `h<h>.onnx` de la Release que indica `manifest.json`, comprueba su SHA-256, pasa la prueba de paridad y publica.
 
 ## 8. Calidad: tests, lint, formato y bloqueo
 
@@ -195,18 +159,15 @@ make lock
 
 ## 9. Tareas: casos frecuentes fuera del flujo principal
 
-### 9.0 Entender el proceso: decisiones, cuadernos y explorador
-- **Decisiones**: `docs/DECISIONES.md` reúne cada decisión con su motivo, su comprobación y su valoración.
-- **Cuadernos**: `notebooks/02_proceso_del_dato`, `03_validacion`, `04_modelos` y `05_resultados`. Se abren con el kernel del entorno `oil-rnn`.
-- **Explorador**: las mismas figuras, con controles. Solo lee `data/`, `runs/` y `artifacts/`.
+### 9.0 Entender el proceso
 
 ```bash
 make explore-install
 make explore
 ```
 
-- **`make explore-install`**: instala Streamlit, del grupo opcional `explore`. Solo hace falta una vez.
-- **`make explore`**: abre http://localhost:8501; se para con Ctrl+C.
+- **`make explore-install`**: instala Streamlit
+- **`make explore`**: abre http://localhost:8501
 - **Requisitos**: `make data` y `make prepare` hechos en esa máquina.
 
 ### 9.1 Entrenar con otros parámetros
@@ -220,43 +181,27 @@ make train NAME=<nombre> ARGS="--set train.epochs=<n> --set train.learning_rate=
 ```
 
 ### 9.2 Comparar RNN, LSTM y GRU
-Las tres celdas con los mismos datos, ventana, pliegues y rejilla de hiperparámetros (sección `sweep` de `configs/config.yaml`), un `make cv` por combinación.
-
-Ver las combinaciones pendientes:
 
 ```bash
 make sweep ARGS="--dry-run"
-```
-
-Lanzarlas; si se interrumpe, se repite y salta las terminadas:
-
-```bash
 make sweep
-```
-
-Mejor configuración por red y horizonte (`cv_<sweep.select_by>`), o todas:
-
-```bash
 make compare
 ```
 
-```bash
-make compare ARGS="--all"
-```
+- **`make sweep ARGS="--dry-run"`**: lista las combinaciones que faltan de la rejilla (`sweep` en `configs/config.yaml`).
+- **`make sweep`**: lanza un `make cv` por combinación. Si se corta, se repite y salta las terminadas.
+- **`make compare`**: muestra la mejor configuración por red y horizonte según `cv_<sweep.select_by>`. Con `ARGS="--all"`, todas.
+- **Otra rejilla**: con otro prefijo, por ejemplo `make sweep ARGS="--set seed=7 --set sweep.prefix=g1s7"`.
 
-Contraste de Diebold-Mariano de cada modelo final frente a la persistencia, sobre sus predicciones en test (no decide nada; solo lee `artifacts/*_final-*/predictions_test.csv`):
+Comparar con referencias:
 
 ```bash
 make dm
-```
-
-Referencia «ingenuo con futuros» en los bloques de validación de `make cv` (último spot actualizado con el futuro del Brent de los `cv.naive_futures.lags` días siguientes; no usa test):
-
-```bash
 make naive-futures
 ```
 
-- **Repetir la rejilla con otro valor fijo**: se cambia el prefijo, por ejemplo `make sweep ARGS="--set seed=7 --set sweep.prefix=g1s7"`.
+- **`make dm`**: contraste de Diebold-Mariano de cada modelo final frente a la persistencia, en test. Solo informa; no decide nada.
+- **`make naive-futures`**: referencia «ingenuo con futuros» en los bloques de `make cv`: el último spot actualizado con el futuro del Brent. No usa test.
 
 ### 9.3 Evaluar un run concreto
 
@@ -264,14 +209,15 @@ make naive-futures
 make evaluate RUN=<run_id>
 ```
 
-- **Uso de test**: solo en la evaluación final. Para decidir arquitectura o hiperparámetros se usan las métricas `cv_*` de `make cv`.
+- **Test**: solo para la evaluación final. Para decidir se usan las métricas `cv_*`.
 
 ### 9.4 Trabajar con dos ordenadores
-- **Reparto**: el código se puede cambiar en cualquiera de los dos; los entrenamientos se lanzan en el de GPU.
-- **Commits**: los cambios de código y los runs van en commits separados.
-- **Diferencias entre máquinas** (ruta de datos, nombre del ordenador): van en `.env`; hay una plantilla en `.env.example`.
+- **Código**: se cambia en cualquiera de los dos.
+- **Entrenamientos**: en el de GPU.
+- **Commits**: código y runs van por separado.
+- **Diferencias entre máquinas**: en `.env` (plantilla en `.env.example`).
 
-Tras cambiar código o configuración, en cualquiera de los dos:
+Tras cambiar código, en cualquiera:
 
 ```bash
 make test
@@ -282,7 +228,7 @@ git pull --rebase
 git push
 ```
 
-En el de GPU, tras un entrenamiento, solo se sube el run:
+Tras entrenar, en el de GPU:
 
 ```bash
 git pull --rebase
@@ -293,55 +239,51 @@ git pull --rebase
 git push
 ```
 
-En el otro, para analizar los resultados:
+Para ver los resultados, en el otro:
 
 ```bash
 git pull --rebase
 ```
 
 ### 9.5 Mover pesos entre máquinas
-Los pesos (`models/`) no van a git. En la máquina de origen:
 
 ```bash
 make pack RUN=<run_id>
-```
-
-En la de destino:
-
-```bash
 make unpack ZIP=<run_id>.run.zip
 ```
 
+- **`make pack`**: en la máquina de origen, crea `<run_id>.run.zip` con `runs/`, `artifacts/` y `models/` del run.
+- **`make unpack`**: en la de destino, lo descomprime.
+- **Por qué**: los pesos (`models/`) no van a git.
+
 ### 9.6 Compartir MLflow entre máquinas
-MLflow guarda en `runs/mlflow.db` de cada máquina. Para verlos todos en un único sitio, en la máquina que actúa de servidor:
 
 ```bash
 mlflow server --host 0.0.0.0
 ```
 
-Y en el `.env` de las demás:
-
 ```text
 MLFLOW_TRACKING_URI=http://<ip>:5000
 ```
 
+- **Servidor**: la máquina que reúne los runs lanza `mlflow server`.
+- **Resto**: añaden la línea `MLFLOW_TRACKING_URI` a su `.env`.
+- **Sin servidor**: cada máquina guarda en su `runs/mlflow.db`.
+
 ### 9.7 Añadir una dependencia
-Con el entorno activo:
 
 ```bash
 poetry add <paquete>
 ```
 
-Se suben `pyproject.toml` y `poetry.lock`. En la otra máquina:
-
-```bash
-make install
-```
+- **Antes**: activar el entorno `oil-rnn`.
+- **Después**: subir `pyproject.toml` y `poetry.lock`, y en la otra máquina ejecutar `make install`.
+- **PyTorch**: no se añade así; su versión se fija en el `Makefile`.
 
 ### 9.8 Configurar PyCharm
 *Settings → Python Interpreter → Add Interpreter → Conda Environment →* `oil-rnn`.
 
 ### 9.9 Actualizar la bibliografía
-- **`docs/references.bib`**: se edita a mano; no se usa Zotero.
-- **Añadir un artículo**: se pega su BibTeX (lo da la editorial o doi.org) con la clave `<apellido><año>`, por ejemplo `diebold1995`.
+- **Archivo**: `docs/references.bib`, editado a mano; no se usa Zotero.
+- **Añadir**: pegar el BibTeX (de la editorial o de doi.org) con la clave `<apellido><año>`, por ejemplo `diebold1995`.
 - **Citar**: solo artículos que estén en el archivo.
