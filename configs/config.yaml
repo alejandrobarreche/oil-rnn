@@ -8,18 +8,17 @@
 # Probar un valor sin editar este archivo:  make train NAME=prueba ARGS="--set seed=7"
 
 seed: 42
-task: regression            # classification | regression
-data_kind: time_series       # tabular | time_series
+task: regression
+data_kind: time_series
 
 data:
-  # ── Obtención: make data ────────────────────────────────
   source:
-    type: code                   # fetch() en src/oil_rnn/sources.py
-    filename: dataset.csv        # nombre en data/raw/
+    type: code
+    filename: dataset.csv
     start: "2000-01-01"
-    end: "2026-11-11"            # fecha de la descarga vigente: congela el dataset y los splits · null = hasta hoy
-    calendar: brent              # filas = días con dato de esta columna
-    fred:                        # columna: id de la serie en FRED
+    end: "2026-11-11"
+    calendar: brent
+    fred:
       brent: DCOILBRENTEU        # EIA, Brent spot
       wti: DCOILWTICO            # EIA, WTI spot
       henry_hub: DHHNGSP         # EIA, gas natural Henry Hub
@@ -27,7 +26,7 @@ data:
       usd_per_eur: DEXUSEU
       cny_per_usd: DEXCHUS
       vix: VIXCLS                # volatilidad implícita del S&P 500
-    yahoo_ohlcv:                 # columna: ticker → <columna>_open/high/low/close/volume
+    yahoo_ohlcv:
       brent_fut: BZ=F            # futuro Brent (datos desde ~2007)
       wti_fut: CL=F              # futuro WTI
     yahoo_close:                 # columna: ticker → solo el cierre
@@ -36,14 +35,9 @@ data:
       dollar_index: DX-Y.NYB
 
   # ── Lectura y splits: make prepare ──────────────────────
-  # raw_file: otro.csv           # por defecto, data.source.filename
-  na_values: []                  # textos que significan «sin dato», ej. ["."] en FRED
-  target: brent                  # columna que se predice
-  # Lista de columnas, o all = todas las numéricas (incluido el target). Sin brent_fut_*: solo
-  # existe desde 2007 y su cierre repite el spot. Los datos empiezan en la primera fila completa.
-  features: [brent, wti, henry_hub, ecb_deposit_rate, usd_per_eur, cny_per_usd, vix,
-             wti_fut_open, wti_fut_high, wti_fut_low, wti_fut_close, wti_fut_volume,
-             copper, gold, dollar_index]
+  na_values: []
+  target: brent
+  features: [brent, wti, henry_hub, ecb_deposit_rate, usd_per_eur, cny_per_usd, vix, wti_fut_open, wti_fut_high, wti_fut_low, wti_fut_close, wti_fut_volume, copper, gold, dollar_index]
   time_column: date              # columna de fecha; los datos se ordenan por ella
   fill_missing: ffill            # PROVISIONAL · ffill = repetir el último valor conocido · null = no rellenar
   window: 60                     # PROVISIONAL · pasos de historia que ve la red; 60 frente a 120 se decide en validación
