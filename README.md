@@ -2,7 +2,7 @@
 
 # oil-rnn
 
-**Predicción del precio del Brent con redes recurrentes, ejecutada en el navegador.**
+**Predicción del precio del Brent con redes neuronales recurrentes.**
 
 [![Abrir la aplicación](https://img.shields.io/badge/Abrir_la_aplicación-1f6feb?style=for-the-badge&logo=googlechrome&logoColor=white)](https://alejandrobarreche.github.io/oil-rnn/)
 [![Guía de uso](https://img.shields.io/badge/Guía_de_uso-2da44e?style=for-the-badge&logo=readthedocs&logoColor=white)](docs/USAGE.md)
