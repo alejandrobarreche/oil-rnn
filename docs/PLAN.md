@@ -4,7 +4,7 @@
 **Cuándo usarlo**: al empezar una sesión, antes de una decisión de proyecto y al cerrar cada fase.
 **Resultado**: repositorio, aplicación funcional y 5 diapositivas, entregados el 20/11/2026.
 **Flujo**: Fase 0 Decisiones → 1 Datos → 2 Pipeline → 3 Comparativa → 4 Evaluación → 5 Sonda → 5b Decisiones y explorador → 6 Página explicativa → 7 Actualización → 8 Presentación
-**Estado**: fases 0–5 y 5b hechas · 6 y 7 sin empezar · Diebold-Mariano hecho (13/11) · siguiente: decidir el resto de mejoras de `docs/DECISIONES.md` (apartado 12).
+**Estado**: fases 0–5 y 5b hechas · 6 y 7 sin empezar · Diebold-Mariano e «ingenuo con futuros» hechos (13/11) · siguiente: decidir el resto de mejoras de `docs/DECISIONES.md` (apartado 12).
 
 ## 0. Antes de empezar: encargo, estado y decisiones del usuario
 

@@ -174,6 +174,42 @@ def test_error_y_cobertura_por_año():
     assert table["coverage"].tolist() == [0.5, 0.5]
 
 
+def test_ingenuo_con_futuros(monkeypatch):
+    # Spot 10, 11, 12, …; futuro = spot · 1,01; h = 2. Origen t = fila del objetivo − 2.
+    n, h = 12, 2
+    dev = pd.DataFrame({"t": pd.date_range("2020-01-01", periods=n), "y": 10.0 + np.arange(n)})
+    dev["f"] = dev["y"] * 1.01
+    rows = np.arange(6, n)
+    pred = pd.DataFrame(
+        {
+            "time": dev["t"].iloc[rows].to_numpy(),
+            "y_true": dev["y"].iloc[rows].to_numpy(),
+            "y_pred": dev["y"].iloc[rows].to_numpy() - 1.0,  # error de 1 en todas las filas
+            "y_baseline": dev["y"].iloc[rows - h].to_numpy(),  # persistencia: error de 2
+            "fold": 1,
+        }
+    )
+    run = {"cell": "gru", "horizon": h, "hidden_size": 8, "num_layers": 1, "dropout": 0.0}
+    run |= {"learning_rate": 1e-3, "seed": 42}
+    finals = pd.DataFrame([run | {"run_id": "final-run"}])
+    grid = pd.DataFrame([run | {"run_id": "cv-run"}])
+    monkeypatch.setattr(
+        explore, "runs_table", lambda prefix=None: finals if prefix == "final" else grid
+    )
+    monkeypatch.setattr(explore, "cv_predictions", lambda run_id: pred)
+
+    cfg = _cfg(horizon=h)
+    cfg["cv"]["naive_futures"] = {"column": "f", "lags": [1, 2, 5]}
+    out = explore.futures_naive(cfg, dev).iloc[0]
+    assert out["cv_run"] == "cv-run" and out["n"] == len(rows)
+    assert out["baseline_rmse"] == pytest.approx(2.0)
+    assert out["skill_net"] == pytest.approx(0.5)
+    # L = 1: P[t]·F[t+1]/F[t] = P[t+1] → error 1. L = 2 y L = 5 (limitado a h): error 0
+    assert out["skill_lag1"] == pytest.approx(0.5)
+    assert out["skill_lag2"] == pytest.approx(1.0)
+    assert out["skill_lag5"] == pytest.approx(1.0)
+
+
 @pytest.mark.parametrize("cell", ["rnn", "lstm", "gru"])
 def test_celda_en_numpy_igual_que_pytorch(cell):
     torch.manual_seed(0)

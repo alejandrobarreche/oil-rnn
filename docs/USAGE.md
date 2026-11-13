@@ -250,6 +250,12 @@ Contraste de Diebold-Mariano de cada modelo final frente a la persistencia, sobr
 make dm
 ```
 
+Referencia «ingenuo con futuros» en los bloques de validación de `make cv` (último spot actualizado con el futuro del Brent de los `cv.naive_futures.lags` días siguientes; no usa test):
+
+```bash
+make naive-futures
+```
+
 - **Repetir la rejilla con otro valor fijo**: se cambia el prefijo, por ejemplo `make sweep ARGS="--set seed=7 --set sweep.prefix=g1s7"`.
 
 ### 9.3 Evaluar un run concreto

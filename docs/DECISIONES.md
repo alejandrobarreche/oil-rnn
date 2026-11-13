@@ -2,7 +2,7 @@
 
 **Finalidad**: reunir cada decisión del trabajo con su motivo, su comprobación y su valoración, para poder defenderlo.
 **Cuándo usarlo**: al preparar la exposición, antes de cambiar el método y al comparar con otro trabajo.
-**Resultado**: 43 decisiones valoradas, la comparación con Brentcast, 7 mejoras sin ejecutar y una ejecutada.
+**Resultado**: 43 decisiones valoradas, la comparación con Brentcast, 6 mejoras sin ejecutar y dos ejecutadas.
 **Flujo**: Fuentes → Limpieza → Transformación → Ventanas → Validación → Modelo → Selección → Evaluación → Intervalo → Aplicación
 **Estado**: 22 bien · 17 regular · 4 mal. Describe los runs `g1`, `g1s7`, `g1s123` y `final-*` (12/11/2026).
 
@@ -88,8 +88,13 @@
 - **Qué**: la fila `t` supone conocidas todas las columnas del día `t`.
 - **Por qué**: sin motivo registrado. Es el planteamiento del enunciado («precio futuro = precio de hoy»).
 - **Alternativa**: Brentcast usa cada dato solo cuando ya estaba publicado (Brent: 7 días hábiles).
-- **Comprobado**: no hay fuga dentro del experimento: predicción y referencia parten del mismo dato. No se midió el efecto en uso real.
-- **Valoración**: Mal para el uso real, bien para la comparación. La predicción «a 5 días» parte de un precio de hace 8 días naturales.
+- **Comprobado**: no hay fuga dentro del experimento: predicción y referencia parten del mismo dato.
+- **Efecto en uso real** (13/11, `make naive-futures`): con L días hábiles de retraso, al pronosticar de verdad ya se conoce el futuro del Brent (`brent_fut_close`) hasta t + L. La regla «ingenuo con futuros», P[t]·F[t+L]/F[t] con L limitado a h, sin red ni entrenamiento, mejora así el RMSE de la persistencia en los 4 bloques de validación (2015–2023, 2016 pronósticos, mismas filas que el run de `make cv` de cada modelo elegido):
+
+''' + TABLE + '''
+- **Cómo leerla**: mejora = 1 − RMSE / RMSE de la persistencia. «Red, mismas filas» es la mediana del run `g1` con semilla 42, sin calibrar, con el RMSE de los 4 bloques juntos; por eso no coincide con la Tabla 1 del README (media por pliegue y por semilla). La regla gana a la persistencia en los 4 bloques por separado, en todos los horizontes y con todos los retrasos. Con L ≥ h el objetivo ya está casi observado en el futuro: a 5 días, L = 5 y L = 7 dan lo mismo.
+- **Límites**: el retraso real de la EIA no se mide aquí (los 7 días hábiles son la cifra de Brentcast); por eso se da la curva. El futuro continuo de Yahoo salta al cambiar de contrato y su cierre no es a la misma hora que el spot (correlación de los rendimientos diarios: 0,77); los dos efectos van incluidos en la cifra.
+- **Valoración**: Mal para el uso real, bien para la comparación. La predicción «a 5 días» parte de un precio de hace 8 días naturales, y con solo 1 día de futuros conocido una regla sin red gana a la persistencia un 8,5 % a 5 días, más que cualquier red.
 
 ### 2.5 WTI negativo: suelo de 1 $/barril
 - **Qué**: `data.inputs.floor` en WTI y sus futuros.
@@ -407,6 +412,7 @@ La columna «Mejor» es criterio propio: gana quien se acerca más al uso real o
 - **Su origen**: actualizar el último spot con el futuro logra cerca del 20 % sin red. Sus redes quedan un 2 % por debajo de esa regla.
 - **Qué significa**: la mejora viene de conocer el mercado de los días que la EIA aún no ha publicado, no de la red.
 - **No son comparables**: él predice el spot desde un dato con 7 días de retraso; aquí se predice desde el último dato.
+- **Medido aquí** (13/11, apartado 2.4): la misma regla en nuestros bloques de validación mejora a la persistencia a 5 días un 8,5 % con 1 día de futuros y un 31 % con 3. Es coherente con su explicación; su +19 % no se reproduce porque su objetivo está a h días del momento del pronóstico y el nuestro a h días del último dato.
 
 ### 11.2 En qué coinciden los dos trabajos
 - **3 meses y 1 año**: ninguna red mejora de forma fiable a la referencia.
@@ -414,11 +420,11 @@ La columna «Mejor» es criterio propio: gana quien se acerca más al uso real o
 - **2026**: la cobertura del intervalo cae.
 - **Selección**: los dos declaran el riesgo de elegir entre muchos experimentos con la misma validación.
 
-## 12. Mejoras valoradas: una ejecutada
+## 12. Mejoras valoradas: dos ejecutadas
 
 | Mejora | Pregunta que responde | Coste | Cómo se comprobaría |
 |---|---|---|---|
-| Referencia «ingenuo con futuros» | ¿Cuánto del error a 5 días es retraso de publicación? | Bajo: sin entrenar, datos desde 2007 | RMSE en los 4 bloques frente a la persistencia |
+| Referencia «ingenuo con futuros» | ¿Cuánto del error a 5 días es retraso de publicación? | Bajo: sin entrenar, datos desde 2007 | **Hecho** (13/11, 2.4): a 5 días, +8,5 % con 1 día de futuros y +31 % con 3; a 63 y 252 días, menos del 5 % |
 | Datos «as-of» con `brent_fut_*` | ¿Mejora la red con el mercado de los últimos días? | Alto: splits, rejilla y web nuevos | `cv_pinball` y `skill` en validación |
 | Indicador de disponibilidad | ¿Empeora `ffill` las entradas? | Medio: `features.py` y `model.ts` | Mismo run con y sin indicador, 3 semillas |
 | Cesta OPEP | ¿Aporta la variable que falta? | Medio: descarga nueva | Mismo run con y sin ella |

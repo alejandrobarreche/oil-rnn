@@ -137,7 +137,7 @@ H0: la red y la persistencia tienen el mismo error esperado. Estadístico > 0: l
 
 **Conclusión por horizonte**
 
-- **5 días.** La red queda a un 3,6 % de la persistencia en RMSE. Su intervalo cubre el 78 % de los casos, cerca del 80 % nominal, pero es tan bueno como el de los cuantiles históricos, no mejor. En validación las tres celdas no se distinguían: la diferencia de pinball era menor que la variación entre semillas.
+- **5 días.** La red queda a un 3,6 % de la persistencia en RMSE. En validación, una regla sin red que actualiza el último spot con lo que se ha movido el futuro del Brent desde entonces (en uso real ya se conoce, porque la EIA publica el spot con retraso) mejora a la persistencia un 8,5 % con 1 día de futuros y un 31 % con 3 (`make naive-futures`, `docs/DECISIONES.md` 2.4). Buena parte de la dificultad a 5 días es ese retraso, no la red. Su intervalo cubre el 78 % de los casos, cerca del 80 % nominal, pero es tan bueno como el de los cuantiles históricos, no mejor. En validación las tres celdas no se distinguían: la diferencia de pinball era menor que la variación entre semillas.
 - **21 días.** Sin mejora ni en validación ni en test.
 - **63 días.** En validación mejoraba a la persistencia en las 3 semillas, pero la mejora venía sobre todo del pliegue 2021–2023 (+21 %). En test la red predice de media una subida del 11 % a 63 días, cuando la real fue del 1,7 %, y amplifica los movimientos recientes (Figura 3). La dirección sí lleva algo de información: acierta el signo del cambio en el 60 % de los días y la correlación entre el rendimiento previsto y el real es de 0,27. Lo que falla es la magnitud.
 - **252 días.** Peor que la persistencia en validación y en test. Cada bloque de 2 años contiene unos 2 pronósticos independientes a 252 días, así que la muestra no permite estimar bien el error.
@@ -214,6 +214,7 @@ oil-rnn/
 - [x] Decisiones documentadas, cuadernos del proceso y explorador local
 - [x] Rediseño de la aplicación y portal con dinero ficticio
 - [x] Contraste de Diebold-Mariano frente a la persistencia
+- [x] Referencia «ingenuo con futuros» en validación
 - [ ] Página explicativa
 - [ ] Actualización de datos y reentrenamiento periódicos
 

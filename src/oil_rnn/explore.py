@@ -10,8 +10,10 @@ que el entrenamiento (data.py, features.py) y lee los resultados que ya están g
     runs_table        una fila por run con su configuración y sus métricas
     cell_trace        una RNN, LSTM o GRU paso a paso en NumPy (estados y puertas)
     significance      Diebold-Mariano de cada modelo final frente a la persistencia en test
+    futures_naive     persistencia actualizada con el futuro del Brent, en los bloques de make cv
 
-    make dm           imprime `significance()`
+    make dm             imprime `significance()`
+    make naive-futures  imprime `futures_naive()`
 """
 
 from __future__ import annotations
@@ -23,7 +25,14 @@ import numpy as np
 import pandas as pd
 import yaml
 
-from .data import feature_columns, fold_boundaries, raw_path, read_table, training_bounds
+from .data import (
+    feature_columns,
+    fold_boundaries,
+    load_train_val,
+    raw_path,
+    read_table,
+    training_bounds,
+)
 from .features import Preprocessor
 from .metrics import diebold_mariano
 from .paths import RUNS_DIR, run_paths
@@ -324,6 +333,56 @@ def significance(prefix: str = "final") -> pd.DataFrame:
     return pd.DataFrame(rows)
 
 
+def futures_naive(
+    cfg: dict, dev: pd.DataFrame | None = None, prefix: str = "final"
+) -> pd.DataFrame:
+    """Referencia «ingenuo con futuros» en los bloques de validación de `make cv` (test fuera).
+
+    Si el spot se publica con L días hábiles de retraso, al hacer de verdad el pronóstico ya se
+    conoce el futuro F hasta t + L. La regla actualiza el último spot publicado con ese
+    movimiento: P[t]·F[t+L]/F[t], con L limitado a h. L = 0 es la persistencia.
+    Usa las mismas filas que el run de make cv (rejilla g1, semilla 42) de cada modelo `prefix`.
+    Una fila por horizonte: skill_lag<L> = 1 − RMSE de la regla / RMSE de la persistencia, y
+    skill_net, lo mismo para la red de ese run (mediana, sin calibrar), sobre las mismas filas."""
+    dcfg, ncfg = cfg["data"], cfg["cv"]["naive_futures"]
+    dev = load_train_val() if dev is None else dev
+    position = pd.Series(range(len(dev)), index=pd.to_datetime(dev[dcfg["time_column"]]))
+    spot = dev[dcfg["target"]].to_numpy(np.float64)
+    fut = dev[ncfg["column"]].to_numpy(np.float64)
+    grid = runs_table("g1")
+    grid = grid[grid["seed"] == 42]
+
+    def rmse(err) -> float:
+        return float(np.sqrt(np.mean(np.square(err))))
+
+    rows = []
+    for _, run in runs_table(prefix).sort_values("horizon").iterrows():
+        h = int(run["horizon"])
+        cv_run = same_config(grid, run).iloc[0]["run_id"]
+        pred = cv_predictions(cv_run)
+        origin = position.loc[pred["time"]].to_numpy() - h
+        if not np.allclose(spot[origin], pred["y_baseline"]):
+            raise ValueError(f"{cv_run}: y_baseline no coincide con {dcfg['target']} en t − h")
+        if np.isnan(fut[origin]).any():
+            raise ValueError(f"{ncfg['column']} vacío en algún origen de {cv_run}")
+        y = pred["y_true"].to_numpy()
+        base = rmse(y - spot[origin])
+        row = {
+            "horizon": h,
+            "cell": run["cell"],
+            "n": len(pred),
+            "baseline_rmse": base,
+            "skill_net": 1 - rmse(y - pred["y_pred"]) / base,
+        }
+        for lag in ncfg["lags"]:
+            k = min(int(lag), h)
+            guess = spot[origin] * fut[origin + k] / fut[origin]
+            row[f"skill_lag{lag}"] = 1 - rmse(y - guess) / base
+        row["cv_run"] = cv_run
+        rows.append(row)
+    return pd.DataFrame(rows)
+
+
 # ── Las celdas, paso a paso ────────────────────────────────
 def _sigmoid(x: np.ndarray) -> np.ndarray:
     return 1.0 / (1.0 + np.exp(-x))
@@ -386,5 +445,17 @@ def count_params(cell: str, n_inputs: int, hidden: int, layers: int = 1, n_outpu
 
 
 if __name__ == "__main__":
+    import argparse
+
+    from .config import load_config
+
+    parser = argparse.ArgumentParser(description="Vistas de explore.py en la terminal")
+    parser.add_argument("view", choices=["dm", "naive-futures"])
+    view = parser.parse_args().view
+    table = (
+        significance().drop(columns="run_id")
+        if view == "dm"
+        else futures_naive(load_config()).drop(columns="cv_run")
+    )
     with pd.option_context("display.width", 200, "display.max_columns", None):
-        print(significance().drop(columns="run_id").to_string(index=False, float_format="%.4g"))
+        print(table.to_string(index=False, float_format="%.4g"))

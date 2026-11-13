@@ -77,6 +77,9 @@ cv:                              # validación walk-forward sobre train + val (m
   folds: 4                       # bloques de evaluación consecutivos que terminan al final de val
   block: 504                     # filas por bloque (≈ 2 años: 2 pronósticos independientes a 252 días)
   holdout: 252                   # últimas filas de cada entrenamiento para early stopping (≈ 1 año); purga = data.horizon
+  naive_futures:                 # referencia «ingenuo con futuros» en los bloques (make naive-futures): P[t]·F[t+L]/F[t]
+    column: brent_fut_close      # futuro con el que se actualiza el último spot publicado
+    lags: [1, 2, 3, 5, 7]        # retrasos de publicación probados, en días hábiles; se limitan a h
 
 sweep:                           # comparativa de la fase 3 (make sweep · make compare): un make cv por combinación
   prefix: g1                     # va al principio del nombre de cada run; otro prefijo = otra rejilla
