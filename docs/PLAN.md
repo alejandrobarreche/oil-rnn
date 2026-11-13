@@ -4,7 +4,7 @@
 **Cuándo usarlo**: al empezar una sesión, antes de una decisión de proyecto y al cerrar cada fase.
 **Resultado**: repositorio, aplicación funcional y 5 diapositivas, entregados el 20/11/2026.
 **Flujo**: Fase 0 Decisiones → 1 Datos → 2 Pipeline → 3 Comparativa → 4 Evaluación → 5 Sonda → 5b Decisiones y explorador → 6 Página explicativa → 7 Actualización → 8 Presentación
-**Estado**: fases 0–5 y 5b hechas · 6 y 7 sin empezar · Diebold-Mariano e «ingenuo con futuros» hechos (13/11) · fase 6 definida salvo la estética (apartado 7) · siguiente: aprobar el plan visual (apartado 7.1).
+**Estado**: fases 0–5 y 5b hechas · 6 y 7 sin empezar · Diebold-Mariano e «ingenuo con futuros» hechos (13/11) · fase 6 definida salvo la estética (apartado 7) · siguiente: construir la página explicativa (apartado 7).
 
 ## 0. Antes de empezar: encargo, estado y decisiones del usuario
 
@@ -187,7 +187,8 @@ Segunda página de `web/` (`explica.html`), enlazada desde Sonda, con lenguaje v
 - **Mundo** (13/11): construido en código, con capas ilustradas en SVG y el 3D propio; sin vídeo ni imágenes generadas por IA, sin coste ni cuentas externas.
 - **Recorrido** (13/11): el viaje de un barril de Brent, una escena por capítulo: plataforma en el Mar del Norte → petrolero → sala de control → puerto → faro en la niebla.
 - **Buenas prácticas**: se consulta `modern-web-guidance` (`npx`) al construir cada parte; autorizado por el usuario.
-- **Plan visual** (colores, tipografía, composición): **Pendiente** de aprobación.
+- **Pantallas** (13/11): solo escritorio, de 14″ a 27″; sin versión móvil. La composición no limita el ancho máximo: ocupa toda la pantalla.
+- **Plan visual** (aprobado el 13/11): el mar del recorrido es la serie del Brent y cada suceso es una boya; luz del amanecer a la noche (plataforma, petrolero, sala de control, puerto al atardecer, faro en la niebla). Colores con función fija: precio real azul Mar del Norte `#2C5566` (espuma `#EEF3F1` en escenas oscuras), red y su rango luz de sodio `#F2B33D`, «el precio de hoy» gris niebla `#8C97A0`, futuros verde de estribor `#2E9E6B`. Tipografía: Big Shoulders (títulos y cifras) y Literata (lectura). Parallax con `view-timeline` bajo `@supports`, respaldo con `IntersectionObserver` y escenas quietas con movimiento reducido.
 
 ### 7.2 Hilo y capítulos
 - **Hilo**: el precio de hoy ya contiene casi todo lo que se sabe. Cada capítulo enseña una parte de cómo se comprobó; al final, lo que sí ayuda: los futuros, lo que el mercado ya sabe y la EIA aún no ha publicado.
