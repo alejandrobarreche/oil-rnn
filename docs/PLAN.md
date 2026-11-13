@@ -21,7 +21,7 @@
 | 3 · Comparativa | Hecha: rejilla `g1` (432 runs de cv) y finalistas con 3 semillas | `runs/*_g1-*`, `runs/*_g1s7-*`, `runs/*_g1s123-*`, `make compare` |
 | 4 · Evaluación final | Hecha: ninguna red supera a la persistencia en test | runs `final-*`, tablas en `README.md` |
 | 5 · Sonda | Hecha y publicada en https://alejandrobarreche.github.io/oil-rnn/ (Release `model-v1`) | `web/`, `make export-web` |
-| 5b · Decisiones y explorador | Hecha; falta que el usuario ejecute los cuadernos y `make explore` | `docs/DECISIONES.md`, `notebooks/02`–`05`, `app/explorador.py` |
+| 5b · Decisiones y explorador | Hecha; cuadernos ejecutados (13/11); falta la revisión visual de `make explore` | `docs/DECISIONES.md`, `notebooks/02`–`05`, `app/explorador.py` |
 | 6 · Página explicativa | Sin empezar | — |
 | 7 · Actualización y reentrenamiento | Sin empezar | — |
 

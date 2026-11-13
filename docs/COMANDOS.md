@@ -3,7 +3,7 @@
 **Finalidad**: registro de los comandos que el usuario ejecuta en cada máquina, con su resultado.
 **Cuándo usarlo**: cada vez que Claude da un comando al usuario y cuando el usuario devuelve la salida.
 **Resultado**: mensajes en orden cronológico, cada uno con máquina, estado, bloques para copiar y resultado.
-**Estado**: mensaje 15 ⏳; el resto ✅.
+**Estado**: todos ✅.
 
 ## 0. Antes de empezar: cómo se lee y se escribe este chat
 
@@ -346,7 +346,7 @@ make explore
 - **Qué revisar**: las seis páginas del menú lateral. Pásale a Claude la salida de `make test` y lo que falle o no se entienda.
 - **Resultado (12/11)**: lock regenerado (solo añade Streamlit 1.67.0 y 7 dependencias; ninguna versión existente cambia) y `make test` con 62 pasados, incluidas las seis páginas del explorador. Falta tu revisión visual de `make explore`.
 
-## 15. Mac · 12/11/2026 · ⏳: ejecutar los cuadernos 02 a 05
+## 15. Mac · 12/11/2026 · ✅: ejecutar los cuadernos 02 a 05
 
 - **Dónde**: PyCharm o Jupyter, con el kernel del entorno `oil-rnn`. Orden: 02, 03, 04 y 05.
 - **Comprobado por Claude**: el código de las celdas se ejecutó como script sin errores. Los cuadernos están sin salidas.
@@ -358,8 +358,9 @@ python -m jupyter nbconvert --to notebook --execute --inplace notebooks/02_proce
 
 - **Si `jupyter` no está instalado**: ábrelos desde PyCharm; no hace falta instalar nada.
 - **Qué revisar**: que cada figura se entiende con su texto. Pásale a Claude las dudas.
+- **Resultado (13/11)**: cuadernos 02–05 ejecutados por el usuario y confirmados en `37d913a`; todas las celdas de código tienen salida.
 
-## 16. Mac · 12/11/2026 · ⏳: descargar los modelos ONNX para `make web-dev`
+## 16. Mac · 12/11/2026 · ✅: descargar los modelos ONNX para `make web-dev`
 
 - **Causa comprobada por Claude**: `web/public/model/` tiene `manifest.json` y `examples.json`, pero no `h5.onnx`, `h21.onnx`, `h63.onnx` ni `h252.onnx` (están fuera de git; los crea `make export-web` en Windows). Vite responde a `model/h5.onnx` con `index.html` (200, `text/html`) y ONNX Runtime no puede leerlo, así que la página no carga.
 - **Arreglo**: bajar los cuatro modelos de la Release `model-v1`, igual que hace `pages.yml`. `gh` no está instalado en el Mac; se usa `curl`.
@@ -372,3 +373,4 @@ make web-dev
 
 - **Si `curl` da 404**: la Release no existe o el repo es privado. Alternativa: copiar los `web/public/model/*.onnx` de Windows al Mac.
 - **Qué pasarle a Claude**: la salida de `ls` y lo que muestre la consola del navegador si sigue fallando.
+- **Resultado (13/11)**: los cuatro ONNX están en el Mac y su SHA-256 coincide con `manifest.json`; `make web-test` 25/25, con la paridad con Python en los 4 horizontes.
