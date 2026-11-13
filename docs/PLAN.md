@@ -1,239 +1,70 @@
 # Plan del proyecto oil-rnn
 
-**Finalidad**: única versión del plan del Caso III: fases, decisiones tomadas y orden de recorte.
-**Cuándo usarlo**: al empezar una sesión, antes de una decisión de proyecto y al cerrar cada fase.
-**Resultado**: repositorio, aplicación funcional y 5 diapositivas, entregados el 20/11/2026.
-**Flujo**: Fase 0 Decisiones → 1 Datos → 2 Pipeline → 3 Comparativa → 4 Evaluación → 5 Sonda → 5b Decisiones y explorador → 6 Página explicativa → 7 Actualización → 8 Presentación
-**Estado**: fases 0–5 y 5b hechas · 6 y 7 sin empezar · Diebold-Mariano e «ingenuo con futuros» hechos (13/11) · fase 6 definida salvo la estética (apartado 7) · siguiente: construir la página explicativa (apartado 7).
+## Resumen
 
-## 0. Antes de empezar: encargo, estado y decisiones del usuario
+Entrega el 20/11/2026: repositorio, aplicación y 5 diapositivas. Están hechas la comparativa, la evaluación en test y Sonda. Faltan la página explicativa y la actualización diaria.
 
-### 0.1 Encargo
-- **Qué pide el enunciado**: comparar RNN simple, LSTM y GRU para predecir el Brent a 5, 63 y 252 días hábiles, con incertidumbre, frente a persistencia.
-- **Aplicación**: integrar el mejor modelo en una aplicación que calcule, explique y se actualice.
-- **Entregables**: repositorio, aplicación funcional y 5 diapositivas.
+Sistema de diseño: [Sonda](https://claude.ai/artifact/GJGpkQEKJT4ZGuDxg49E3H).
 
-### 0.2 Estado de cada fase (12/11/2026, punto de partida de la próxima sesión)
+## Fases
 
-| Fase | Estado | Dónde está |
-|---|---|---|
-| 0–2 · Decisiones, datos, pipeline | Hecha | `configs/config.yaml`, `src/oil_rnn/` |
-| 3 · Comparativa | Hecha: rejilla `g1` (432 runs de cv) y finalistas con 3 semillas | `runs/*_g1-*`, `runs/*_g1s7-*`, `runs/*_g1s123-*`, `make compare` |
-| 4 · Evaluación final | Hecha: ninguna red supera a la persistencia en test | runs `final-*`, tablas en `README.md` |
-| 5 · Sonda | Hecha y publicada en https://alejandrobarreche.github.io/oil-rnn/ (Release `model-v1`) | `web/`, `make export-web` |
-| 5b · Decisiones y explorador | Hecha; cuadernos ejecutados (13/11); falta la revisión visual de `make explore` | `docs/DECISIONES.md`, `notebooks/02`–`05`, `app/explorador.py` |
-| 6 · Página explicativa | Sin empezar | — |
-| 7 · Actualización y reentrenamiento | Sin empezar | — |
+| Fase | Estado | Resultado |
+| --- | --- | --- |
+| 0–2. Decisiones, datos y pipeline | Hecha | Configuración fijada y código de entrenamiento |
+| 3. Comparar RNN, LSTM y GRU | Hecha | 432 entrenamientos y finalistas con 3 semillas |
+| 4. Evaluar en test | Hecha | Ninguna red mejora a la persistencia |
+| 5. Sonda | Hecha | Publicada en [GitHub Pages](https://alejandrobarreche.github.io/oil-rnn/), con portal de dinero ficticio |
+| 5b. Documento de decisiones | Hecha | Falta revisar a mano el explorador |
+| 6. Página explicativa | Sin empezar | Definida, sin plan visual aprobado |
+| 7. Actualización diaria | Sin empezar | — |
+| 8. Presentación | La prepara el usuario | — |
 
-- **Orden acordado con el usuario** (12/11): la fase 5b va antes que las fases 6 y 7; el rediseño de Sonda, en otra sesión.
-- **Fase 5b**: documentar primero y decidir después. Las mejoras de `docs/DECISIONES.md` (apartado 12) no se ejecutan sin decisión del usuario.
-- **Figuras para la fase 6**: las de `src/oil_rnn/explore_plots.py` cubren los capítulos 1 a 5 de la página explicativa.
+## Pendientes
 
-### 0.3 Decisiones del usuario
-- **Aplicación**: web estática + GitHub Actions para datos y reentrenamiento.
-  **Pendiente**: confirmar con el profesor; el enunciado dice «aplicación en Python».
-- **Rúbrica**: se asume la anterior (Repositorio 10 · Red 10 · Modelo y test 15 · App 5 · Resultados 20 · PPT 10 · Oral 30). No se sabe cómo se medirá «Resultados».
-- **Alcance**: Brent, horizontes 5, 21, 63 y 252 días (21 es un extra).
-- **Web**: dos páginas independientes. **Sonda** (predicción, sistema de diseño existente) y **página explicativa** (animación, 3D), donde va lo diferencial.
-- **Recursos**: GPU propia disponible. Presentación y oral: los prepara el usuario.
+- [ ] Ver en pantalla las vistas de 1 mes, 3 meses y 1 año de Sonda.
+- [ ] Añadir a la bibliografía la referencia de la calibración conforme.
+- [ ] Escribir la causa del suceso de 2026.
+- [ ] Averiguar cómo se puntúa «Resultados» en la rúbrica.
 
-### 0.4 Fallos de breast-cnn que corrige este plan
+## Página explicativa
 
-| Fallo en breast-cnn | Equivalente aquí | Medida en este plan |
-|---|---|---|
-| Modelo colapsado en la respuesta segura («no pCR») | Red que devuelve «cambio ≈ 0», es decir, persistencia disfrazada | Toda métrica junto a persistencia, por horizonte; se declara en qué horizontes no hay mejora |
-| Umbral no pensado para el objetivo | Intervalos no calibrados | Cuantiles + calibración en validación; cobertura del 80 % medida |
-| AUC de test casi al azar tras buen proceso | Buena validación en un tramo, mala en otro | Walk-forward con varios pliegues y error por régimen antes de tocar test |
-| Menos de 10 épocas | Early stopping prematuro | `train.min_epochs: 10` |
-| (Acierto) capacidad elegida con datos | — | Se mantiene: tamaños comparados por brecha train/val |
+Recorrido en página web donde contamos:
+1. Contexto y objetivo del proyecto.
+2. Qué es Brent y sucesos históricos que afectan al precio.
+3. Datos importantes para entender los movimientos del precio de mercado.
+4. Soluciones posibles para predecir el precio del Brent y cómo se comparan.
+5. Definir la solución elegida y detallar cómo funciona.
+6. Explicar la arquitectura de la red elegida y cómo se entrena.
+7. Mostrar la predicción de Sonda y cómo se actualiza cada día.
+8. Conclusiones y posibles mejoras.
 
-## 1. Fase 0 · Enunciado y decisiones (día 1): valores de configuración fijados
+### Pendiente
+- [ ] Definir el plan visual de la página.
+- [ ] Hacer la página web y publicarla en GitHub Pages.
 
-1. Guardar la transcripción ya obtenida en `docs/assignment/ENUNCIADO.md`.
-2. Resolver los `PENDIENTE` de `configs/config.yaml`. La aprobación de este plan fija la propuesta, salvo lo marcado «fase 1»:
+## Actualización diaria
 
-| Clave | Propuesta | Motivo |
-|---|---|---|
-| `data.target` | `brent` | Enunciado |
-| `data.time_column` | `date` | Columna que escribe `sources.fetch` |
-| `data.horizon` | 5, 21, 63, 252: un modelo por horizonte (`--set data.horizon=N`) | Estrategia directa; el enunciado pide parámetros y tiempo por red y horizonte |
-| `data.target_mode` | `log_return` (nuevo): log(P[t]/P[t−h]) | El precio va de ~20 a ~140 $; el cambio relativo es comparable entre épocas |
-| `data.window` | 60 de partida; 60 frente a 120 se decide en validación | Ejemplo del enunciado |
-| `data.val_size` / `test_size` | 0,15 / 0,15 (test ≈ últimos 3,8 años) | Test necesita 3–4 pronósticos independientes a 252 días |
-| `data.source.end` | `2026-11-11` (fecha de la descarga) | Congela el dataset: los splits no se mueven entre runs |
-| `data.features` | Todas salvo `brent_fut_*`; los datos empiezan en la primera fila completa (~ago. 2000) | `brent_fut` solo existe desde 2007 (sin fuente gratuita anterior) y su cierre repite el spot. Experimento opcional: con datos desde 2007, con y sin `brent_fut_*` |
+La pide el enunciado y está sin empezar.
 
-## 2. Fase 1 · Datos y EDA, solo train (días 1–2): features y transformaciones
+- [ ] Descargar los datos cada día con GitHub Actions y publicarlos en Sonda.
+- [ ] Reentrenar el modelo elegido, a mano o cada cierto tiempo, y publicar la nueva versión.
+- [ ] Añadir a `CLAUDE.md` la regla de GitHub Actions.
+- [ ] Poner al día `README.md` y `docs/USAGE.md`.
 
-- **Ejecución**: `make prepare` y `notebooks/01_eda.ipynb` (los ejecuta el usuario).
-- **Preguntas**: huecos por columna y fecha de inicio útil (`brent_fut` empieza ~2007); tratamiento del WTI negativo (20/04/2020); estacionariedad de niveles frente a rendimientos; autocorrelación de rendimientos a cada horizonte; volatilidad por régimen.
-- **Salida**: lista de `data.features` y transformaciones (rendimientos logarítmicos, volatilidad móvil) en `features.py`, replicadas después en `web/src/model.ts`.
-- **Cesta OPEP**: sin descarga automática. Se omite y se dice en el README, salvo que el usuario aporte un CSV en `data/external/`.
-- **Sucesos del ciclo económico** (2008, 2014–16, 2020, 2022, 2026): el usuario aporta las fuentes; no se redacta ninguna causa sin entrada en `docs/references.bib`.
+## Si falta tiempo
 
-## 3. Fase 2 · Pipeline de modelado (días 2–3): cambios mínimos sobre lo existente
+Se recorta en este orden:
 
-- **`src/oil_rnn/features.py`** — `Preprocessor`: `target_mode: log_return`, features derivadas, `n_outputs` = número de cuantiles.
-- **`src/oil_rnn/model.py`** — `RNNRegressor`: cabeza con 3 salidas (cuantiles 0,1 · 0,5 · 0,9), pérdida *pinball*, `min_epochs`. Registrar número de parámetros y tiempo de entrenamiento con `run.log_metrics`.
-- **`src/oil_rnn/data.py` + `cv.py`** — `make cv`: 4 pliegues *walk-forward* de ventana creciente sobre train+val, con bloques de evaluación de 2 años (2015–2023). Purga de `horizon` filas en cada frontera y *early stopping* con el último año de cada entrenamiento; test queda fuera.
-- **`make train`**: modelo final con train+val por el mismo procedimiento.
-- **`src/oil_rnn/metrics.py`** — `compute_metrics`: añadir MSE, acierto de dirección, cobertura del 80 %, anchura del intervalo y *pinball*. Referencia de intervalo: cuantiles históricos del rendimiento a h días en train.
-- **Calibración conforme** de los cuantiles (CQR, corrección relativa en log) con las predicciones de los 4 bloques de `make cv`. Su cobertura se mide corrigiendo cada pliegue solo con los anteriores. `make train CALIB=<run de cv>` la guarda con el modelo (exige la misma configuración).
-  **Pendiente**: añadir la referencia de CQR a `docs/references.bib`.
-- **Tests nuevos** en `tests/`: ningún target de train posterior al fin de train; ninguna ventana usa filas posteriores a t−h; cuantiles no cruzados; inversa de `log_return`.
+1. Probar el futuro del Brent como entrada.
+2. Probar una ventana de 120 días.
+3. Reentrenar cada cierto tiempo (queda a mano).
+4. Dejar los capítulos 4 y 5 de la página explicativa como figuras fijas.
 
-## 4. Fase 3 · Comparativa RNN · LSTM · GRU (días 3–5, GPU): misma rejilla para las tres
+Nunca se recorta: la comparativa completa, la evaluación en test y Sonda con los horizontes del enunciado.
 
-- **Condiciones iguales**: mismos datos, ventana, pliegues y la misma rejilla de hiperparámetros y semillas para las tres celdas (tamaño oculto, capas, dropout, tasa de aprendizaje).
-- **Rejilla** (decidida el 11/11; `sweep` en `configs/config.yaml`, `make sweep`): oculto {32, 64, 128, 256} × [1 capa | 2 capas, dropout 0 | 2 capas, dropout 0,3] × lr {1e-3, 3e-4, 1e-4}.
-- **Tamaño**: 36 configuraciones × 3 celdas × 4 horizontes = 432 runs de `make cv`, semilla 42, 60 épocas con paciencia 10. Ventana 60 fija en la rejilla.
-- **Criterio de selección**: `cv_pinball` (media de los 4 pliegues).
-- **Capacidad**: elegida por brecha train/val, como en el trabajo anterior.
-- **Estabilidad**: finalistas con 3 semillas.
-- **Ejecución**: el usuario lanza los entrenamientos con los comandos exactos; cada uno es un run (`runs/<id>/`).
-- **Salida**: tabla red × horizonte con MAE, RMSE, mejora frente a persistencia, parámetros y tiempo, todo en validación.
+## Al cerrar cada fase
 
-## 5. Fase 4 · Selección y evaluación final (día 5): ninguna red supera a la persistencia en test
-
-### 5.1 Elegir el modelo por horizonte con validación
-- **Objetivo**: conclusión escrita de dónde aporta valor y dónde no (previsiblemente poco a 252 días; se comprueba, no se supone).
-- **Regla** (decidida el 12/11, antes de mirar test): en cada horizonte, la red con menor `cv_pinball` medio en 3 semillas (42, 7, 123), con la configuración ganadora de la rejilla `g1`.
-- **Modelo final**: semilla 42 y la calibración del run de cv de esa configuración.
-
-| h | Red | Configuración (oculto, capas, dropout, lr) | Calibración (`CALIB`) | Conclusión en cv |
-|---|---|---|---|---|
-| 5 | GRU | 256, 1, 0, 1e-3 | `20261112-004459_g1-gru-h5-…` | Intervalo mejor que el histórico; predicción puntual sin mejora; las tres celdas empatan |
-| 21 | LSTM | 64, 1, 0, 1e-4 | `20261111-232334_g1-lstm-h21-…` | Sin mejora sobre la persistencia |
-| 63 | GRU | 128, 2, 0,3, 1e-4 | `20261112-012653_g1-gru-h63-…` | `skill_rmse` +4,8 % ± 0,6 % en 3 semillas |
-| 252 | RNN | 256, 2, 0,3, 1e-4 | `20261111-225050_g1-rnn-h252-…` | Peor que la persistencia (−4,3 %); intervalo sobrecubre (90 %) |
-
-### 5.2 Evaluar una sola vez en test
-- **Procedimiento**: `make evaluate` una sola vez sobre test: métricas, cobertura real del intervalo, error por régimen.
-- **Resultado** (12/11, runs `final-*`): ninguna red supera a la persistencia (`skill_rmse` −3,6 %, −8,1 %, −61 %, −45 %). Tablas y conclusión en `README.md`.
-- **Mejora de RMSE por año de test**:
-
-| h | 2023 | 2024 | 2025 | 2026 |
-|---|---|---|---|---|
-| 5 | −2,3 % | −4,1 % | +0,2 % | −4,3 % |
-| 21 | −5,8 % | +4,0 % | −12,7 % | −9,0 % |
-| 63 | −58 % | −70 % | −93 % | −59 % |
-| 252 | −112 % | −47 % | −22 % | +9,2 % |
-
-- **En la aplicación**: la red elegida en los cuatro horizontes, con el texto de que, medida en 2023–2026, no mejora a la persistencia. El dato más fiable es el intervalo a 5 días.
-- **Diebold-Mariano** frente a persistencia (13/11, `make dm`): la red tiene más error en los 4 horizontes, pero ninguna diferencia es significativa al 5 % (p entre 0,09 y 0,46). Detalle en `docs/DECISIONES.md` 8.4.
-- **Tabla definitiva**: en `README.md`.
-
-## 6. Fase 5 · Sonda, la aplicación de predicción (días 4–7): hecha y publicada
-
-Se desarrolla en paralelo, con datos simulados.
-
-### 6.1 Alcance
-- **`make export-web` ampliado**: cuatro ONNX, manifiesto y JSON con la forma de `contrato-de-datos.md` del sistema de diseño (predicción con `lo80/hi80`, calidad con `coverage80` y *backtest*).
-- **`web/`**: integrar tokens y componentes de Sonda (artefacto `GJGpkQEKJT4ZGuDxg49E3H`), reducido a Brent y cuatro horizontes; fuera intradía, 1D, selector de activos, curva de futuros y alertas.
-- **Requisitos del enunciado**: selector de horizonte, histórico con sucesos marcados, precio previsto, variación, intervalo del 80 % y texto para usuario no técnico.
-- **Texto para el usuario**: plantilla alimentada por la fiabilidad medida en la fase 4 y por los factores obtenidos por oclusión de variables en el navegador.
-- **Abanico**: entre horizontes se interpola; los cuatro puntos calculados se marcan como tales.
-- **Paridad**: `web/src/model.ts` replica `features.py`; `make web-test` en verde.
-
-### 6.2 Decisiones de la interfaz (12/11)
-- **Motor**: `bundle.js` de Sonda (motor de gráficos, iconos y clases `bx-*`), alimentado con los datos exportados; desde el rediseño lleva cambios locales (6.6).
-- **Vistas de dominio** (cabecera, tarjetas, medidor, factores, rendimiento): se construyen en `web/src/main.ts` con sus clases.
-- **Fuera**: columna de activos, alertas, curva de futuros, comparador de modelos e intradía.
-- **Medidor de dirección**: con zona «Sin sesgo claro» (probabilidad de subida entre 45 % y 55 %). Al lado, el acierto de dirección en test frente a la dirección constante más frecuente.
-- **Panel de rendimiento**: cada métrica junto a su referencia.
-- **Sucesos del ciclo económico** (`web.events` en `config.yaml`): fecha y precio salen de los datos. Las causas son solo las que da el enunciado, sin fuentes externas: el usuario decide no usar Zotero. La de 2026 queda sin documentar.
-
-### 6.3 Pasos, todos hechos el 12/11
-1. Exportación de los 4 modelos, `market.json` y `quality.json`.
-2. Inferencia y paridad de los 4 en el navegador.
-3. Interfaz con Sonda.
-4. Texto para el usuario.
-5. Ciclo económico.
-
-Comprobados con `make test`, `make lint`, `make web-test` (15/15), compilación, capturas de la vista de 1 semana y despliegue en GitHub Pages.
-
-### 6.4 Cómo está construida la web, para el rediseño
-- **`web/src/sonda/`**: `bundle.js` y `bundle.css` copiados del sistema de diseño (Sonda 2); `tokens.css` generado desde su `tokens.json`. `bundle.js` lleva cambios locales (6.6): si el sistema de diseño cambia, hay que volver a aplicarlos.
-- **`web/src/main.ts`**: carga los datos, ejecuta los 4 modelos y construye las vistas.
-- **`web/src/style.css`**: composición (dos columnas, apilado por debajo de 1100 px). **`web/index.html`**: estructura.
-- **`web/src/explain.ts`** (tests en `web/tests/explain.test.ts`): abanico interpolado en log-precio, P(subida) suponiendo log-precio normal, factores por oclusión (entrada fijada a su media de train) y sesgo del backtest.
-- **`web/src/model.ts`**: réplica de `features.py`; no se toca en un rediseño (paridad con `make web-test`).
-- **Datos**: `web/public/data/market.json` (histórico, sucesos, últimas 81 filas) y `quality.json` (métricas de test frente a referencias y backtest); los genera `make export-web`.
-
-### 6.5 Lo que muestra hoy (datos al 3/11/2026)
-- **Predicción**: +4,1 % a 1 semana, +9,2 % a 1 mes y +63 % a 3 meses y a 1 año.
-- **Texto**: el de cada horizonte sale de las métricas de test (no mejora a la persistencia, sesgo alcista, intervalo a un solo lado), no de frases fijas.
-- **Sin revisar**: no se han visto en captura las vistas de 1 mes, 3 meses y 1 año.
-
-### 6.6 Rediseño y portal con dinero ficticio (rama `feat/web-redesign`, 12/11)
-- **Rediseño**: Sonda 2 (temas claro y oscuro). El gráfico va arriba y ocupa el alto de la pantalla; el horizonte se elige con un control segmentado.
-- **Cambios locales en `bundle.js`**: sin los datos de ejemplo, selector Línea | Velas (velas de cierres: el Brent spot solo tiene un precio al día), degradado bajo la línea, fecha objetivo en las tarjetas y herramienta de medir corregida (un clic sin arrastrar no guarda nada, solo queda la última medición y vuelve al cursor).
-- **Portal** (`web/src/portal/`): cartera simulada (icono en la cabecera) con pestañas Posiciones, Calculadora e Historial, evaluaciones en recuadro modal e historial descargable en CSV y JSON; decisión en `DECISIONES.md` 10.4.
-  - `sim.ts` y `store.ts` son lógica pura con pruebas.
-  - `modal.ts` usa `<dialog>`.
-  - `index.ts` contiene rutas y vistas.
-  - Los tipos de Sonda se comparten en `web/src/sonda.ts`.
-- **Comprobado**: `make web-test` (25/25) y recorrido en Chrome (1288×800 y 1900×1000, temas claro y oscuro).
-
-## 7. Fase 6 · Página explicativa (días 6–8): definición acordada el 13/11, falta la estética
-
-Segunda página de `web/` (`explica.html`), enlazada desde Sonda, con lenguaje visual propio. Cuenta cómo se construyó la predicción y por qué no bate a «el precio de hoy», solo con datos reales ya medidos: la página no introduce ninguna cifra.
-
-### 7.1 Decisiones del usuario (13/11)
-- **Uso**: solo lectura. Página larga con scroll; sin navegación por pasos ni modo presentación.
-- **Nivel**: solo lenguaje sencillo, para el público no técnico del enunciado. Sin fórmulas ni desplegables técnicos: lo técnico queda en el repositorio y los cuadernos.
-- **3D**: una pieza, en el capítulo 3: el recorrido del estado oculto de la RNN, la LSTM y la GRU entrenadas a lo largo de los 60 días de una ventana real, proyectado a 3D y girable.
-- **Estética**: página inmersiva con parallax ligado al scroll (referencias del usuario: Awwwards «30 webs con efecto parallax» y la skill scroll-world).
-- **Mundo** (13/11): construido en código, con capas ilustradas en SVG y el 3D propio; sin vídeo ni imágenes generadas por IA, sin coste ni cuentas externas.
-- **Recorrido** (13/11): el viaje de un barril de Brent, una escena por capítulo: plataforma en el Mar del Norte → petrolero → sala de control → puerto → faro en la niebla.
-- **Buenas prácticas**: se consulta `modern-web-guidance` (`npx`) al construir cada parte; autorizado por el usuario.
-- **Pantallas** (13/11): solo escritorio, de 14″ a 27″; sin versión móvil. La composición no limita el ancho máximo: ocupa toda la pantalla.
-- **Plan visual** (aprobado el 13/11): el mar del recorrido es la serie del Brent y cada suceso es una boya; luz del amanecer a la noche (plataforma, petrolero, sala de control, puerto al atardecer, faro en la niebla). Colores con función fija: precio real azul Mar del Norte `#2C5566` (espuma `#EEF3F1` en escenas oscuras), red y su rango luz de sodio `#F2B33D`, «el precio de hoy» gris niebla `#8C97A0`, futuros verde de estribor `#2E9E6B`. Tipografía: Big Shoulders (títulos y cifras) y Literata (lectura). Parallax con `view-timeline` bajo `@supports`, respaldo con `IntersectionObserver` y escenas quietas con movimiento reducido.
-
-### 7.2 Hilo y capítulos
-- **Hilo**: el precio de hoy ya contiene casi todo lo que se sabe. Cada capítulo enseña una parte de cómo se comprobó; al final, lo que sí ayuda: los futuros, lo que el mercado ya sabe y la EIA aún no ha publicado.
-
-| Capítulo | Qué enseña, en lenguaje sencillo | Datos |
-|---|---|---|
-| 1. La serie y su ciclo | Brent 2000–2026 y los 6 sucesos; causas solo las del enunciado | `market.json` |
-| 2. Cómo entra el dato | Ventana de 60 días, lo que ve la red y lo que tiene que adivinar; pasado para aprender, futuro para comprobar | `data/splits.json`, `fold_table`, ventanas de unas pocas fechas |
-| 3. Por dentro de la red | Qué recuerda y qué olvida cada celda; recorrido del estado en 3D; tamaño de cada red | Pesos leídos de los ONNX, `cell_trace`, `count_params` |
-| 4. Batir al precio de hoy | Red frente a persistencia por horizonte y por año; las diferencias caben en el azar; los futuros sí ayudan a 5 días | `predictions_test.csv`, `significance`, `futures_naive` |
-| 5. Qué significa el rango | Qué es el rango del 80 %, cuántas veces acertó y por qué falló en 2026 | Runs `final-*`, `skill_by` |
-
-### 7.3 Técnica
-- **Datos**: `make export-explain` (Mac): lee `data/`, `runs/`, `artifacts/` y los ONNX y escribe `web/public/data/explain.json`, en git como `market.json`. Los cálculos van en `explore.py`.
-- **Pesos**: se leen de los ONNX con `onnx` (comprobado: `h5.onnx` contiene `rnn.weight_ih_l0` y `rnn.weight_hh_l0`). Los modelos finales cubren las tres celdas: GRU (h=5), LSTM (h=21) y RNN (h=252).
-- **Web**: Vite multipágina; gráficos propios en SVG/Canvas y 3D con proyección propia en canvas, sin dependencias nuevas.
-- **Fuera de alcance**: métricas nuevas, entrenamientos y cambios en Sonda salvo el enlace. La comparación con Brentcast queda en `docs/DECISIONES.md`.
-- **Comprobación**: test de la exportación, `make web-test`, compilación y revisión en Chrome a 1280 y 390 px, con teclado y movimiento reducido.
-- **Coste**: unos 3 días. Recorte fijado en el apartado 10: los capítulos 4–5 pasan a figuras estáticas.
-
-## 8. Fase 7 · Actualización, reentrenamiento y repositorio (días 8–9): workflow programado y documentación al día
-
-- **Workflow programado de GitHub Actions**: `make data` diario y publicación de los últimos datos.
-- **Reentrenamiento**: manual o periódico del modelo elegido con su configuración guardada, exportación y Release.
-  **Pendiente**: regla nueva en `CLAUDE.md` (Actions como tercera «máquina»).
-- **Documentación**: `README.md` y `docs/USAGE.md` al día; CI en verde.
-
-## 9. Fase 8 · Presentación y exposición: la prepara el usuario
-
-El proyecto solo aporta las cifras y figuras de las fases 4–6.
-
-## 10. Recortar si falta tiempo: orden fijo
-
-1. Experimento con `brent_fut_*`.
-2. Diebold-Mariano: hecho el 13/11.
-3. Ventana 120.
-4. Reentrenamiento periódico (queda manual).
-5. Capítulos 4–5 de la página explicativa pasan a figuras estáticas.
-
-- **Nunca se recorta**: comparativa completa, evaluación final en test y Sonda con los horizontes del enunciado.
-
-## 11. Verificar: comprobaciones por fase
-
-- [ ] `make test` y `make lint` tras cada fase de código; `make web-test` tras las fases 5 y 6.
-- [ ] Fase 2: prueba de humo de entrenamiento (la lanza el usuario) con las tres celdas.
-- [ ] Fase 4: `runs/<id>/eval_*.json` contiene, por horizonte, `rmse`, `baseline_rmse`, `skill_vs_baseline` y cobertura; el README solo cita esas cifras.
-- [ ] Fases 5–7: `make web-dev` y comprobación en el navegador de que la predicción coincide con la de `Predictor` para los ejemplos exportados.
-- [ ] Fases 5–7: ejecución manual del workflow de actualización.
+- [ ] Pasan `make test` y `make lint`; también `make web-test` si se tocó la web.
+- [ ] La predicción del navegador coincide con la de Python.
+- [ ] El README solo cita cifras guardadas en los runs.
+- [ ] El workflow de actualización funciona lanzado a mano.
