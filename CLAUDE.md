@@ -114,7 +114,7 @@ models/<id>/     pesos + preprocessor.joblib + model_card.json (fuera de git)
 3. Si no está claro quién ejecuta algo, pregunta.
 
 **Citar un artículo que no está en `docs/references.bib`**
-1. Indica título, autores y DOI para que el usuario lo añada a Zotero.
+1. Pide al usuario el BibTeX (o título, autores y DOI) y añádelo tú a `docs/references.bib` con la clave `<apellido><año>`.
 2. Trata el resultado publicado como motivo para probar la idea; decide con validación interna.
 
 ## Cuidado con
@@ -122,5 +122,5 @@ models/<id>/     pesos + preprocessor.joblib + model_card.json (fuera de git)
 - **Máquina**: identifícala por la plataforma. `darwin` = Mac: no escribe en `runs/` ni `artifacts/`. `win32` = Windows con GPU: entrena.
 - **`runs/<id>/` y `artifacts/<id>/`**: solo los escribe un entrenamiento, nunca una edición a mano.
 - **Datos**: se cortan en la última observación real del target.
-- **`docs/references.bib`**: lo exporta Zotero (Better BibTeX); no lo edites a mano.
+- **`docs/references.bib`**: se edita a mano, solo con entradas que aporte el usuario; no se usa Zotero.
 - **Modelo web**: se publica como Release con `make web-release`; no lo añadas a git.

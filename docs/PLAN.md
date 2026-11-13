@@ -69,7 +69,7 @@
 - **Preguntas**: huecos por columna y fecha de inicio útil (`brent_fut` empieza ~2007); tratamiento del WTI negativo (20/04/2020); estacionariedad de niveles frente a rendimientos; autocorrelación de rendimientos a cada horizonte; volatilidad por régimen.
 - **Salida**: lista de `data.features` y transformaciones (rendimientos logarítmicos, volatilidad móvil) en `features.py`, replicadas después en `web/src/model.ts`.
 - **Cesta OPEP**: sin descarga automática. Se omite y se dice en el README, salvo que el usuario aporte un CSV en `data/external/`.
-- **Sucesos del ciclo económico** (2008, 2014–16, 2020, 2022, 2026): el usuario añade las fuentes a Zotero; no se redacta ninguna causa sin entrada en `docs/references.bib`.
+- **Sucesos del ciclo económico** (2008, 2014–16, 2020, 2022, 2026): el usuario aporta las fuentes; no se redacta ninguna causa sin entrada en `docs/references.bib`.
 
 ## 3. Fase 2 · Pipeline de modelado (días 2–3): cambios mínimos sobre lo existente
 
@@ -79,7 +79,7 @@
 - **`make train`**: modelo final con train+val por el mismo procedimiento.
 - **`src/oil_rnn/metrics.py`** — `compute_metrics`: añadir MSE, acierto de dirección, cobertura del 80 %, anchura del intervalo y *pinball*. Referencia de intervalo: cuantiles históricos del rendimiento a h días en train.
 - **Calibración conforme** de los cuantiles (CQR, corrección relativa en log) con las predicciones de los 4 bloques de `make cv`. Su cobertura se mide corrigiendo cada pliegue solo con los anteriores. `make train CALIB=<run de cv>` la guarda con el modelo (exige la misma configuración).
-  **Pendiente**: añadir la referencia de CQR a Zotero.
+  **Pendiente**: añadir la referencia de CQR a `docs/references.bib`.
 - **Tests nuevos** en `tests/`: ningún target de train posterior al fin de train; ninguna ventana usa filas posteriores a t−h; cuantiles no cruzados; inversa de `log_return`.
 
 ## 4. Fase 3 · Comparativa RNN · LSTM · GRU (días 3–5, GPU): misma rejilla para las tres

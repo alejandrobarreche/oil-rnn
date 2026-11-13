@@ -336,6 +336,6 @@ make install
 *Settings → Python Interpreter → Add Interpreter → Conda Environment →* `oil-rnn`.
 
 ### 9.9 Actualizar la bibliografía
-- **`docs/references.bib`**: no se edita a mano.
-- **En Zotero**: clic derecho en la colección del proyecto → *Exportar colección* → formato *Better BibTeX*, marcando *Mantener actualizado*, con destino `docs/references.bib`.
-- **Después**: cada artículo que se añade a la colección aparece en el archivo.
+- **`docs/references.bib`**: se edita a mano; no se usa Zotero.
+- **Añadir un artículo**: se pega su BibTeX (lo da la editorial o doi.org) con la clave `<apellido><año>`, por ejemplo `diebold1995`.
+- **Citar**: solo artículos que estén en el archivo.
