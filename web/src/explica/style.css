@@ -1,0 +1,462 @@
+/* Página explicativa: el viaje de un barril de Brent, del amanecer a la noche.
+   Solo escritorio (14″–27″): sin ancho máximo, las medidas siguen a la pantalla.
+   Colores con función fija en todo el viaje; cada escena cambia solo el cielo y el agua. */
+
+:root {
+  /* función fija */
+  --real: #2c5566; /* precio real (azul Mar del Norte) */
+  --net: #f2b33d; /* la red y su rango (luz de sodio) */
+  --today: #8c97a0; /* «el precio de hoy» (gris niebla) */
+  --futures: #2e9e6b; /* futuros (verde de estribor) */
+  --ink: #0e1e2b;
+  --foam: #eef3f1;
+
+  --font-display: "Big Shoulders Display", "Big Shoulders", "Arial Narrow", sans-serif;
+  --font-text: "Literata", Georgia, serif;
+  --gutter: 6vw;
+  --route-h: 3.25rem;
+}
+
+/* Escenas: cielo, agua y tinta del texto */
+.dawn {
+  --sky-top: #8fa8b8;
+  --sky-mid: #c4d0d6;
+  --sky-low: #e6dccd;
+  --water-top: #3a6375;
+  --water-deep: #0f2532;
+  --line: var(--real);
+  --steel: #1d3140;
+  --swell: #0b1c26;
+  --text: var(--ink);
+  --text-soft: #34495a;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  /* el texto crece con la pantalla: 16 px en 14″, unos 21 px en 27″ */
+  font-size: clamp(16px, calc(0.45vw + 9.5px), 22px);
+  scroll-behavior: smooth;
+  @media (prefers-reduced-motion: reduce) {
+    scroll-behavior: auto;
+  }
+}
+
+body.ex {
+  margin: 0;
+  background: #0f2532;
+  color: var(--ink);
+  font-family: var(--font-text);
+  font-size: 1.075rem;
+  line-height: 1.65;
+  -webkit-font-smoothing: antialiased;
+}
+
+.ex-loading {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  margin: 0;
+  color: var(--foam);
+  font-family: var(--font-display);
+  font-size: 1.6rem;
+  letter-spacing: 0.02em;
+}
+
+a {
+  color: inherit;
+}
+
+:focus-visible {
+  outline: 2px solid var(--net);
+  outline-offset: 3px;
+}
+
+/* ── Recorrido ─────────────────────────────────────────── */
+.route {
+  position: fixed;
+  inset: 0 0 auto;
+  z-index: 10;
+  height: var(--route-h);
+  display: flex;
+  align-items: center;
+  gap: 3vw;
+  padding: 0 var(--gutter);
+  font-family: var(--font-display);
+  font-size: 1.05rem;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  color: var(--ink);
+  background: color-mix(in oklab, var(--foam) 72%, transparent);
+  backdrop-filter: blur(10px);
+}
+.route a {
+  text-decoration: none;
+}
+.route-home {
+  font-weight: 700;
+}
+.route-stops {
+  display: flex;
+  gap: 2.2vw;
+  margin: 0 0 0 auto;
+  padding: 0;
+  list-style: none;
+}
+.route-stops li {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+}
+.route-stops li::before {
+  content: "";
+  width: 0.55rem;
+  height: 0.55rem;
+  border-radius: 50%;
+  border: 1.5px solid currentColor;
+}
+.route-stops li:has([aria-current])::before {
+  background: currentColor;
+}
+.route-stops [aria-current] {
+  font-weight: 800;
+}
+.route-later {
+  opacity: 0.45;
+}
+.route-sonda {
+  padding: 0.3rem 0.9rem;
+  border: 1.5px solid currentColor;
+  border-radius: 2px;
+}
+.route-sonda:hover {
+  background: var(--ink);
+  color: var(--foam);
+}
+
+/* ── Piezas comunes de una escena ──────────────────────── */
+.scene {
+  position: relative;
+  color: var(--text);
+}
+.sky {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, var(--sky-top) 0%, var(--sky-mid) 38%, var(--sky-low) 62%);
+}
+.layer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  width: 100%;
+}
+.layer.far {
+  height: 46%;
+}
+.clouds {
+  width: 100%;
+  height: 100%;
+  fill: color-mix(in oklab, var(--foam) 75%, transparent);
+}
+.sea {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+.water-top {
+  stop-color: var(--water-top);
+}
+.water-deep {
+  stop-color: var(--water-deep);
+}
+.surface {
+  fill: none;
+  stroke: var(--line);
+  stroke-width: 2.25px;
+  stroke-linejoin: round;
+}
+
+/* Plataforma: la base de las patas (y = 260 de 300) se apoya en la superficie */
+.platform-at {
+  position: absolute;
+  width: 15vw;
+  translate: -50% -86.7%;
+}
+.platform-at.small {
+  width: 7vw;
+}
+.platform {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+.platform .steel {
+  fill: var(--steel);
+}
+.platform .lattice {
+  stroke: var(--sky-mid);
+  stroke-width: 1.5;
+  fill: none;
+}
+.platform .flare {
+  fill: var(--net);
+}
+
+/* ── Portada ───────────────────────────────────────────── */
+.hero {
+  height: 100vh;
+  overflow: clip;
+}
+.hero-copy {
+  position: absolute;
+  top: calc(var(--route-h) + 6vh);
+  left: var(--gutter);
+  width: 46vw;
+}
+.hero h1 {
+  margin: 0 0 3vh;
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 6.4vw;
+  line-height: 0.88;
+  letter-spacing: -0.005em;
+  text-wrap: balance;
+  color: var(--ink);
+}
+.lead {
+  max-width: 38rem;
+  margin: 0;
+  font-size: 1.28rem;
+  line-height: 1.6;
+  color: var(--text-soft);
+}
+.cue {
+  margin: 4vh 0 0;
+  font-family: var(--font-display);
+  font-size: 1.15rem;
+  font-weight: 500;
+  letter-spacing: 0.03em;
+}
+.cue::after {
+  content: "";
+  display: block;
+  width: 1px;
+  height: 5vh;
+  margin: 1vh 0 0 0.3rem;
+  background: currentColor;
+}
+
+/* Un único momento sin que el lector haga nada: el mar se dibuja de izquierda a derecha */
+.reveal {
+  @media (prefers-reduced-motion: no-preference) {
+    animation: reveal 2.8s cubic-bezier(0.25, 0.7, 0.2, 1) 0.2s both;
+  }
+}
+.after-reveal {
+  @media (prefers-reduced-motion: no-preference) {
+    animation: fade-in 0.9s ease-out 1.5s both;
+  }
+}
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+}
+@keyframes reveal {
+  from {
+    clip-path: inset(0 100% 0 0);
+  }
+  to {
+    clip-path: inset(0 0 0 0);
+  }
+}
+
+/* ── Capítulo con cámara que recorre el mar ────────────── */
+.chapter {
+  --length: 8; /* alto del capítulo en pantallas: 1 de escena fija + 7 de recorrido */
+  --travel: 1;
+  height: calc(var(--length) * 100vh);
+}
+.stage {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  overflow: clip;
+  container-type: inline-size;
+}
+.chapter .layer[data-travel] {
+  width: calc((var(--pan) * var(--travel) + 1) * 100cqw);
+  @media (prefers-reduced-motion: reduce) {
+    width: 100cqw; /* sin recorrido: todo el mar a la vista */
+  }
+}
+.chapter .layer.near {
+  top: auto;
+  bottom: 0;
+  height: 9%;
+}
+.swell {
+  width: 100%;
+  height: 100%;
+  fill: var(--swell);
+  opacity: 0.85;
+}
+
+.guides {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+.guide {
+  position: absolute;
+  left: 0;
+  right: 0;
+  border-top: 1px dashed color-mix(in oklab, var(--line) 40%, transparent);
+}
+.guide span {
+  position: absolute;
+  right: 1.6vw;
+  top: -0.8rem;
+  padding: 0 0.45rem;
+  background: var(--sky-low);
+  line-height: 1.6rem;
+  font-family: var(--font-display);
+  font-size: 1.05rem;
+  font-weight: 500;
+  color: var(--text-soft);
+}
+
+.buoy {
+  position: absolute;
+  translate: -50% -100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.buoy-tag {
+  order: -2;
+  font-family: var(--font-display);
+  font-size: 1.35rem;
+  font-weight: 700;
+  line-height: 1;
+  padding: 0.2rem 0.4rem;
+  color: var(--text);
+  background: color-mix(in oklab, var(--sky-low) 90%, transparent);
+}
+.buoy::before {
+  content: "";
+  order: -1;
+  width: 1.5px;
+  height: 5.5vh;
+  background: var(--text);
+}
+.buoy-mark {
+  width: 0.95rem;
+  height: 1.25rem;
+  border-radius: 50% 50% 45% 45%;
+  background: linear-gradient(180deg, var(--foam) 0 40%, var(--ink) 40% 58%, var(--foam) 58%);
+  border: 1.5px solid var(--ink);
+  translate: 0 35%;
+}
+
+.years {
+  position: absolute;
+  inset: auto 0 11% 0;
+  height: 1.5rem;
+}
+.year {
+  position: absolute;
+  translate: -50% 0;
+  font-family: var(--font-display);
+  font-size: 1.05rem;
+  font-weight: 500;
+  color: color-mix(in oklab, var(--foam) 62%, transparent);
+}
+
+.chapter-title {
+  position: absolute;
+  top: calc(var(--route-h) + 3vh);
+  right: var(--gutter);
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 5.2vw;
+  line-height: 1;
+  color: color-mix(in oklab, var(--ink) 82%, transparent);
+}
+
+.steps {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+.step {
+  position: absolute;
+  left: var(--gutter);
+  width: min(36rem, 34vw);
+  top: calc(var(--at) * (100% - 100vh) + 34vh);
+  translate: 0 -50%;
+  padding: 1.5rem 1.8rem 1.6rem;
+  border-left: 3px solid var(--line);
+  background: color-mix(in oklab, var(--sky-low) 88%, transparent);
+  backdrop-filter: blur(8px);
+  pointer-events: auto;
+}
+.step h3 {
+  margin: 0 0 0.6rem;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 2.1rem;
+  line-height: 1.05;
+}
+.step p {
+  margin: 0 0 0.75rem;
+}
+.step p:last-child {
+  margin-bottom: 0;
+}
+.step strong {
+  font-weight: 600;
+}
+
+/* ── Parallax ligado al scroll ─────────────────────────── */
+@supports ((animation-timeline: view()) and (animation-range: entry)) {
+  @media (prefers-reduced-motion: no-preference) {
+    .chapter {
+      view-timeline: --chapter block;
+    }
+    .chapter .layer[data-travel] {
+      animation: pan linear both;
+      animation-timeline: --chapter;
+      animation-range: contain 0% contain 100%;
+    }
+    .hero {
+      view-timeline: --hero block;
+    }
+    .hero .far,
+    .hero .hero-copy {
+      animation: lag linear both;
+      animation-timeline: --hero;
+      animation-range: exit 0% exit 100%;
+    }
+    .hero .hero-copy {
+      --lag: 18vh;
+    }
+  }
+}
+@keyframes pan {
+  to {
+    translate: calc(var(--pan) * var(--travel) * -100cqw) 0;
+  }
+}
+@keyframes lag {
+  to {
+    translate: 0 var(--lag, 34vh);
+  }
+}
