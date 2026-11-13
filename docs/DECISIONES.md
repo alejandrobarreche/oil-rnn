@@ -2,9 +2,9 @@
 
 **Finalidad**: reunir cada decisión del trabajo con su motivo, su comprobación y su valoración, para poder defenderlo.
 **Cuándo usarlo**: al preparar la exposición, antes de cambiar el método y al comparar con otro trabajo.
-**Resultado**: 43 decisiones valoradas, la comparación con Brentcast y 8 mejoras sin ejecutar.
+**Resultado**: 43 decisiones valoradas, la comparación con Brentcast, 7 mejoras sin ejecutar y una ejecutada.
 **Flujo**: Fuentes → Limpieza → Transformación → Ventanas → Validación → Modelo → Selección → Evaluación → Intervalo → Aplicación
-**Estado**: 21 bien · 18 regular · 4 mal. Describe los runs `g1`, `g1s7`, `g1s123` y `final-*` (12/11/2026).
+**Estado**: 22 bien · 17 regular · 4 mal. Describe los runs `g1`, `g1s7`, `g1s123` y `final-*` (12/11/2026).
 
 ## 0. Antes de empezar: cómo leer este documento
 
@@ -13,7 +13,7 @@
 - **Cifras**: salen de `runs/<id>/metrics.json`, `runs/<id>/eval_test.json` y `data/splits.json`. Ninguna es nueva.
 - **Sin motivo registrado**: se dice así cuando el motivo no consta en `docs/PLAN.md`, `configs/config.yaml` ni el código.
 - **Test ya se evaluó** (12/11). Un cambio de método posterior se decide solo con validación y se declara.
-- **Sin citas**: `docs/references.bib` está vacío. Los métodos se describen; no se atribuyen a ningún artículo.
+- **Citas**: solo Diebold y Mariano (1995) y Harvey, Leybourne y Newbold (1997), en 8.4. El resto de métodos se describe sin atribuirlo a ningún artículo.
 - **Brentcast**: el trabajo de un compañero, `https://brentcast.vercel.app`. Sus datos salen de sus páginas `datos.html` y `resultados.html`.
 - **Ver cada paso**: cuadernos `notebooks/02`–`05` y el explorador (`make explore`).
 
@@ -313,12 +313,22 @@
 
 - **Valoración**: Bien el procedimiento. El resultado es negativo y se dice así.
 
-### 8.4 Significación estadística: no se calculó
-- **Qué**: no hay contraste ni intervalo de confianza de las mejoras.
-- **Por qué**: quedó como recortable en `docs/PLAN.md`.
-- **Alternativa**: Brentcast da IC del 95 % por remuestreo de bloques y un contraste de Diebold-Mariano.
-- **Comprobado**: no.
-- **Valoración**: Regular. A 252 días hay 3 o 4 pronósticos independientes en test; ninguna cifra es fiable.
+### 8.4 Significación estadística: Diebold-Mariano, ninguna diferencia significativa
+- **Qué**: contraste de Diebold y Mariano (1995) con la corrección de Harvey, Leybourne y Newbold (1997), de cada modelo final frente a la persistencia en test (`make dm`, `metrics.diebold_mariano`). H0: las dos tienen el mismo error esperado. Se hace con el error cuadrático (el del RMSE) y con el absoluto (el del MAE).
+- **Por qué**: las mejoras de 8.3 son estimaciones con una sola muestra de test; sin contraste no se sabe si son distintas de cero. Los pronósticos a h días se solapan h − 1 días, así que la varianza suma las autocovarianzas hasta el retardo h − 1; la corrección de Harvey et al. ajusta el estadístico a muestras pequeñas y lo compara con una t de n − 1 grados de libertad.
+- **Alternativa**: IC del 95 % por remuestreo de bloques (Brentcast). No se hizo: responde a la misma pregunta y añade una decisión más (la longitud del bloque).
+- **Comprobado** (13/11): estadístico > 0 (la red tiene más error) en los cuatro horizontes y ningún p-valor menor que 0,05:
+
+| h | Red | Pronósticos (independientes ≈ n/h) | Error cuadrático: estadístico · p | Error absoluto: estadístico · p |
+|---|---|---|---|---|
+| 5 | GRU | 955 (191) | +1,22 · 0,22 | +1,32 · 0,19 |
+| 21 | LSTM | 955 (45) | +0,73 · 0,46 | +0,74 · 0,46 |
+| 63 | GRU | 955 (15) | +1,10 · 0,27 | +1,72 · 0,087 |
+| 252 | RNN | 955 (3) | +0,83 · 0,40 | +1,05 · 0,29 |
+
+- **Robustez**: con pesos de Bartlett en lugar de pesos iguales, el error cuadrático da p entre 0,17 y 0,38 (cálculo a mano del 13/11, no lo imprime `make dm`).
+- **Qué no decide**: nada del modelo. Se calcula después de la única evaluación en test.
+- **Valoración**: Bien el procedimiento. Límite que hay que decir: a 63 y 252 días hay unos 15 y 3 pronósticos independientes, así que el contraste tiene poca potencia. «No significativo» no quiere decir «igual»: la red no supera a la persistencia y tampoco se puede afirmar que sea peor.
 
 ## 9. Intervalo: calibración conforme
 
@@ -388,7 +398,7 @@ La columna «Mejor» es criterio propio: gana quien se acerca más al uso real o
 | Validación | 4 bloques de 2 años, 2015–2023 | 4 cortes de 1 año, 2018–2021 | oil-rnn |
 | Intervalo | Cuantiles de la red y corrección conforme | Márgenes fijos | oil-rnn |
 | Referencia del intervalo | Cuantiles históricos | No consta | oil-rnn |
-| Significación | No | IC del 95 % y Diebold-Mariano | Brentcast |
+| Significación | Diebold-Mariano | IC del 95 % y Diebold-Mariano | Brentcast |
 | Semillas en test | 1 | Media de 3 | Brentcast |
 | Actualización diaria | No | Sí | Brentcast |
 
@@ -404,7 +414,7 @@ La columna «Mejor» es criterio propio: gana quien se acerca más al uso real o
 - **2026**: la cobertura del intervalo cae.
 - **Selección**: los dos declaran el riesgo de elegir entre muchos experimentos con la misma validación.
 
-## 12. Mejoras valoradas: ninguna ejecutada
+## 12. Mejoras valoradas: una ejecutada
 
 | Mejora | Pregunta que responde | Coste | Cómo se comprobaría |
 |---|---|---|---|
@@ -413,7 +423,7 @@ La columna «Mejor» es criterio propio: gana quien se acerca más al uso real o
 | Indicador de disponibilidad | ¿Empeora `ffill` las entradas? | Medio: `features.py` y `model.ts` | Mismo run con y sin indicador, 3 semillas |
 | Cesta OPEP | ¿Aporta la variable que falta? | Medio: descarga nueva | Mismo run con y sin ella |
 | Ventana deslizante | ¿Ayuda olvidar regímenes antiguos? | Bajo: un parámetro en `cv.py` | `cv_pinball` de los finalistas |
-| Diebold-Mariano e IC por bloques | ¿Son las diferencias distintas de cero? | Bajo: solo cálculo sobre predicciones guardadas | p-valor por horizonte |
+| Diebold-Mariano e IC por bloques | ¿Son las diferencias distintas de cero? | Bajo: solo cálculo sobre predicciones guardadas | **Diebold-Mariano hecho** (13/11, 8.4): ninguna es significativa al 5 %. IC por bloques sin hacer |
 | Solo el Brent como entrada | ¿Aportan algo las 14 variables externas? | Bajo: 12 runs de `make cv` | `cv_pinball` frente a los finalistas |
 
 ### 12.1 Ventas adelantadas: qué parte de la idea se puede traer

@@ -9,6 +9,9 @@ que el entrenamiento (data.py, features.py) y lee los resultados que ya están g
     fold_table        fechas de ajuste, parada y evaluación de cada pliegue y del modelo final
     runs_table        una fila por run con su configuración y sus métricas
     cell_trace        una RNN, LSTM o GRU paso a paso en NumPy (estados y puertas)
+    significance      Diebold-Mariano de cada modelo final frente a la persistencia en test
+
+    make dm           imprime `significance()`
 """
 
 from __future__ import annotations
@@ -22,6 +25,7 @@ import yaml
 
 from .data import feature_columns, fold_boundaries, raw_path, read_table, training_bounds
 from .features import Preprocessor
+from .metrics import diebold_mariano
 from .paths import RUNS_DIR, run_paths
 
 STAGES = ("bruto", "corte", "relleno", "inicio")
@@ -288,6 +292,38 @@ def skill_by(pred: pd.DataFrame, by: str = "year") -> pd.DataFrame:
     return pd.DataFrame.from_dict(rows, orient="index")
 
 
+def significance(prefix: str = "final") -> pd.DataFrame:
+    """Diebold-Mariano (con la corrección de Harvey, Leybourne y Newbold) de cada modelo `prefix`
+    frente a la persistencia, sobre sus predicciones en test. Una fila por horizonte.
+
+    dm_* con el error cuadrático (el del RMSE) y dm_abs_* con el absoluto (el del MAE).
+    stat < 0: la red tiene menos error; p_value: probabilidad de una diferencia al menos así
+    de grande si las dos tuvieran el mismo error esperado. n_independent = n / h, aproximado."""
+    rows = []
+    for _, run in runs_table(prefix).sort_values("horizon").iterrows():
+        pred = test_predictions(run["run_id"])
+        h = int(run["horizon"])
+        e_model, e_ref = pred["y_true"] - pred["y_pred"], pred["y_true"] - pred["y_baseline"]
+        sq = diebold_mariano(e_model, e_ref, h, power=2)
+        ab = diebold_mariano(e_model, e_ref, h, power=1)
+        rows.append(
+            {
+                "horizon": h,
+                "cell": run["cell"],
+                "n": sq["n"],
+                "n_independent": sq["n"] // h,
+                "dm_stat": sq["stat"],
+                "dm_p_value": sq["p_value"],
+                "dm_kernel": sq["kernel"],
+                "dm_abs_stat": ab["stat"],
+                "dm_abs_p_value": ab["p_value"],
+                "dm_abs_kernel": ab["kernel"],
+                "run_id": run["run_id"],
+            }
+        )
+    return pd.DataFrame(rows)
+
+
 # ── Las celdas, paso a paso ────────────────────────────────
 def _sigmoid(x: np.ndarray) -> np.ndarray:
     return 1.0 / (1.0 + np.exp(-x))
@@ -347,3 +383,8 @@ def count_params(cell: str, n_inputs: int, hidden: int, layers: int = 1, n_outpu
         size_in = n_inputs if layer == 0 else hidden
         total += blocks * hidden * (size_in + hidden + 2)
     return total
+
+
+if __name__ == "__main__":
+    with pd.option_context("display.width", 200, "display.max_columns", None):
+        print(significance().drop(columns="run_id").to_string(index=False, float_format="%.4g"))

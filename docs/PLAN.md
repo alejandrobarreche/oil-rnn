@@ -4,7 +4,7 @@
 **Cuándo usarlo**: al empezar una sesión, antes de una decisión de proyecto y al cerrar cada fase.
 **Resultado**: repositorio, aplicación funcional y 5 diapositivas, entregados el 20/11/2026.
 **Flujo**: Fase 0 Decisiones → 1 Datos → 2 Pipeline → 3 Comparativa → 4 Evaluación → 5 Sonda → 5b Decisiones y explorador → 6 Página explicativa → 7 Actualización → 8 Presentación
-**Estado**: fases 0–5 y 5b hechas · 6 y 7 sin empezar · siguiente: decidir las mejoras de `docs/DECISIONES.md` (apartado 12).
+**Estado**: fases 0–5 y 5b hechas · 6 y 7 sin empezar · Diebold-Mariano hecho (13/11) · siguiente: decidir el resto de mejoras de `docs/DECISIONES.md` (apartado 12).
 
 ## 0. Antes de empezar: encargo, estado y decisiones del usuario
 
@@ -120,8 +120,7 @@
 | 252 | −112 % | −47 % | −22 % | +9,2 % |
 
 - **En la aplicación**: la red elegida en los cuatro horizontes, con el texto de que, medida en 2023–2026, no mejora a la persistencia. El dato más fiable es el intervalo a 5 días.
-- **Diebold-Mariano** frente a persistencia, si queda tiempo.
-  **Pendiente**: añadir su referencia a Zotero.
+- **Diebold-Mariano** frente a persistencia (13/11, `make dm`): la red tiene más error en los 4 horizontes, pero ninguna diferencia es significativa al 5 % (p entre 0,09 y 0,46). Detalle en `docs/DECISIONES.md` 8.4.
 - **Tabla definitiva**: en `README.md`.
 
 ## 6. Fase 5 · Sonda, la aplicación de predicción (días 4–7): hecha y publicada
@@ -202,7 +201,7 @@ El proyecto solo aporta las cifras y figuras de las fases 4–6.
 ## 10. Recortar si falta tiempo: orden fijo
 
 1. Experimento con `brent_fut_*`.
-2. Diebold-Mariano.
+2. Diebold-Mariano: hecho el 13/11.
 3. Ventana 120.
 4. Reentrenamiento periódico (queda manual).
 5. Capítulos 4–5 de la página explicativa pasan a figuras estáticas.

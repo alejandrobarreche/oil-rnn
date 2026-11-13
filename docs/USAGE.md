@@ -244,6 +244,12 @@ make compare
 make compare ARGS="--all"
 ```
 
+Contraste de Diebold-Mariano de cada modelo final frente a la persistencia, sobre sus predicciones en test (no decide nada; solo lee `artifacts/*_final-*/predictions_test.csv`):
+
+```bash
+make dm
+```
+
 - **Repetir la rejilla con otro valor fijo**: se cambia el prefijo, por ejemplo `make sweep ARGS="--set seed=7 --set sweep.prefix=g1s7"`.
 
 ### 9.3 Evaluar un run concreto

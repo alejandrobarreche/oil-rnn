@@ -83,6 +83,42 @@ def compute_metrics(task: str, out: dict, prefix: str = "") -> dict[str, float]:
     return {f"{prefix}{k}": float(v) for k, v in m.items()}
 
 
+def diebold_mariano(e_model, e_ref, horizon: int, power: int = 2) -> dict:
+    """Contraste de Diebold y Mariano (1995) con la corrección para muestras pequeñas de
+    Harvey, Leybourne y Newbold (1997). H0: misma pérdida esperada |e|^power en los dos
+    pronósticos (power=2: error cuadrático, el del RMSE; power=1: absoluto, el del MAE).
+
+    d_t = |e_model|^p − |e_ref|^p, así que diff < 0 y stat < 0 significan que el modelo
+    tiene menos error. Los errores a h días se solapan h − 1 días: la varianza de la media de
+    d suma las autocovarianzas hasta el retardo h − 1. Si esa suma sale ≤ 0 (puede pasar con
+    pesos iguales), se repite con pesos de Bartlett, 1 − k/h, que siempre dan una varianza ≥ 0.
+    p_value: bilateral, con una t de Student de n − 1 grados de libertad."""
+    from scipy import stats
+
+    d = (
+        np.abs(np.asarray(e_model, np.float64)) ** power
+        - np.abs(np.asarray(e_ref, np.float64)) ** power
+    )
+    n = len(d)
+    if n <= 2 * horizon:
+        raise ValueError(f"Hacen falta más de {2 * horizon} pronósticos para h={horizon}; hay {n}")
+    small = n + 1 - 2 * horizon + horizon * (horizon - 1) / n
+    dc = d - d.mean()
+    gamma = np.array([dc[k:] @ dc[: n - k] / n for k in range(horizon)])
+    var, kernel = gamma[0] + 2 * gamma[1:].sum(), "rectangular"
+    if var <= 0:
+        weights = 1 - np.arange(1, horizon) / horizon
+        var, kernel = gamma[0] + 2 * (weights * gamma[1:]).sum(), "bartlett"
+    stat = d.mean() / np.sqrt(var / n) * np.sqrt(small / n) if var > 0 else 0.0
+    return {
+        "stat": float(stat),
+        "p_value": float(2 * stats.t.sf(abs(stat), n - 1)),
+        "diff": float(d.mean()),
+        "n": n,
+        "kernel": kernel,
+    }
+
+
 def save_eval_plots(task: str, out: dict, out_dir: Path, split: str) -> list[Path]:
     out_dir.mkdir(parents=True, exist_ok=True)
     y_true, y_pred = out["y_true"], out["y_pred"]

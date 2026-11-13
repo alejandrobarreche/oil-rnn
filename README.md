@@ -84,7 +84,7 @@ Cada pliegue entrena con todo lo anterior a un bloque de 2 años (2015–2023) y
 ## Resultados
 
 > [!IMPORTANT]
-> **En test (25/01/2023–03/11/2026), ninguna red supera a la persistencia en ningún horizonte.** La única mejora que se veía en validación (GRU a 63 días, +4,8 %) no se confirma: en test es un 61 % peor. A 5 días el intervalo del 80 % está bien calibrado (cobertura del 78 %), pero no es mejor que el de los cuantiles históricos.
+> **En test (25/01/2023–03/11/2026), ninguna red supera a la persistencia en ningún horizonte.** La única mejora que se veía en validación (GRU a 63 días, +4,8 %) no se confirma: en test es un 61 % peor. A 5 días el intervalo del 80 % está bien calibrado (cobertura del 78 %), pero no es mejor que el de los cuantiles históricos. Según el contraste de Diebold-Mariano (Tabla 3), ninguna diferencia frente a la persistencia es significativa al 5 %: la red no la mejora, pero tampoco se puede afirmar que sea peor.
 
 **Cómo se eligió cada modelo.** Rejilla de 36 configuraciones (tamaño oculto 32–256, 1 o 2 capas, dropout 0 o 0,3, tasa de aprendizaje 1e‑4 a 1e‑3), igual para las tres celdas y los cuatro horizontes: 432 validaciones walk-forward. En cada horizonte se eligió la red con menor pérdida pinball media en 3 semillas. La elección quedó registrada en `docs/PLAN.md` antes de evaluar en test, y test se evaluó una sola vez.
 
@@ -120,6 +120,17 @@ Modelos entrenados con train + val, semilla 42. Precios en $/barril.
 
 Tiempos medidos en una RTX 3050 Ti Laptop.
 
+**Tabla 3. Contraste de Diebold-Mariano frente a la persistencia en test (`make dm`)**
+
+H0: la red y la persistencia tienen el mismo error esperado. Estadístico > 0: la red tiene más error. Contraste de Diebold y Mariano (1995) con la corrección de Harvey, Leybourne y Newbold (1997): la varianza suma las autocovarianzas hasta el retardo h − 1, porque los pronósticos a h días se solapan, y el estadístico se compara con una t de n − 1 grados de libertad.
+
+| h | Red | Pronósticos (independientes ≈ n/h) | Error cuadrático: estadístico · p | Error absoluto: estadístico · p |
+|---|---|---|---|---|
+| 5 | GRU | 955 (191) | +1,22 · 0,22 | +1,32 · 0,19 |
+| 21 | LSTM | 955 (45) | +0,73 · 0,46 | +0,74 · 0,46 |
+| 63 | GRU | 955 (15) | +1,10 · 0,27 | +1,72 · 0,087 |
+| 252 | RNN | 955 (3) | +0,83 · 0,40 | +1,05 · 0,29 |
+
 **Figura 3. GRU a 63 días en test: precio real, mediana prevista e intervalo del 80 %**
 
 ![GRU h=63 en test](artifacts/20261112-125335_final-gru-h63_omen-pc/series_test.png)
@@ -130,6 +141,7 @@ Tiempos medidos en una RTX 3050 Ti Laptop.
 - **21 días.** Sin mejora ni en validación ni en test.
 - **63 días.** En validación mejoraba a la persistencia en las 3 semillas, pero la mejora venía sobre todo del pliegue 2021–2023 (+21 %). En test la red predice de media una subida del 11 % a 63 días, cuando la real fue del 1,7 %, y amplifica los movimientos recientes (Figura 3). La dirección sí lleva algo de información: acierta el signo del cambio en el 60 % de los días y la correlación entre el rendimiento previsto y el real es de 0,27. Lo que falla es la magnitud.
 - **252 días.** Peor que la persistencia en validación y en test. Cada bloque de 2 años contiene unos 2 pronósticos independientes a 252 días, así que la muestra no permite estimar bien el error.
+- **Significación.** Incluso el −61 % a 63 días tiene p = 0,27: test contiene unos 15 pronósticos independientes a 63 días y sus errores están muy correlacionados, así que la diferencia cabe en la variabilidad de la muestra. A 63 y 252 días el contraste tiene poca potencia; «no significativo» no quiere decir «igual».
 - **2026.** En los tres horizontes cortos la cobertura del intervalo cae al 48–58 % en 2026, cuando el precio sube un 16 % a 63 días y un 30 % a 252.
 
 **Qué muestra la aplicación.** El modelo elegido en cada horizonte, junto con el aviso de que, medido en 2023–2026, no mejora a «el precio de hoy». El dato más fiable es el intervalo a 5 días.
@@ -200,7 +212,8 @@ oil-rnn/
 - [x] Evaluación final en test
 - [x] Modelos exportados y aplicación publicada (Sonda, primera versión)
 - [x] Decisiones documentadas, cuadernos del proceso y explorador local
-- [ ] Rediseño de la aplicación y portal con dinero ficticio (hecho en la rama `feat/web-redesign`, sin fusionar)
+- [x] Rediseño de la aplicación y portal con dinero ficticio
+- [x] Contraste de Diebold-Mariano frente a la persistencia
 - [ ] Página explicativa
 - [ ] Actualización de datos y reentrenamiento periódicos
 
@@ -208,4 +221,4 @@ oil-rnn/
 
 ## Bibliografía
 
-`docs/references.bib` es la única fuente de citas y se mantiene con Zotero (Better BibTeX).
+`docs/references.bib` es la única fuente de citas y se mantiene con Zotero (Better BibTeX). Citados: Diebold y Mariano (1995), *Comparing Predictive Accuracy*; Harvey, Leybourne y Newbold (1997), *Testing the equality of prediction mean squared errors*.
