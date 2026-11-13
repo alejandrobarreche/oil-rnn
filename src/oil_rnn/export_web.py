@@ -2,6 +2,7 @@
 
     make export-web                     # con la Release por defecto
     make export-web RELEASE=model-v2
+    make export-explain                 # solo web/public/data/explain.json (página explicativa)
 
 Genera en web/public/model/:
     h<h>.onnx       la red de cada horizonte (no se sube a git: se publica como Release)
@@ -31,7 +32,15 @@ from .config import load_config, require
 from .conformal import calibrate_quantiles
 from .data import SPLITS, file_sha256, load_split
 from .model import Predictor
-from .paths import ARTIFACTS_DIR, MODELS_DIR, WEB_DATA_DIR, WEB_MODEL_DIR, relative, run_paths
+from .paths import (
+    ARTIFACTS_DIR,
+    MODELS_DIR,
+    WEB_DATA_DIR,
+    WEB_EXPLAIN_FILE,
+    WEB_MODEL_DIR,
+    relative,
+    run_paths,
+)
 
 N_EXAMPLES = 3
 
@@ -228,7 +237,18 @@ def export(cfg: dict, release: str) -> dict:
 def main(argv: list[str] | None = None) -> None:
     parser = argparse.ArgumentParser(description="Exporta los modelos de web.models para la web")
     parser.add_argument("--release", default="model-v1", help="Release de GitHub de los modelos")
+    parser.add_argument(
+        "--explain", action="store_true", help="Solo los datos de la página explicativa"
+    )
     args = parser.parse_args(argv)
+    if args.explain:
+        from .explore import explain_data
+
+        data = explain_data(load_config())
+        text = json.dumps(data, ensure_ascii=False, separators=(",", ":"))
+        WEB_EXPLAIN_FILE.write_text(text, encoding="utf-8")
+        print(f"{relative(WEB_EXPLAIN_FILE)}: {len(text) / 1024:.0f} KB")
+        return
     sys.stdout.reconfigure(encoding="utf-8")  # torch.onnx escribe emojis; cp1252 fallaría
     manifest = export(load_config(), args.release)
     for m in manifest["models"]:

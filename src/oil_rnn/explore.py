@@ -11,6 +11,7 @@ que el entrenamiento (data.py, features.py) y lee los resultados que ya están g
     cell_trace        una RNN, LSTM o GRU paso a paso en NumPy (estados y puertas)
     significance      Diebold-Mariano de cada modelo final frente a la persistencia en test
     futures_naive     persistencia actualizada con el futuro del Brent, en los bloques de make cv
+    explain_data      todo lo que dibuja la página explicativa (make export-explain)
 
     make dm             imprime `significance()`
     make naive-futures  imprime `futures_naive()`
@@ -18,8 +19,10 @@ que el entrenamiento (data.py, features.py) y lee los resultados que ya están g
 
 from __future__ import annotations
 
+import copy
 import json
 import re
+from pathlib import Path
 
 import numpy as np
 import pandas as pd
@@ -35,7 +38,7 @@ from .data import (
 )
 from .features import Preprocessor
 from .metrics import diebold_mariano
-from .paths import RUNS_DIR, run_paths
+from .paths import RUNS_DIR, SPLITS_MANIFEST, WEB_DATA_DIR, WEB_MODEL_DIR, run_paths
 
 STAGES = ("bruto", "corte", "relleno", "inicio")
 STAGE_LABELS = {
@@ -442,6 +445,195 @@ def count_params(cell: str, n_inputs: int, hidden: int, layers: int = 1, n_outpu
         size_in = n_inputs if layer == 0 else hidden
         total += blocks * hidden * (size_in + hidden + 2)
     return total
+
+
+# ── Página explicativa (make export-explain) ───────────────
+def preprocessor_from_manifest(cfg: dict, entry: dict) -> Preprocessor:
+    """El preprocesado de un modelo exportado, rehecho con los parámetros de su entrada en
+    web/public/model/manifest.json: lo mismo que replica web/src/model.ts."""
+    run_cfg = copy.deepcopy(cfg)
+    run_cfg["data"] |= {k: entry[k] for k in ("window", "horizon", "target_mode", "target")}
+    prep = Preprocessor(run_cfg)
+    prep.features, prep.transforms = list(entry["features"]), list(entry["transforms"])
+    prep.inputs = list(entry["inputs"])
+    prep.floor = {f: v for f, v in zip(entry["features"], entry["floor"], strict=True) if v}
+    prep.volatility, prep.clip = entry["volatility"], entry["clip"]
+    prep.x_mean, prep.x_scale = np.asarray(entry["x_mean"]), np.asarray(entry["x_scale"])
+    prep.y_mean, prep.y_scale = float(entry["y_mean"]), float(entry["y_scale"])
+    return prep
+
+
+def onnx_session(path: Path, hidden: bool = False):
+    """Sesión de ONNX Runtime de una red exportada. Con hidden=True añade como segunda salida
+    el estado oculto de la primera capa en cada paso de la ventana. La RNN simple se exporta
+    desenrollada (un tanh por paso): su primera capa es la primera concatenación de tanh."""
+    import onnx
+    import onnxruntime as ort
+
+    model = onnx.load(path)
+    if hidden:
+        graph = model.graph
+        recurrent = [n for n in graph.node if n.op_type in ("GRU", "LSTM", "RNN")]
+        if recurrent:
+            name = recurrent[0].output[0]
+        else:
+            name = next(
+                n.output[0]
+                for n in graph.node
+                if n.op_type == "Concat" and n.input and all(i.startswith("tanh") for i in n.input)
+            )
+        graph.output.append(onnx.helper.make_tensor_value_info(name, onnx.TensorProto.FLOAT, None))
+    return ort.InferenceSession(model.SerializeToString())
+
+
+def state_path(states: np.ndarray, dims: int = 3) -> dict:
+    """Recorrido del estado oculto (pasos × unidades), empezando en el estado inicial (ceros),
+    proyectado en sus `dims` direcciones de mayor variación (componentes principales) y
+    escalado a [-1, 1]. explained: fracción de la variación que recogen esas direcciones.
+    change: cuánto cambia el estado cada día (raíz del cambio cuadrático medio por unidad)."""
+    h = np.vstack([np.zeros((1, states.shape[1])), states])
+    centered = h - h.mean(axis=0)
+    _, s, vt = np.linalg.svd(centered, full_matrices=False)
+    xyz = centered @ vt[:dims].T
+    change = np.sqrt(np.mean(np.diff(h, axis=0) ** 2, axis=1))
+    return {
+        "xyz": (xyz / np.abs(xyz).max()).round(4).tolist(),
+        "explained": float((s[:dims] ** 2).sum() / (s**2).sum()),
+        "change": change.round(5).tolist(),
+    }
+
+
+def cell_paths(cfg: dict, manifest: dict, market: dict) -> tuple[list[dict], dict]:
+    """Cada modelo final sobre la última ventana de market.json (la que usa Sonda): recorrido
+    de su estado oculto y tamaño. Devuelve también la ventana del primer horizonte tal como la
+    ve la red (window × entradas, estandarizada y recortada). Antes comprueba, con los
+    ejemplos de paridad de make export-web, que el preprocesado rehecho da la misma salida."""
+    from .conformal import calibrate_quantiles
+
+    examples = json.loads((WEB_MODEL_DIR / "examples.json").read_text(encoding="utf-8"))
+    finals = runs_table("final").set_index("run_id")
+    rows = np.asarray(market["rows"]["values"], np.float64)
+    paths, window = [], None
+    for entry in sorted(manifest["models"], key=lambda e: e["horizon"]):
+        if entry["features"] != market["features"]:
+            raise ValueError(f"h={entry['horizon']}: features distintas en manifest y market")
+        prep = preprocessor_from_manifest(cfg, entry)
+        session = onnx_session(WEB_MODEL_DIR / entry["model_file"], hidden=True)
+        name = session.get_inputs()[0].name
+        for ex in examples[str(entry["horizon"])]:
+            raw = session.run(None, {name: prep.window_from_rows(np.asarray(ex["rows"]))[None]})[0]
+            last = np.array([ex["rows"][-1][entry["target_index"]]])
+            pred = calibrate_quantiles(
+                prep.inverse_target(raw, last), entry["quantiles"], entry["conformal"]
+            )
+            if not np.allclose(pred[0], ex["expected"], rtol=1e-4):
+                raise ValueError(f"h={entry['horizon']}: el preprocesado rehecho no reproduce")
+        x = prep.window_from_rows(rows)
+        states = session.run(None, {name: x[None]})[1].reshape(len(x), -1)
+        run = finals.loc[entry["run_id"]]
+        layers, hidden = int(run["num_layers"]), int(run["hidden_size"])
+        paths.append(
+            {
+                "horizon": entry["horizon"],
+                "cell": entry["cell"],
+                "hidden": hidden,
+                "layers": layers,
+                "params": count_params(entry["cell"], len(entry["inputs"]), hidden, layers),
+                **state_path(states),
+            }
+        )
+        if window is None:
+            window = {
+                "horizon": entry["horizon"],
+                "t": market["rows"]["t"][-len(x) :],
+                "inputs": entry["inputs"],
+                "price": rows[-len(x) :, entry["target_index"]].round(2).tolist(),
+                "x": x.round(3).tolist(),
+            }
+    return paths, window
+
+
+def cell_comparison(cfg: dict) -> pd.DataFrame:
+    """Validación (make cv) de las tres celdas por horizonte: la mejor configuración de la
+    rejilla (menor cv_<sweep.select_by> con semilla 42) y su mejora de RMSE frente a la
+    persistencia (cv_skill_vs_baseline) en todas las semillas con esa configuración."""
+    prefix, key = cfg["sweep"]["prefix"], f"cv_{cfg['sweep']['select_by']}"
+    runs = runs_table()
+    runs = runs[runs["prefix"].fillna("").str.startswith(prefix)]
+    grid = runs[runs["prefix"] == prefix]
+    chosen = set(zip(runs_table("final")["horizon"], runs_table("final")["cell"], strict=True))
+    rows = []
+    for (h, cell), group in grid.groupby(["horizon", "cell"]):
+        same = same_config(runs, group.loc[group[key].idxmin()])
+        skill = same["cv_skill_vs_baseline"]
+        rows.append(
+            {
+                "horizon": int(h),
+                "cell": cell,
+                "chosen": (h, cell) in chosen,
+                "seeds": len(same),
+                "skill": skill.mean(),
+                "skill_min": skill.min(),
+                "skill_max": skill.max(),
+            }
+        )
+    return pd.DataFrame(rows)
+
+
+def test_summary(prefix: str = "final") -> list[dict]:
+    """Por modelo final: sus predicciones en test (fecha objetivo, real, mediana, intervalo y
+    persistencia, en $), las métricas de eval_test.json y el error y la cobertura por año."""
+    out = []
+    for _, run in runs_table(prefix).sort_values("horizon").iterrows():
+        pred = test_predictions(run["run_id"])
+        metrics = _read_json(run_paths(run["run_id"])["run"] / "eval_test.json")["metrics"]
+        by_year = skill_by(pred).rename_axis("year").reset_index()
+        out.append(
+            {
+                "horizon": int(run["horizon"]),
+                "cell": run["cell"],
+                "t": pred["time"].dt.strftime("%Y-%m-%d").tolist(),
+                **{
+                    k: pred[c].round(2).tolist()
+                    for k, c in (
+                        ("real", "y_true"),
+                        ("pred", "y_pred"),
+                        ("lo", "y_lo"),
+                        ("hi", "y_hi"),
+                        ("base", "y_baseline"),
+                    )
+                },
+                "metrics": {k.removeprefix("test_"): v for k, v in metrics.items()},
+                "by_year": _records(by_year),
+            }
+        )
+    return out
+
+
+def _records(df: pd.DataFrame) -> list[dict]:
+    return json.loads(df.to_json(orient="records", date_format="iso", double_precision=5))
+
+
+def explain_data(cfg: dict) -> dict:
+    """Todo lo que dibuja la página explicativa (web/explica.html), salvo el histórico y los
+    sucesos, que lee de market.json. Solo cifras ya guardadas: no entrena ni evalúa."""
+    manifest = json.loads((WEB_MODEL_DIR / "manifest.json").read_text(encoding="utf-8"))
+    market = json.loads((WEB_DATA_DIR / "market.json").read_text(encoding="utf-8"))
+    ranges = json.loads(SPLITS_MANIFEST.read_text(encoding="utf-8"))["ranges"]
+    dev = load_train_val()
+    cells, window = cell_paths(cfg, manifest, market)
+    horizons = sorted(m["horizon"] for m in manifest["models"])
+    return {
+        "asof": market["ts"],
+        "splits": {k: [v[0][:10], v[1][:10]] for k, v in ranges.items()},
+        "folds": {str(h): _records(fold_table(cfg, dev, h)) for h in horizons},
+        "window": window,
+        "cells": cells,
+        "cv": _records(cell_comparison(cfg)),
+        "test": test_summary(),
+        "dm": _records(significance().drop(columns="run_id")),
+        "futures": _records(futures_naive(cfg, dev).drop(columns="cv_run")),
+    }
 
 
 if __name__ == "__main__":

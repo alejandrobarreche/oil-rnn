@@ -59,6 +59,9 @@ EXPLORER_CSS = ROOT / "app" / "estilo.css"  # estilo propio; el tema está en .s
 WEB_DIR = ROOT / "web"
 WEB_MODEL_DIR = WEB_DIR / "public" / "model"  # ONNX, manifiesto y ejemplos (make export-web)
 WEB_DATA_DIR = WEB_DIR / "public" / "data"  # mercado y calidad en la forma del contrato de Sonda
+WEB_EXPLAIN_FILE = (
+    WEB_DATA_DIR / "explain.json"
+)  # datos de la página explicativa (make export-explain)
 
 
 def run_paths(run_id: str) -> dict[str, Path]:

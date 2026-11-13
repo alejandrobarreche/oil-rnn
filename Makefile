@@ -33,7 +33,7 @@ CALIB ?=
 
 .PHONY: help setup pending check-env install install-mac install-cpu install-cuda install-rocm \
         backend-mac backend-cpu backend-cuda backend-rocm lock test lint format device \
-        data prepare cv sweep compare dm naive-futures train evaluate runs pack unpack mlflow-ui explore-install explore export-web web-install web-dev web-test web-build web-release
+        data prepare cv sweep compare dm naive-futures train evaluate runs pack unpack mlflow-ui explore-install explore export-web export-explain web-install web-dev web-test web-build web-release
 
 
 help:
@@ -60,6 +60,7 @@ help:
 	@echo "  make mlflow-ui        interfaz de MLflow"
 	@echo "== Web =="
 	@echo "  make export-web       exporta los modelos de web.models (configs) a ONNX para web/"
+	@echo "  make export-explain   datos de la pagina explicativa (web/public/data/explain.json)"
 	@echo "  make web-dev          servidor de desarrollo en http://localhost:5173"
 	@echo "  make web-test         paridad TypeScript frente a Python"
 	@echo "  make web-build        compila web/dist"
@@ -164,6 +165,9 @@ explore: check-env
 # ── Web ────────────────────────────────────────────────────
 export-web: check-env
 	$(PYTHON) -m $(PKG).export_web --release $(RELEASE)
+
+export-explain: check-env
+	$(PYTHON) -m $(PKG).export_web --explain
 
 web-install:
 	cd web && npm install

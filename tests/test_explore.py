@@ -266,3 +266,31 @@ def test_figuras_con_datos_sinteticos():
         plots.pinball_curves(),
     ]
     assert all(isinstance(f, Figure) for f in figures)
+
+
+def test_preprocesado_rehecho_desde_el_manifiesto():
+    from oil_rnn.export_web import _preprocessing
+
+    cfg = _cfg(window=5, horizon=2)
+    df = _raw()
+    df = df[df.notna().all(axis=1)].reset_index(drop=True)
+    prep = Preprocessor(cfg).fit(df)
+    entry = _preprocessing(prep) | {"target": prep.target}
+    rebuilt = explore.preprocessor_from_manifest(cfg, entry)
+    rows = df[prep.features].to_numpy()[-(prep.window + prep.warmup) :]
+    assert np.allclose(rebuilt.window_from_rows(rows), prep.window_from_rows(rows))
+    y = np.array([[0.1, 0.2, 0.3]])
+    assert np.allclose(
+        rebuilt.inverse_target(y, np.array([50.0])), prep.inverse_target(y, np.array([50.0]))
+    )
+
+
+def test_recorrido_del_estado():
+    # Estado que avanza en línea recta: una sola dirección recoge toda la variación
+    states = np.outer(np.arange(1, 11), np.ones(4))
+    out = explore.state_path(states)
+    xyz = np.array(out["xyz"])
+    assert xyz.shape == (11, 3)  # empieza en el estado inicial (ceros)
+    assert np.abs(xyz).max() == pytest.approx(1.0)
+    assert out["explained"] == pytest.approx(1.0)
+    assert out["change"] == pytest.approx([1.0] * 10)
