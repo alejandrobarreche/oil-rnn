@@ -461,7 +461,7 @@ git push
 - **Semillas de `g1`**: el `pinball_skill` del mismo modelo cambia hasta 12 puntos entre semillas a 252 días (GRU-256: +4,3 %, −4,2 %, −8,3 %) y entre 1 y 4 a 5 días. El único resultado estable es la GRU-128 a 63 días: `skill_vs_baseline` +5,4 %, +4,5 % y +4,4 %.
 - **Conclusión**: a 5 días la red pequeña iguala a la grande con 125 veces menos parámetros y una curva que converge. A 21, 63 y 252 días queda por debajo, pero `m1` cambió a la vez tamaño y ventana (20 en vez de 60), así que no se sabe cuál de las dos lo causa. A 252 días ninguna red supera a la persistencia de forma estable.
 
-## 20. Windows GPU · 16/11/2026 · ⏳: rejilla m2 (redes pequeñas con ventana 60) y semillas de la GRU-16 a 5 días
+## 20. Windows GPU · 16/11/2026 · ✅: rejilla m2 (redes pequeñas con ventana 60) y semillas de la GRU-16 a 5 días
 
 - **Pregunta**: (a) a 21, 63 y 252 días, ¿la red pequeña falla por su tamaño o por ver solo 20 días? (b) a 5 días, ¿la GRU-16 mantiene su resultado con otras dos semillas, como la GRU-256?
 - **Qué hace**: (a) 18 runs de `make cv` como los de `m1`, con la ventana de 60 de la config; (b) 2 runs de `make cv` de la GRU-16 a 5 días con semillas 7 y 123. Sin cambiar código ni `configs/config.yaml`.
@@ -486,3 +486,30 @@ git push
 ```
 
 - **Qué pasarle a Claude**: un aviso cuando estén subidos.
+
+- **Resultado (17/11)**: 20 runs (`*_m2-*`, `*_m1s7-*`, `*_m1s123-*`), subidos en `93ce204`. Todo es validación (4 pliegues).
+- **(a) Ventana**: con 60 días las redes pequeñas quedan igual que con 20 (mejor `cv_pinball_skill`: 21 días −1,5 %, 63 días −3,1 %, 252 días −11,4 %). La ventana no es la causa; a 21, 63 y 252 días la red pequeña no iguala al modelo publicado (+0,5 %, +2,6 % y −2,3 % de media en 3 semillas). Se quedan los modelos publicados.
+- **(b) GRU-16 a 5 días, 3 semillas**: `cv_pinball_skill` +1,5 %, −0,7 % y +1,2 % (media +0,7 %); `cv_skill_vs_baseline` −0,3 %, −0,2 % y −0,7 % (media −0,4 %). GRU-256 publicada: +1,5 % y −1,1 % de media. La diferencia (0,8 puntos de `pinball_skill` a favor de la grande, 0,7 de error a favor de la pequeña) es menor que la variación entre semillas (desviación ≈ 1,1 puntos en las dos).
+- **Conclusión**: a 5 días las dos empatan dentro del ruido. Se elige la GRU-16 por el criterio de coste del enunciado: 1.683 parámetros frente a 211.203 y curvas que paran por *early stopping* (mejor época 34–163) en vez de memorizar en la época 1–2. Ninguna de las dos mejora a la persistencia en error medio.
+
+## 21. Windows GPU · 17/11/2026 · ⏳: modelo final GRU-16 a 5 días y su evaluación en test
+
+- **Pregunta**: ¿qué error tiene en test (2023–2026) la GRU-16 elegida en la entrada 20, frente a la persistencia y frente a la GRU-256 publicada (−3,6 % en `skill_vs_baseline`)?
+- **Qué hace**: `make train` con train+val y la misma configuración que la rejilla `m1`, calibrando el intervalo con su run de cv; después `make evaluate` en test una sola vez. Sin cambiar código ni `configs/config.yaml`.
+- **Duración estimada**: 1–2 min.
+- **Comprobado por Claude**: el run de calibración existe (`20261116-231322_m1-gru-h5-n16-l1-d0-lr0-0001_omen-pc`) y `make export-web` admite modelos con ventanas distintas. El entrenamiento no se ha ejecutado.
+
+```powershell
+make train NAME=final-gru16-h5 CALIB=20261116-231322_m1-gru-h5-n16-l1-d0-lr0-0001_omen-pc ARGS="--set model.cell=gru --set data.horizon=5 --set model.hidden_size=16 --set model.num_layers=1 --set model.dropout=0.0 --set train.learning_rate=0.0001 --set data.window=20 --set train.batch_size=128 --set train.epochs=400 --set train.patience=20"; if ($LASTEXITCODE -eq 0) { make evaluate }
+```
+
+- **Para subirlo**: solo este run.
+
+```powershell
+git add runs/*_final-gru16-h5_* artifacts/*_final-gru16-h5_*
+git commit -m "chore(runs): modelo final GRU-16 a 5 días evaluado en test"
+git pull --rebase
+git push
+```
+
+- **Qué pasarle a Claude**: un aviso cuando esté subido. Después Claude cambia `web.models` en `configs/config.yaml` y `docs/DECISIONES.md`, y te da `make export-web` y `make web-release`.
