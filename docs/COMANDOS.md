@@ -386,7 +386,9 @@ make cv NAME=mini-gru-h5 ARGS="--set data.horizon=5 --set data.window=20 --set m
 ```
 
 - **Resultado (16/11)**: run `20261116-222735_mini-gru-h5_omen-pc`, 4 pliegues. `cv_skill_vs_baseline` −0,7 % y `cv_pinball_skill` −0,6 %; cobertura 70 % (86 % con la corrección conformal). La GRU de 256 unidades de la rejilla tenía −0,1 %, +2,6 % y 78 %.
-- **Sin concluir**: la salida no trae la época mejor ni las épocas ejecutadas de cada pliegue; están en `metrics.json`. Para subir solo este run:
+- **Curva**: en los 4 pliegues la mejor época es la 150 de 150 y la pérdida de parada baja sin oscilar (entre 0 y 12 subidas en 150 épocas). El entrenamiento se cortó por el tope, no por early stopping: la red seguía mejorando.
+- **Conclusión**: la curva se alarga y se suaviza, pero con tasa 0,00003 no converge en 150 épocas; sus métricas no son comparables con las de la red grande. Sigue en la entrada 18.
+- **Subida (16/11)**: run en `bcbe70c`, con este bloque:
 
 ```powershell
 git add runs/20261116-222735_mini-gru-h5_omen-pc artifacts/20261116-222735_mini-gru-h5_omen-pc
@@ -394,3 +396,26 @@ git commit -m "chore(runs): prueba mini-gru-h5 con red pequeña y tasa de aprend
 git pull --rebase
 git push
 ```
+
+## 18. Windows GPU · 16/11/2026 · ⏳: la red pequeña hasta converger (GRU, 5 días)
+
+- **Pregunta**: entrenada hasta que pare el early stopping, ¿iguala la red de 16 unidades a la GRU de 256 de la rejilla (`cv_skill_vs_baseline` −0,1 %, `cv_pinball_skill` +2,6 %)?
+- **Qué cambia frente a la entrada 17**: tasa de aprendizaje 0,0001 y 0,0003 (antes 0,00003), tope de 400 épocas y paciencia 20. No cambia código ni `configs/config.yaml`.
+- **Duración estimada**: hasta 5 min por run (la entrada 17 tardó 20–27 s por pliegue con 150 épocas).
+- **Sin comprobar por Claude**: los comandos no se han ejecutado en el Mac.
+
+```powershell
+make cv NAME=mini-gru-h5-lr1e4 ARGS="--set data.horizon=5 --set data.window=20 --set model.cell=gru --set model.hidden_size=16 --set model.num_layers=1 --set model.dropout=0.0 --set train.learning_rate=0.0001 --set train.batch_size=128 --set train.epochs=400 --set train.patience=20"
+make cv NAME=mini-gru-h5-lr3e4 ARGS="--set data.horizon=5 --set data.window=20 --set model.cell=gru --set model.hidden_size=16 --set model.num_layers=1 --set model.dropout=0.0 --set train.learning_rate=0.0003 --set train.batch_size=128 --set train.epochs=400 --set train.patience=20"
+```
+
+- **Para subirlos**: solo estos dos runs.
+
+```powershell
+git add runs/*_mini-gru-h5-lr* artifacts/*_mini-gru-h5-lr*
+git commit -m "chore(runs): red pequeña a 5 días hasta converger, tasas 0,0001 y 0,0003"
+git pull --rebase
+git push
+```
+
+- **Qué pasarle a Claude**: avisa cuando estén subidos; la época mejor de cada pliegue está en `metrics.json`.
