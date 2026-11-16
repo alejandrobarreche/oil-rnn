@@ -4,6 +4,7 @@
 // con los datos de make export-web y las predicciones ONNX calculadas en el navegador.
 // Versión WebAssembly (CPU): el .wasm se empaqueta con la web, sin depender de un CDN.
 import * as ort from "onnxruntime-web/wasm";
+import { mountDrop } from "./drop";
 import { occlusion } from "./explain";
 import { type Bundle, predict, type Row } from "./model";
 import { mountPortal } from "./portal";
@@ -100,18 +101,30 @@ function forecastPanel(m: SondaMarket, f: Forecast): Html {
       <i class="rg-band" style="left:${pos(f.lo)}%;width:${(Number(pos(f.hi)) - Number(pos(f.lo))).toFixed(2)}%"></i>
       <i class="rg-now" style="left:${pos(m.last)}%"></i><i class="rg-mid" style="left:${pos(f.mid)}%"></i></div>
     <div class="fp-ends"><span style="left:${pos(f.lo)}%">${num(f.lo)} $</span><span style="left:${pos(f.hi)}%">${num(f.hi)} $</span></div></div>`;
-  // Error medio en test: la red frente a repetir el precio de hoy, dos barras en la misma escala
+  // Cuánto falló cada uno en test: la red frente a decir que el precio seguirá igual, en la misma escala
   const top = q ? Math.max(q.metrics.mae, q.baseline.mae) : 1;
   const bar = (name: string, v: number, ref: boolean) =>
     `<div class="fp-bar${ref ? " is-ref" : ""}"><span>${name}</span><div><i style="width:${((v / top) * 100).toFixed(2)}%"></i></div><b>${num(v)} $</b></div>`;
+  const gap = q ? q.metrics.mae / q.baseline.mae - 1 : 0;
+  const verdict =
+    Math.abs(gap) < 0.005
+      ? "La red falla lo mismo que no usar modelo."
+      : `La red falla un ${S.fmt.num(Math.abs(gap) * 100, 0)} % ${gap > 0 ? "más" : "menos"} que no usar modelo.`;
   const error = q
-    ? `<div class="fp-block"><div class="fp-l">Error medio en datos que no vio</div>${bar("Con la red", q.metrics.mae, false)}${bar("Sin modelo", q.baseline.mae, true)}</div>`
+    ? `<div class="fp-block"><div class="fp-l">Cuánto falló de media, de ${S.fmt.monthYear(q.period[0])} a ${S.fmt.monthYear(q.period[1])}</div>
+        ${bar("La red", q.metrics.mae, false)}${bar("Decir «seguirá igual»", q.baseline.mae, true)}
+        <p class="fp-verdict">${verdict}</p></div>`
     : "";
+  // Probabilidad de subida: la gota se llena hasta ese nivel
+  const up = S.probUp(m.last, f);
+  const lead = up >= 0.5;
+  const prob = `<div class="pd"><div class="pd-drop" id="drop" role="img" aria-label="Sube ${S.fmt.pct(up)}, baja ${S.fmt.pct(1 - up)}"></div>
+    <div><div class="pd-v ${lead ? "bx-up-text" : "bx-down-text"}">${S.fmt.pct(lead ? up : 1 - up)}</div>
+      <div class="pd-l">de probabilidad de que ${lead ? "suba" : "baje"}</div>
+      <div class="pd-s">${S.fmt.pct(lead ? 1 - up : up)} de que ${lead ? "baje" : "suba"}</div></div></div>`;
   return `<div class="ch"><div><div class="ch-t">Previsión a ${label(f.h)}</div><div class="ch-s">Para el ${longDate(target)}, con una red ${f.model ?? ""}</div></div></div>
     <div class="bx-fc-big"><span class="bx-fc-v">${num(f.mid)} $</span>${S.ui.chg(f.mid - m.last, f.mid / m.last - 1)}</div>
-    <div style="height:14px"></div>
-    ${S.ui.directionMeter(S.probUp(m.last, f))}
-    ${range}${error}`;
+    ${prob}${range}${error}`;
 }
 
 /** Fiabilidad de los cuatro modelos en el test, cada cifra junto a su referencia trivial. */
@@ -179,6 +192,7 @@ async function init() {
     $("tabs").innerHTML = S.ui.horizonTabs(sel);
     $("ph").innerHTML = S.ui.priceHeader(market, f);
     $("panel").innerHTML = forecastPanel(market, f);
+    mountDrop($("drop"), S.probUp(market.last, f));
     $("cards").innerHTML = S.ui.forecastCards(market, forecasts, sel);
     $("metrics").innerHTML = reliability(forecasts, sel);
     $("drv-t").textContent = `Qué mira el modelo a ${label(sel)}`;
