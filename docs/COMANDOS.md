@@ -423,7 +423,7 @@ git push
 - **Métricas de validación (una semilla)**: tasa 0,0001: `cv_skill_vs_baseline` −0,3 %, `cv_pinball_skill` +1,5 %, cobertura 77 %. GRU de 256 de la rejilla: −0,1 %, +2,6 %, 78 %. Tasa 0,0003: −2,7 % y −0,4 %, con un pliegue en −7,3 %; se descarta.
 - **Conclusión**: la red pequeña arregla la curva y deja de memorizar, pero a 5 días no mejora las métricas. La diferencia con la grande (1,1 puntos de `pinball_skill`) es menor que la variación entre pliegues y hay una sola semilla: no se puede decir cuál es mejor.
 
-## 19. Windows GPU · 16/11/2026 · ⏳: rejilla m1, redes pequeñas en los cuatro horizontes
+## 19. Windows GPU · 16/11/2026 · ✅: rejilla m1, redes pequeñas en los cuatro horizontes
 
 - **Pregunta**: con 16 o 32 unidades, ventana de 20 días y tasa 0,0001, ¿iguala cada red (RNN, LSTM, GRU) a su mejor configuración de la rejilla `g1` en 5, 21, 63 y 252 días, con curvas que convergen?
 - **Qué hace**: 24 runs de `make cv` (3 redes × 4 horizontes × 2 tamaños), sin cambiar código ni `configs/config.yaml`. Es reanudable: si se corta, el mismo comando sigue donde iba.
@@ -446,3 +446,43 @@ git push
 ```
 
 - **Qué pasarle a Claude**: la salida de `make compare` y un aviso cuando estén subidos.
+
+- **Resultado (16/11)**: 24 runs `*_m1-*`, subidos en `10e4129`. Todo es validación (4 pliegues); `m1` tiene una semilla y los ganadores de `g1` tres (42, 7 y 123).
+- **`cv_pinball_skill`, mejor red pequeña frente al modelo publicado en la web (elegido en `g1`, media de 3 semillas)**:
+
+| Horizonte | Mejor `m1` (1 semilla) | Modelo publicado (media de 3 semillas) | Mediana de las 108 de `g1` |
+|---|---|---|---|
+| 5 | GRU-16: +1,5 % | GRU-256: +1,5 % | +1,1 % |
+| 21 | RNN-16: −1,4 % | LSTM-64: +0,4 % | −1,3 % |
+| 63 | LSTM-16: −3,8 % | GRU-128: +2,6 % | −2,3 % |
+| 252 | RNN-32: −11,0 % | RNN-256: −2,3 % | −10,5 % |
+
+- **Curvas**: a 5 días las pequeñas paran entre las épocas 29 y 340. A 63 y 252 días también memorizan pronto en el pliegue 3 (mejor época 3 a 26).
+- **Semillas de `g1`**: el `pinball_skill` del mismo modelo cambia hasta 12 puntos entre semillas a 252 días (GRU-256: +4,3 %, −4,2 %, −8,3 %) y entre 1 y 4 a 5 días. El único resultado estable es la GRU-128 a 63 días: `skill_vs_baseline` +5,4 %, +4,5 % y +4,4 %.
+- **Conclusión**: a 5 días la red pequeña iguala a la grande con 125 veces menos parámetros y una curva que converge. A 21, 63 y 252 días queda por debajo, pero `m1` cambió a la vez tamaño y ventana (20 en vez de 60), así que no se sabe cuál de las dos lo causa. A 252 días ninguna red supera a la persistencia de forma estable.
+
+## 20. Windows GPU · 16/11/2026 · ⏳: rejilla m2 (redes pequeñas con ventana 60) y semillas de la GRU-16 a 5 días
+
+- **Pregunta**: (a) a 21, 63 y 252 días, ¿la red pequeña falla por su tamaño o por ver solo 20 días? (b) a 5 días, ¿la GRU-16 mantiene su resultado con otras dos semillas, como la GRU-256?
+- **Qué hace**: (a) 18 runs de `make cv` como los de `m1`, con la ventana de 60 de la config; (b) 2 runs de `make cv` de la GRU-16 a 5 días con semillas 7 y 123. Sin cambiar código ni `configs/config.yaml`.
+- **Duración estimada**: unos 35 min.
+- **Comprobado por Claude**: `--dry-run` en el Mac lista las 18 combinaciones de `m2`. El entrenamiento no se ha ejecutado.
+- **Cómo se decide**: si `m2` iguala la media de 3 semillas del modelo publicado en un horizonte, ese horizonte pasa a red pequeña; si no, se queda el modelo actual.
+
+```powershell
+make sweep ARGS="--set sweep.prefix=m2 --set sweep.horizons=[21,63,252] --set sweep.hidden_size=[16,32] --set sweep.depth=[[1,0.0]] --set sweep.learning_rate=[0.0001] --set train.batch_size=128 --set train.epochs=400 --set train.patience=20"
+foreach ($seed in 7, 123) {
+  python -m oil_rnn.cv --name "m1s$seed-gru-h5-n16-l1-d0-lr0.0001" --set seed=$seed --set model.cell=gru --set data.horizon=5 --set model.hidden_size=16 --set model.num_layers=1 --set model.dropout=0.0 --set train.learning_rate=0.0001 --set data.window=20 --set train.batch_size=128 --set train.epochs=400 --set train.patience=20
+}
+```
+
+- **Para subirlos**: solo estos runs.
+
+```powershell
+git add runs/*_m2-* artifacts/*_m2-* runs/*_m1s* artifacts/*_m1s*
+git commit -m "chore(runs): rejilla m2 con ventana 60 y semillas de la GRU-16 a 5 días (20 runs de cv)"
+git pull --rebase
+git push
+```
+
+- **Qué pasarle a Claude**: un aviso cuando estén subidos.
