@@ -124,3 +124,7 @@ models/<id>/     pesos + preprocessor.joblib + model_card.json (fuera de git)
 - **Datos**: se cortan en la última observación real del target.
 - **`docs/references.bib`**: se edita a mano, solo con entradas que aporte el usuario; no se usa Zotero.
 - **Modelo web**: se publica como Release con `make web-release`; no lo añadas a git.
+
+## Más información
+
+- Reglas de la web (Sonda y página del Brent): `web/CLAUDE.md`.
