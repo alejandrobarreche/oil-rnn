@@ -1,75 +1,42 @@
-// Sonda · predicción del Brent. Composición Workspace del sistema de diseño Sonda 2
-// (src/sonda/: bundle.js, bundle.css y tokens.css, copiados del artefacto del sistema de diseño):
-// sus componentes (window.Sonda.ui), su gráfico interactivo (charts.price) y su backtest, alimentados
-// con los datos de make export-web y las predicciones ONNX calculadas en el navegador.
-// Versión WebAssembly (CPU): el .wasm se empaqueta con la web, sin depender de un CDN.
+// Producto: previsión del Brent en una sola pantalla. A la izquierda, la escena 3D (precio real,
+// previsión que se abre hasta la fecha objetivo y la gota de crudo); a la derecha, los controles.
+// «Hoy» calcula la previsión en el navegador con los modelos ONNX de make export-web; «Un día pasado»
+// usa las previsiones de test ya exportadas (quality.json) y deja revelar el precio que llegó después.
 import * as ort from "onnxruntime-web/wasm";
-import { mountDrop } from "./drop";
-import { occlusion } from "./explain";
+import * as I from "./icons";
 import { type Bundle, predict, type Row } from "./model";
-import { mountPortal } from "./portal";
-import {
-  type ChartState,
-  type CycleEvent,
-  type Forecast,
-  type Html,
-  horizonLabel as label,
-  type Quality,
-  S,
-  type SondaMarket,
-} from "./sonda";
-import "./sonda/tokens.css";
-import "./sonda/bundle.css";
-import "./sonda/bundle.js";
-import "./style.css";
+import { type Quality, S } from "./sonda";
+import { createStage, type StageData } from "./stage";
+import "./product.css";
 
 ort.env.wasm.numThreads = 1; // GitHub Pages no permite memoria compartida entre hilos
 
-// ── datos exportados (make export-web) ───────────────────────
 interface Market {
-  asset: string;
   last: number;
-  change: number;
   ts: string;
   history: { t: string; close: number }[];
-  events: CycleEvent[];
-  features: string[];
+  events: { t: string; label: string }[];
   rows: { t: string[]; values: Row[] };
 }
+interface Fc {
+  lo: number;
+  mid: number;
+  hi: number;
+}
 
-const LABELS: Record<string, string> = {
-  brent: "Brent",
-  wti: "WTI",
-  henry_hub: "Gas natural (Henry Hub)",
-  ecb_deposit_rate: "Tipo de depósito del BCE",
-  usd_per_eur: "Dólares por euro",
-  cny_per_usd: "Yuanes por dólar",
-  vix: "Volatilidad bursátil (VIX)",
-  wti_fut_open: "Apertura del futuro WTI",
-  wti_fut_high: "Máximo del futuro WTI",
-  wti_fut_low: "Mínimo del futuro WTI",
-  wti_fut_close: "Cierre del futuro WTI",
-  wti_fut_volume: "Volumen del futuro WTI",
-  copper: "Cobre",
-  gold: "Oro",
-  dollar_index: "Índice del dólar",
-  brent_vol21: "Volatilidad del Brent (21 días)",
-};
-const CELL: Record<string, string> = { rnn: "RNN simple", lstm: "LSTM", gru: "GRU" };
-// Rango del gráfico según el horizonte: desde 1 año, para que se vean los sucesos del ciclo económico
-const RANGE: Record<number, string> = { 5: "1A", 21: "1A", 63: "5A", 252: "Todo" };
-// Qué puede invalidar la previsión en cada plazo (contexto del enunciado: geopolítica y OPEP+)
-const RISKS: Record<number, string> = {
-  5: "Una noticia brusca: un recorte de la OPEP+, un ataque a una ruta de petroleros o un dato económico inesperado.",
-  21: "Una decisión de la OPEP+ o un cambio rápido en la tensión geopolítica.",
-  63: "Un cambio de producción de la OPEP+, un conflicto o un giro en la economía mundial.",
-  252: "Una recesión, una guerra o un cambio duradero en la oferta: a un año casi todo puede cambiar.",
-};
-// Alto fijo alrededor del lienzo: fila de lectura y controles (40), hueco y relleno de la tarjeta
-const CHART_CHROME = 40 + 6 + 20 + 24;
+// Plazos del enunciado; `spread` dibuja el icono (el abanico se abre más cuanto más lejos)
+const HZ = [
+  { h: 5, label: "1 semana", spread: 0.12 },
+  { h: 63, label: "3 meses", spread: 0.5 },
+  { h: 252, label: "1 año", spread: 1 },
+];
+// Días de pasado visibles en la escena según el plazo
+const WINDOW: Record<number, number> = { 5: 70, 63: 330, 252: 1010 };
 
 const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
 const base = import.meta.env.BASE_URL;
+const still = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+const money = (v: number) => `${S.fmt.num(v, 0)} $`;
 
 async function loadJson<T>(path: string): Promise<T> {
   const res = await fetch(`${base}${path}`);
@@ -77,205 +44,391 @@ async function loadJson<T>(path: string): Promise<T> {
   return res.json() as Promise<T>;
 }
 
-/** Mercado en la forma de Sonda. El WTI solo cubre las filas de entrada exportadas (última ventana). */
-function toSonda(mk: Market): SondaMarket {
-  const j = mk.features.indexOf("wti");
-  return {
-    asset: mk.asset,
-    unit: "$/bbl",
-    last: mk.last,
-    change: mk.change,
-    ts: mk.ts,
-    history: { t: mk.history.map((p) => p.t), close: mk.history.map((p) => p.close) },
-    wti: j < 0 ? undefined : { t: mk.rows.t, close: mk.rows.values.map((r) => r[j] as number) },
-    events: mk.events,
+// ── tema ─────────────────────────────────────────────────────
+const isDark = () => {
+  const t = document.documentElement.dataset.theme;
+  return t ? t === "dark" : window.matchMedia("(prefers-color-scheme: dark)").matches;
+};
+
+// ── cifra que rueda desde el valor que hay en pantalla ───────
+const rolling = new WeakMap<HTMLElement, { v: number; raf: number }>();
+function roll(el: HTMLElement, to: number) {
+  const st = rolling.get(el) ?? { v: to, raf: 0 };
+  cancelAnimationFrame(st.raf);
+  const from = st.v;
+  if (still || from === to) {
+    st.v = to;
+    el.textContent = S.fmt.num(to, 0);
+    rolling.set(el, st);
+    return;
+  }
+  const t0 = performance.now();
+  const step = (now: number) => {
+    const k = Math.min(1, (now - t0) / 900);
+    const e = 1 - 2 ** (-10 * k);
+    st.v = from + (to - from) * e;
+    el.textContent = S.fmt.num(st.v, 0);
+    if (k < 1) st.raf = requestAnimationFrame(step);
+    else st.v = to;
   };
+  st.raf = requestAnimationFrame(step);
+  rolling.set(el, st);
 }
 
-// ── componentes propios de la página ─────────────────────────
-/** Panel de previsión: solo la previsión del horizonte elegido; la fiabilidad va en su tarjeta. */
-function forecastPanel(m: SondaMarket, f: Forecast): Html {
-  const { num, longDate } = S.fmt;
-  const target = S.tradingDays(m.ts, f.h)[f.h - 1];
-  const q = f.quality;
-  // Rango: banda entre los dos extremos sobre una escala que incluye el precio de hoy
-  const min = Math.min(f.lo, m.last);
-  const max = Math.max(f.hi, m.last);
-  const pos = (v: number) => (((v - min) / (max - min || 1)) * 100).toFixed(2);
-  const range = `<div class="fp-block"><div class="fp-l">Rango probable (80 %)</div>
-    <span class="bx-ib-keys" aria-hidden="true"><span class="${f.mid >= m.last ? "k-l" : "k-r"}" style="left:${pos(m.last)}%">hoy</span><span class="k-fc ${f.mid >= m.last ? "k-r" : "k-l"}" style="left:${pos(f.mid)}%">previsto</span></span>
-    <div class="rg-track" role="img" aria-label="Entre ${num(f.lo)} y ${num(f.hi)} dólares; hoy ${num(m.last)}">
-      <i class="rg-band" style="left:${pos(f.lo)}%;width:${(Number(pos(f.hi)) - Number(pos(f.lo))).toFixed(2)}%"></i>
-      <i class="rg-now" style="left:${pos(m.last)}%"></i><i class="rg-mid" style="left:${pos(f.mid)}%"></i></div>
-    <div class="fp-ends"><span style="left:${pos(f.lo)}%">${num(f.lo)} $</span><span style="left:${pos(f.hi)}%">${num(f.hi)} $</span></div></div>`;
-  // Cuánto falló cada uno en test: la red frente a decir que el precio seguirá igual, en la misma escala
-  const top = q ? Math.max(q.metrics.mae, q.baseline.mae) : 1;
-  const bar = (name: string, v: number, ref: boolean) =>
-    `<div class="fp-bar${ref ? " is-ref" : ""}"><span>${name}</span><div><i style="width:${((v / top) * 100).toFixed(2)}%"></i></div><b>${num(v)} $</b></div>`;
-  const gap = q ? q.metrics.mae / q.baseline.mae - 1 : 0;
-  const verdict =
-    Math.abs(gap) < 0.005
-      ? "La red falla lo mismo que no usar modelo."
-      : `La red falla un ${S.fmt.num(Math.abs(gap) * 100, 0)} % ${gap > 0 ? "más" : "menos"} que no usar modelo.`;
-  const error = q
-    ? `<div class="fp-block"><div class="fp-l">Cuánto falló de media, de ${S.fmt.monthYear(q.period[0])} a ${S.fmt.monthYear(q.period[1])}</div>
-        ${bar("La red", q.metrics.mae, false)}${bar("Decir «seguirá igual»", q.baseline.mae, true)}
-        <p class="fp-verdict">${verdict}</p></div>`
-    : "";
-  // Probabilidad de subida: la gota se llena hasta ese nivel
-  const up = S.probUp(m.last, f);
-  const lead = up >= 0.5;
-  const prob = `<div class="pd"><div class="pd-drop" id="drop" role="img" aria-label="Sube ${S.fmt.pct(up)}, baja ${S.fmt.pct(1 - up)}"></div>
-    <div><div class="pd-v ${lead ? "bx-up-text" : "bx-down-text"}">${S.fmt.pct(lead ? up : 1 - up)}</div>
-      <div class="pd-l">de probabilidad de que ${lead ? "suba" : "baje"}</div>
-      <div class="pd-s">${S.fmt.pct(lead ? 1 - up : up)} de que ${lead ? "baje" : "suba"}</div></div></div>`;
-  return `<div class="ch"><div><div class="ch-t">Previsión a ${label(f.h)}</div><div class="ch-s">Para el ${longDate(target)}, con una red ${f.model ?? ""}</div></div></div>
-    <div class="bx-fc-big"><span class="bx-fc-v">${num(f.mid)} $</span>${S.ui.chg(f.mid - m.last, f.mid / m.last - 1)}</div>
-    ${prob}${range}${error}`;
+// ── control segmentado con indicador que se desliza ──────────
+function segmented<T extends string | number>(
+  host: HTMLElement,
+  items: { value: T; label: string; icon: string }[],
+  onPick: (v: T) => void,
+) {
+  host.innerHTML =
+    '<span class="seg-thumb" aria-hidden="true"></span>' +
+    items
+      .map((x) => `<button type="button" role="radio" data-v="${x.value}">${x.icon}<span>${x.label}</span></button>`)
+      .join("");
+  const thumb = host.querySelector<HTMLElement>(".seg-thumb") as HTMLElement;
+  const buttons = [...host.querySelectorAll<HTMLButtonElement>("button")];
+  let sel: T | null = null;
+  const set = (v: T) => {
+    sel = v;
+    buttons.forEach((b) => {
+      const on = b.dataset.v === String(v);
+      b.setAttribute("aria-checked", String(on));
+      b.tabIndex = on ? 0 : -1;
+      if (on) {
+        thumb.style.width = `${b.offsetWidth}px`;
+        thumb.style.transform = `translateX(${b.offsetLeft}px)`;
+      }
+    });
+  };
+  new ResizeObserver(() => sel !== null && set(sel)).observe(host);
+  buttons.forEach((b, i) => {
+    b.addEventListener("click", () => onPick(items[i].value));
+    b.addEventListener("keydown", (e) => {
+      const d = e.key === "ArrowRight" ? 1 : e.key === "ArrowLeft" ? -1 : 0;
+      if (!d) return;
+      e.preventDefault();
+      const j = (i + d + items.length) % items.length;
+      onPick(items[j].value);
+      buttons[j].focus();
+    });
+  });
+  return set;
 }
 
-/** Fiabilidad de un plazo frente a decir «seguirá igual», por el error medio en test (±2 % = empate). */
-function verdictOf(q: Quality): { tone: "up" | "flat" | "down"; label: string; use: string } {
-  const gap = q.metrics.mae / q.baseline.mae - 1;
-  if (gap <= -0.02)
-    return { tone: "up", label: "Mejor que no usar modelo", use: "Aporta información; aun así, fíate más del rango que de la cifra." };
-  if (gap < 0.02)
-    return { tone: "flat", label: "Igual que no usar modelo", use: "No añade nada a suponer que el precio seguirá igual." };
-  return { tone: "down", label: "Peor que no usar modelo", use: "Tómala como orientación, no como un precio seguro." };
-}
-
-/** La previsión en palabras: qué significa, qué fiabilidad tiene y qué puede invalidarla. */
-function inWords(m: SondaMarket, f: Forecast): Html {
-  const { num, longDate } = S.fmt;
-  const target = S.tradingDays(m.ts, f.h)[f.h - 1];
-  const v = f.quality ? verdictOf(f.quality) : null;
-  return `<div class="ch"><div><div class="ch-t">La previsión a ${label(f.h)}, en palabras</div></div></div>
-    <dl class="wd">
-      <div><dt>Qué significa</dt><dd>Lo más probable es que el Brent valga unos <b class="wd-fc">${num(f.mid, 0)} $</b> el ${longDate(target)}. En 8 de cada 10 casos acabaría entre <b>${num(f.lo, 0)}</b> y <b>${num(f.hi, 0)} $</b>.</dd></div>
-      ${v ? `<div><dt>Fiabilidad</dt><dd><span class="wd-tag is-${v.tone}">${v.label}</span> ${v.use}</dd></div>` : ""}
-      <div><dt>Qué puede invalidarla</dt><dd>${RISKS[f.h] ?? ""} La red solo ve datos de mercado hasta el ${longDate(m.ts)}; no lee noticias.</dd></div>
-    </dl>`;
-}
-
-/** Fiabilidad de los cuatro modelos en el test, cada cifra junto a su referencia trivial. */
-function reliability(fs: Forecast[], sel: number): Html {
-  const { num, pct } = S.fmt;
-  const cell = (v: string, ref: string, better: boolean) =>
-    `<td><div class="v ${better ? "is-better" : "is-worse"}">${v}</div><div class="r">${ref}</div></td>`;
-  const rows = fs
-    .filter((f) => f.quality)
-    .map((f) => {
-      const { metrics: m, baseline: b } = f.quality as Quality;
-      const always = b.best_constant === "up" ? "sube" : "baja";
-      return `<tr data-h="${f.h}" class="${f.h === sel ? "is-active" : ""}" aria-selected="${f.h === sel}">
-        <td><div class="v">${label(f.h)}</div><div class="model">${f.model ?? ""}</div></td>
-        ${cell(pct(m.hit_rate), `Diciendo siempre «${always}»: ${pct(b.hit_rate_best_constant)}`, m.hit_rate > b.hit_rate_best_constant)}
-        ${cell(`${num(m.mae)} $`, `Si el precio no cambiara: ${num(b.mae)} $`, m.mae < b.mae)}
-        ${cell(pct(m.coverage80), "Debería ser 80 %", Math.abs(m.coverage80 - 0.8) <= 0.05)}
-      </tr>`;
-    })
-    .join("");
-  return `<table class="rel">
-    <thead><tr><th>Horizonte</th>
-      <th title="Porcentaje de días en que acierta si el precio sube o baja; la referencia es decir siempre lo mismo">Acierta si sube o baja</th>
-      <th title="Diferencia media, en dólares, entre el precio previsto y el real; la referencia es suponer que el precio no cambia">Error medio</th>
-      <th title="Veces que el precio real quedó dentro del rango probable; debería ser el 80 %">Dentro del rango</th></tr></thead>
-    <tbody>${rows}</tbody></table>`;
-}
-
-// ── página ───────────────────────────────────────────────────
 async function init() {
-  S.theme.init();
-  // Sin preferencia guardada se abre en oscuro: el mismo mundo que la página del Brent
-  if (!localStorage.getItem("sonda-theme")) S.theme.set("dark");
-  S.theme.bind(document);
-  $("logo").innerHTML = S.ui.logo({ size: 26 });
-  $("theme").innerHTML = S.ui.themeToggle();
+  const stage = createStage($("stage"));
+  $("study").innerHTML = `${I.book}<span>Cómo se hizo</span>`;
+  $("theme").innerHTML = I.theme;
 
-  const [bundle, mk, quality] = await Promise.all([
-    loadJson<Bundle>("model/manifest.json"),
+  const [mk, quality] = await Promise.all([
     loadJson<Market>("data/market.json"),
     loadJson<Quality[]>("data/quality.json"),
   ]);
-  const forecasts: Forecast[] = [];
+  const hist = mk.history;
+  const N = hist.length;
+  const idxOf = new Map(hist.map((p, i) => [p.t, i]));
+
+  // Previsiones de test por plazo: la fecha `t` es la fecha objetivo; se partió h días hábiles antes
+  const bt = new Map<number, Map<string, Fc>>();
+  const origins = new Map<number, number[]>();
+  for (const q of quality) {
+    const m = new Map<string, Fc>();
+    const os: number[] = [];
+    for (const p of q.backtest) {
+      m.set(p.t, { lo: p.lo80, mid: p.pred, hi: p.hi80 });
+      const i = idxOf.get(p.t);
+      if (i !== undefined && i - q.horizon >= 0) os.push(i - q.horizon);
+    }
+    bt.set(q.horizon, m);
+    origins.set(
+      q.horizon,
+      os.sort((a, b) => a - b),
+    );
+  }
+
+  // Estado
+  let h = 5;
+  let mode: "now" | "past" = "now";
+  let origin = (() => {
+    const os = origins.get(5) ?? [];
+    return os[Math.floor(os.length * 0.62)] ?? N - 1;
+  })();
+  let predicted = false;
+  let revealed = false;
+  const today = new Map<number, Fc>();
+  let modelsReady = false;
+
+  // ── controles ──
+  const setH = segmented(
+    $("horizon"),
+    HZ.map((x) => ({ value: x.h, label: x.label, icon: I.fan(x.spread) })),
+    (v) => {
+      h = v;
+      clampOrigin();
+      render();
+    },
+  );
+  const setMode = segmented(
+    $("mode"),
+    [
+      { value: "now" as const, label: "Hoy", icon: I.now },
+      { value: "past" as const, label: "Un día pasado", icon: I.past },
+    ],
+    (v) => {
+      if (v === mode) return;
+      mode = v;
+      revealed = false;
+      $("mode").dataset.mode = v;
+      render();
+    },
+  );
+
+  function clampOrigin() {
+    const os = origins.get(h) ?? [];
+    if (!os.length || os.includes(origin)) return;
+    // el día válido más cercano al elegido
+    origin = os.reduce((a, b) => (Math.abs(b - origin) < Math.abs(a - origin) ? b : a));
+  }
+
+  // Deslizador: el periodo de test entero, con su perfil de precio detrás
+  const scrub = $("scrub");
+  function renderScrub() {
+    const os = origins.get(h) ?? [];
+    const a = os[0] ?? 0;
+    const b = os[os.length - 1] ?? N - 1;
+    const seg = hist.slice(a, b + 1).map((p) => p.close);
+    const mn = Math.min(...seg);
+    const mx = Math.max(...seg);
+    const pts = seg
+      .map((v, i) => `${((i / (seg.length - 1)) * 100).toFixed(2)},${(38 - ((v - mn) / (mx - mn)) * 34).toFixed(2)}`)
+      .join(" ");
+    const k = os.indexOf(origin);
+    scrub.innerHTML = `<div class="scrub-track">
+        <svg class="scrub-spark" viewBox="0 0 100 40" preserveAspectRatio="none" aria-hidden="true"><polyline points="${pts}"/></svg>
+        <input type="range" min="0" max="${os.length - 1}" value="${k}" aria-label="Día desde el que se prevé" />
+        <output class="scrub-bubble"></output>
+      </div>`;
+    const input = scrub.querySelector("input") as HTMLInputElement;
+    const bubble = scrub.querySelector("output") as HTMLOutputElement;
+    const place = () => {
+      const f = Number(input.value) / Math.max(1, os.length - 1);
+      bubble.textContent = S.fmt.longDate(hist[origin].t);
+      scrub.style.setProperty("--f", f.toFixed(4));
+    };
+    input.addEventListener("input", () => {
+      origin = os[Number(input.value)];
+      revealed = false;
+      place();
+      render(false);
+    });
+    place();
+  }
+
+  // ── resultado ──
+  const result = $("result");
+  result.innerHTML = `
+    <div class="r-top">
+      <div class="r-big"><span class="r-num" id="num">${S.fmt.num(mk.last, 0)}</span><span class="r-unit">$</span></div>
+      <div class="r-meta">
+        <span class="chip" id="chg"></span>
+        <span class="r-date" id="when">${I.calendar}<span></span></span>
+      </div>
+    </div>
+    <div class="range" id="range">
+      <div class="range-track"><i class="range-band"></i><i class="range-now"></i><i class="range-mid"></i><i class="range-real"></i></div>
+      <div class="range-ends"><span class="range-lo"></span><span class="range-hi"></span></div>
+    </div>
+    <div class="real" id="real">
+      <span class="real-l">${I.eye}<span>Precio real</span></span>
+      <b class="real-v" id="realv"></b>
+      <span class="badge" id="hit"></span>
+    </div>`;
+
+  // ── acciones ──
+  const actions = $("actions");
+  actions.innerHTML = `
+    <button type="button" class="btn btn-primary" id="go">${I.drop}<span>Prever</span></button>
+    <button type="button" class="btn btn-secondary" id="reveal">${I.eye}<span>Revelar precio real</span></button>`;
+  const go = $("go") as HTMLButtonElement;
+  const rev = $("reveal") as HTMLButtonElement;
+  const fire = (btn: HTMLElement) => {
+    btn.classList.remove("is-firing");
+    void btn.offsetWidth;
+    btn.classList.add("is-firing");
+  };
+  go.addEventListener("click", () => {
+    if (go.disabled) return;
+    fire(go);
+    if (predicted) {
+      // Repetir: el volumen se recoge y vuelve a abrirse con la gota
+      predicted = false;
+      revealed = false;
+      render(false);
+      window.setTimeout(() => {
+        predicted = true;
+        render(false);
+      }, 420);
+      return;
+    }
+    predicted = true;
+    render(false);
+  });
+  rev.addEventListener("click", () => {
+    if (rev.disabled) return;
+    fire(rev);
+    revealed = true;
+    render(false);
+  });
+
+  // ── tema ──
+  $("theme").addEventListener("click", (e) => {
+    const next = isDark() ? "light" : "dark";
+    const apply = () => {
+      document.documentElement.dataset.theme = next;
+      try {
+        localStorage.setItem("brent-theme", next);
+      } catch {
+        /* sin almacenamiento: el tema vale para esta visita */
+      }
+      stage.theme();
+    };
+    const doc = document as Document & { startViewTransition?: (cb: () => void) => unknown };
+    if (doc.startViewTransition && !still) {
+      const r = (e.currentTarget as HTMLElement).getBoundingClientRect();
+      document.documentElement.style.setProperty("--vx", `${r.left + r.width / 2}px`);
+      document.documentElement.style.setProperty("--vy", `${r.top + r.height / 2}px`);
+      doc.startViewTransition(apply);
+    } else apply();
+  });
+  window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => stage.theme());
+
+  // ── pintado ──
+  function current() {
+    if (mode === "now") {
+      return { o: N - 1, target: S.tradingDays(mk.ts, h)[h - 1], fc: today.get(h) ?? null, future: [] as number[] };
+    }
+    const tIdx = origin + h;
+    return {
+      o: origin,
+      target: hist[tIdx].t,
+      fc: bt.get(h)?.get(hist[tIdx].t) ?? null,
+      future: hist.slice(origin + 1, tIdx + 1).map((p) => p.close),
+    };
+  }
+
+  function render(rebuildScrub = true) {
+    setH(h);
+    setMode(mode);
+    scrub.hidden = mode !== "past";
+    if (mode === "past" && rebuildScrub) renderScrub();
+
+    const c = current();
+    const from = Math.max(0, c.o - WINDOW[h]);
+    const vis = hist.slice(from, c.o + 1);
+    const start = hist[c.o].close;
+    const show = predicted && !!c.fc;
+    const data: StageData = {
+      t: vis.map((p) => p.t),
+      v: vis.map((p) => p.close),
+      future: c.future,
+      h,
+      target: c.target,
+      fc: show ? c.fc : null,
+      revealed: show && revealed,
+      events: mk.events,
+      fmt: money,
+      fmtDate: S.fmt.day,
+    };
+    stage.set(data);
+
+    // Cifra: parte del precio del día de partida y rueda hasta la previsión
+    roll($("num"), show && c.fc ? c.fc.mid : start);
+    const chg = $("chg");
+    const when = $("when").querySelector("span") as HTMLElement;
+    if (show && c.fc) {
+      const r = c.fc.mid / start - 1;
+      chg.className = `chip ${r >= 0 ? "is-up" : "is-down"}`;
+      chg.innerHTML = `${I.trend(r >= 0)}<span>${r >= 0 ? "+" : "−"}${S.fmt.num(Math.abs(r) * 100, Math.abs(r) < 0.1 ? 1 : 0)} %</span>`;
+      when.textContent = S.fmt.longDate(c.target);
+    } else {
+      chg.className = "chip is-idle";
+      chg.innerHTML = `${I.now}<span>${mode === "now" ? "Hoy" : "Ese día"}</span>`;
+      when.textContent = S.fmt.longDate(hist[c.o].t);
+    }
+
+    // Rango del 80 %: banda sobre una escala que incluye el precio de partida y el real
+    const range = $("range");
+    const real = c.future.length ? c.future[c.future.length - 1] : null;
+    if (c.fc) {
+      const vals = [c.fc.lo, c.fc.hi, start].concat(real !== null && revealed ? [real] : []);
+      let mn = Math.min(...vals);
+      let mx = Math.max(...vals);
+      const pad = (mx - mn) * 0.08;
+      mn -= pad;
+      mx += pad;
+      const x = (v: number) => `${(((v - mn) / (mx - mn)) * 100).toFixed(2)}%`;
+      range.style.setProperty("--now", x(start));
+      range.style.setProperty("--lo", show ? x(c.fc.lo) : x(start));
+      range.style.setProperty("--hi", show ? x(c.fc.hi) : x(start));
+      range.style.setProperty("--mid", show ? x(c.fc.mid) : x(start));
+      if (real !== null) range.style.setProperty("--real", x(real));
+      (range.querySelector(".range-lo") as HTMLElement).textContent = money(c.fc.lo);
+      (range.querySelector(".range-hi") as HTMLElement).textContent = money(c.fc.hi);
+    }
+    range.classList.toggle("is-open", show);
+    range.classList.toggle("is-revealed", show && revealed && real !== null);
+
+    // Precio real (Un día pasado, tras revelar)
+    const on = mode === "past" && show && revealed && real !== null && !!c.fc;
+    $("real").classList.toggle("is-on", on);
+    if (on && c.fc && real !== null) {
+      $("realv").textContent = money(real);
+      const inside = real >= c.fc.lo && real <= c.fc.hi;
+      const hit = $("hit");
+      hit.className = `badge ${inside ? "is-in" : "is-out"}`;
+      hit.innerHTML = `${inside ? I.check : I.cross}<span>${inside ? "Dentro del rango" : "Fuera del rango"}</span>`;
+    }
+
+    // Botones
+    go.disabled = mode === "now" && !modelsReady;
+    go.classList.toggle("is-loading", go.disabled);
+    (go.querySelector("span") as HTMLElement).textContent = go.disabled
+      ? "Cargando la red"
+      : predicted
+        ? "Prever otra vez"
+        : "Prever";
+    rev.hidden = mode !== "past";
+    rev.disabled = !show || revealed;
+
+    // Fiabilidad en una línea, con enlace al estudio
+    const q = quality.find((x) => x.horizon === h);
+    if (q) {
+      const gap = q.metrics.mae / q.baseline.mae - 1;
+      const how =
+        Math.abs(gap) < 0.02
+          ? "falla lo mismo que decir «seguirá igual»"
+          : `falla un ${S.fmt.num(Math.abs(gap) * 100, 0)} % ${gap > 0 ? "más" : "menos"} que decir «seguirá igual»`;
+      $("verdict").innerHTML =
+        `${I.scale}<span>De ${q.period[0].slice(0, 4)} a ${q.period[1].slice(0, 4)}, ${how}</span>${I.arrow}`;
+    }
+  }
+
+  render();
+  requestAnimationFrame(() => document.body.classList.add("is-in"));
+
+  // Modelos de «Hoy»: se cargan en segundo plano; mientras, «Un día pasado» ya funciona
+  const bundle = await loadJson<Bundle>("model/manifest.json");
   for (const m of bundle.models) {
+    if (!HZ.some((x) => x.h === m.horizon)) continue;
     const session = await ort.InferenceSession.create(`${base}model/${m.model_file}`);
     const [lo, mid, hi] = await predict(ort, session, m, mk.rows.values);
-    const drv = await occlusion(ort, session, m, mk.rows.values);
-    forecasts.push({
-      h: m.horizon as number,
-      model: CELL[m.cell ?? ""],
-      lo,
-      mid,
-      hi,
-      drivers: drv.map((d) => ({ name: LABELS[d.input] ?? d.input, value: d.value })),
-      quality: quality.find((x) => x.horizon === m.horizon),
-    });
+    today.set(m.horizon as number, { lo, mid, hi });
   }
-  const market = toSonda(mk);
-  $("asof").textContent = `Datos hasta el ${S.fmt.longDate(mk.ts)}`;
-
-  let sel = 5;
-  let chart: { state(): ChartState } | null = null;
-  const render = () => {
-    const f = forecasts.find((x) => x.h === sel) as Forecast;
-    $("tabs").innerHTML = S.ui.horizonTabs(sel);
-    $("ph").innerHTML = S.ui.priceHeader(market, f);
-    $("panel").innerHTML = forecastPanel(market, f);
-    mountDrop($("drop"), S.probUp(market.last, f));
-    $("words").innerHTML = inWords(market, f);
-    $("cards").innerHTML = S.ui.forecastCards(market, forecasts, sel);
-    $("metrics").innerHTML = reliability(forecasts, sel);
-    $("drv-t").textContent = `Qué mira el modelo a ${label(sel)}`;
-    $("drv").innerHTML = S.ui.drivers(f.drivers);
-    if (f.quality) {
-      const [a, b] = f.quality.period;
-      $("perf-s").textContent = `Comprobada con datos que los modelos no vieron al entrenar (${S.fmt.monthYear(a)} – ${S.fmt.monthYear(b)}). En verde, lo que mejora a la referencia`;
-      $("bt-t").textContent = `Real frente a previsto a ${label(sel)}`;
-      S.charts.backtest($("bt"), { points: f.quality.backtest, height: 190 });
-    }
-    mountChart(false);
-  };
-  // Alto del gráfico: lo que queda de pantalla bajo su cabecera, para verlo entero al abrir
-  const chartHeight = () => {
-    const top = $("chart").getBoundingClientRect().top + window.scrollY;
-    return Math.round(Math.min(760, Math.max(320, window.innerHeight - top - CHART_CHROME)));
-  };
-  let height = 0;
-  // keep: conserva el rango (cambio de tamaño); si no, el rango se ajusta al horizonte
-  const mountChart = (keep: boolean) => {
-    const st = chart?.state();
-    height = chartHeight();
-    chart = S.charts.price($("chart"), {
-      history: market.history,
-      wti: market.wti,
-      events: market.events,
-      forecast: { path: S.fan(market.last, forecasts, sel, market.ts) },
-      range: (keep && st?.range) || (RANGE[sel] ?? "1A"),
-      scale: st?.scale ?? "lin",
-      kind: st?.kind ?? "line",
-      indicators: st?.indicators ?? {},
-      height,
-    });
-  };
-  let resizing = 0;
-  window.addEventListener("resize", () => {
-    clearTimeout(resizing);
-    resizing = window.setTimeout(() => {
-      if (Math.abs(chartHeight() - height) > 24) mountChart(true);
-    }, 200);
-  });
-  document.addEventListener("click", (e) => {
-    const t = (e.target as HTMLElement).closest<HTMLElement>("[data-h]");
-    if (!t || t.closest("dialog")) return;
-    sel = Number(t.dataset.h);
-    render();
-  });
-  $("loading").remove();
-  render();
-  mountPortal({ market, forecasts, history: mk.history, onMarketShown: () => mountChart(true) });
+  modelsReady = true;
+  render(false);
 }
 
 init().catch((err: Error) => {
-  $("loading").textContent = err.message;
+  $("result").innerHTML = `<p class="error">${err.message}</p>`;
 });

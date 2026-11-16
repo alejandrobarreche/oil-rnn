@@ -1,11 +1,13 @@
 # web
 
-Web del proyecto: Sonda (panel de previsión, Vite + TypeScript + ONNX Runtime Web) y «El precio del Brent» (página explicativa con scroll, Three.js, D3 y KaTeX). Las reglas generales están en el `CLAUDE.md` de la raíz.
+Web del proyecto en dos partes: el producto (previsión del Brent en una pantalla, Vite + TypeScript + ONNX Runtime Web + Three.js) y el estudio, «El precio del Brent» (desarrollo del trabajo con scroll, Three.js, D3 y KaTeX). Las reglas generales están en el `CLAUDE.md` de la raíz.
 
 ## Reglas clave
 
 **Siempre**
-- Usa los tokens que ya existen: `src/sonda/tokens.css` en Sonda y las variables `--sc-*` de `public/brent/index.html` en la página del Brent.
+- Usa los tokens que ya existen: los de `src/product.css` en el producto y las variables `--sc-*` de `public/brent/index.html` en el estudio.
+- Mantén el producto en una pantalla sin scroll en escritorio: enseña por qué es útil y deja probarlo; las métricas van en una línea con enlace al estudio.
+- Trabaja los dos temas, claro y oscuro, en cada cambio, y compruébalos en el navegador.
 - Haz que cada pantalla responda una pregunta con una cifra o un gráfico de datos reales; el texto solo nombra lo que se ve.
 - Usa un objeto 3D solo si su forma o su movimiento enseñan el concepto (una ventana que avanza, un estado que pasa de un día al siguiente, un rango que se abre); si no, un gráfico 2D.
 - Explica la red con sus datos reales: entradas, salida, error frente a la persistencia y curva de entrenamiento.
@@ -15,11 +17,12 @@ Web del proyecto: Sonda (panel de previsión, Vite + TypeScript + ONNX Runtime W
 **Nunca**
 - No añadas texto para explicar un gráfico que no se entiende: rehaz el gráfico.
 - No pases de una idea y 25 palabras por paso de scroll, ni de una línea por subtítulo de tarjeta.
+- No pongas etiquetas que repitan lo que ya dice el contenido (p. ej. «en palabras» sobre un texto, «Cuánto falló» sobre un gráfico de error).
 - No pongas explicaciones en `title`: en móvil no se ven. Escríbelas a la vista o quítalas.
 - No repitas en un subtítulo lo que ya dice el título o la cabecera de la tabla; quítalo.
 - No añadas escenas ni objetos 3D sin dato del proyecto detrás; usa un gráfico o elimina la escena.
 - No uses «·» como separador en ningún texto; usa una coma, «a», «de» o dos frases.
-- No uses dorado, ámbar, azul petróleo ni acentos azules en Sonda, ni halos o brillos de color en botones, campos o foco; el foco es un contorno neutro.
+- No uses dorado, ámbar, azul petróleo ni acentos azules en el producto, ni halos o brillos de color en botones, campos o foco; el foco es un contorno neutro.
 - No bajes de 13 px en ningún texto ni de 44 px de alto en los botones de acción.
 
 ## Comandos
@@ -34,28 +37,30 @@ make web-build     # Compilación a web/dist (lo ejecuta el usuario)
 
 | Ruta | Qué contiene |
 |---|---|
-| `index.html` · `src/main.ts` | Sonda: página y composición del mercado |
-| `src/portal/` | Cartera, calculadora e historial |
-| `src/sonda/` | Copia del sistema de diseño Sonda: tokens, estilos y componentes |
-| `src/style.css` | Estilos propios de la página |
-| `src/explain.ts` | Cálculos de la interfaz: abanico, probabilidad de subida, factores |
+| `index.html`, `src/main.ts` | Producto: controles, «Hoy» (ONNX) y «Un día pasado» (previsiones de test de `quality.json`) |
+| `src/stage.ts` | Escena 3D: lámina del precio, volumen de la previsión, gota y precio real revelado |
+| `src/icons.ts` | Iconos SVG con sus partes animables |
+| `src/product.css` | Estilos y temas claro y oscuro del producto |
+| `src/sonda/bundle.js`, `src/sonda.ts` | Solo formato de cifras y fechas (`S.fmt`) y días hábiles (`S.tradingDays`) |
+| `src/portal/`, `src/explain.ts` | Simulador y cálculos de la versión anterior; el producto no los usa |
 | `public/brent/` | «El precio del Brent»: `index.html`, `scrollcraft.css`, `scrollcraft.js` y sus datos |
 
 ## Convenciones
 
-- **Skills**: antes de tocar la interfaz, carga las que apliquen si están instaladas: `scroll-craft`, `threejs-*` y `gsap-scrolltrigger` (página del Brent), `dataviz` (gráficos), `laws-of-ux` y `emil-skills:emil-design-eng` (Sonda).
-- **Tipografía (Sonda y página del Brent)**: Archivo para marca, títulos y cifras; Geist para texto. Nada de serif editoriales (Newsreader, Source Serif, Instrument Serif).
+- **Skills**: antes de tocar la interfaz, carga las que apliquen si están instaladas: `scroll-craft`, `threejs-*` y `gsap-scrolltrigger` (estudio), `dataviz` (gráficos), `emil-skills:apple-design`, `threejs-*` y `laws-of-ux` (producto).
+- **Tipografía (producto y estudio)**: Archivo para marca, títulos y cifras; Geist para texto. Nada de serif editoriales (Newsreader, Source Serif, Instrument Serif).
 - **Página del Brent, color**: un solo acento (`--sc-accent`); `--sheen` para sucesos y datos de entrada; `--persist` para la persistencia. Nada de beige.
-- **Sonda, tema oscuro**: negro neutro del crudo (`#0c0c0e`), tinta cálida y la previsión en el violeta del brillo de la gota (`#b9a2ff`); verde y rojo solo para sube y baja. Es el tema por defecto y se define al final de `src/style.css`, sobre los tokens de `src/sonda/`.
+- **Producto, color**: el violeta del brillo del crudo marca la previsión (`#6a4cf0` en claro, `#b9a2ff` en oscuro); verde y rojo solo para sube y baja. El tema sigue al sistema y se puede cambiar con el botón.
+- **Producto, movimiento**: muelles críticamente amortiguados que parten del valor en pantalla; iconos que se animan al pulsar; un solo momento de entrada; todo respeta `prefers-reduced-motion`.
 - **Controles**: todo botón responde al pasar, al pulsar (`scale(0.97)`) y al foco de teclado; nunca `transition: all`.
 - **Página del Brent, composición**: sin columnas de texto, recuadros decorativos ni notas pequeñas en gris.
-- **Sonda, enfoque**: herramienta de apoyo a decisiones, no terminal de trading; el gráfico principal no lleva herramientas de dibujo ni indicadores, y el simulador queda en segundo plano.
 - **Títulos**: sustantivos («La red», «El resultado»); nunca preguntas ni frases de acción.
 - **Fórmulas**: con KaTeX; nunca como texto de código.
 - **Enlaces**: siempre relativos; la web se sirve desde una subcarpeta.
 
 ## Cuidado con
 
-- **`src/sonda/`**: nació como copia del sistema de diseño, pero `bundle.js` lleva cambios propios (curva suavizada, previsión como mancha, menú «Opciones», textos); no lo sustituyas por el original. Los estilos propios van en `src/style.css`.
+- **`src/sonda/bundle.js`**: lleva cambios propios; no lo sustituyas por el original del sistema de diseño.
+- **«Un día pasado»**: en `quality.json`, `t` es la fecha objetivo; el día de partida está `h` días hábiles antes.
 - **`public/brent/data.json` y `data2.json`**: ningún comando los regenera; si cambian los runs, quedan desfasados.
-- **Librerías de la página del Brent**: se cargan desde jsDelivr con versión fija (three 0.170.0, d3 7.9.0, katex 0.16.11); no cambies una versión sin probar la página entera.
+- **Librerías**: se cargan desde jsDelivr con versión fija (three 0.170.0 en producto y estudio, d3 7.9.0, katex 0.16.11); no cambies una versión sin probar las dos páginas.

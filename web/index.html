@@ -2,12 +2,20 @@
 <html lang="es">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Sonda Brent</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <title>Brent: previsión del precio</title>
+    <meta name="color-scheme" content="light dark" />
     <link rel="icon" href="data:," />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,100..900&family=Geist:wght@300..700&display=swap" rel="stylesheet" />
+    <script>
+      // Tema antes de pintar: el guardado o el del sistema
+      try {
+        var t = localStorage.getItem("brent-theme");
+        if (t) document.documentElement.dataset.theme = t;
+      } catch (e) {}
+    </script>
     <script type="importmap">
       {
         "imports": {
@@ -17,54 +25,30 @@
       }
     </script>
   </head>
-  <body class="bx-page">
-    <div class="bx-ws">
-      <header class="bx-top">
-        <a class="home" href="#/mercado" aria-label="Mercado">
-          <span id="logo"></span>
-          <h1 class="mark">BRENT<i>.</i></h1>
-        </a>
-        <span class="bx-spacer"></span>
-        <span class="bx-pill bx-pill-solid asof" id="asof"></span>
-        <a class="wallet" id="explain" href="./brent/index.html" title="El precio del Brent: cómo se hizo la previsión" aria-label="Cómo funciona"><svg class="bx-icon" width="18" height="18" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 2.25S3.75 6.9 3.75 9.75a4.25 4.25 0 0 0 8.5 0C12.25 6.9 8 2.25 8 2.25Z"/><path d="M6.25 10.25a1.9 1.9 0 0 0 1.5 1.6"/></svg><span>Cómo funciona</span></a>
-        <a class="wallet" id="wallet" href="#/cartera" aria-label="Simulador de inversión"></a>
-        <span id="theme"></span>
-      </header>
+  <body>
+    <header class="bar">
+      <a class="brand" href="./" aria-label="Brent, inicio"><span class="mark">BRENT<i>.</i></span></a>
+      <span class="grow"></span>
+      <a class="btn btn-ghost" id="study" href="./brent/index.html"></a>
+      <button class="btn btn-icon" id="theme" type="button" aria-label="Cambiar entre tema claro y oscuro"></button>
+    </header>
 
-      <p id="loading" class="loading">Calculando las predicciones en el navegador…</p>
+    <main class="app">
+      <section class="stage" id="stage" aria-label="Precio del Brent y previsión"></section>
 
-      <main class="view" data-view="mercado">
-        <div class="bx-ws-main">
-          <section class="bx-card chart-card">
-            <div class="chart-h"><div id="ph"></div><nav id="tabs" class="hz" aria-label="Horizonte de la previsión"></nav></div>
-            <div id="chart"></div>
-          </section>
-          <aside class="side">
-            <section class="bx-card bx-ws-panel" id="panel"></section>
-          </aside>
-        </div>
-        <section class="bx-card words" id="words"></section>
-        <div class="ch section-h">
-          <div><div class="ch-t">Todos los horizontes</div><div class="ch-s">Pulsa uno para verlo en el gráfico</div></div>
-        </div>
-        <div id="cards"></div>
-        <div class="bx-ws-pair">
-          <section class="bx-card">
-            <div class="ch"><div><div class="ch-t">Fiabilidad de los modelos</div><div class="ch-s" id="perf-s"></div></div></div>
-            <div id="metrics"></div>
-            <div class="bt-h" id="bt-t"></div>
-            <div id="bt"></div>
-          </section>
-          <section class="bx-card">
-            <div class="ch"><div><div class="ch-t" id="drv-t">Qué mira el modelo</div><div class="ch-s">Cuánto cambiaría la previsión, en $ por barril, si el modelo no viera cada dato</div></div></div>
-            <div id="drv"></div>
-          </section>
-        </div>
-      </main>
-      <main class="view" data-view="cartera" id="view-cartera" hidden></main>
-      <main class="view" data-view="calculadora" id="view-calculadora" hidden></main>
-      <main class="view" data-view="historial" id="view-historial" hidden></main>
-    </div>
+      <section class="panel" id="panel">
+        <h1 class="title">Previsión del Brent</h1>
+
+        <div class="seg seg-h" id="horizon" role="radiogroup" aria-label="Plazo"></div>
+        <div class="seg seg-m" id="mode" role="radiogroup" aria-label="Desde cuándo"></div>
+        <div class="scrub" id="scrub" hidden></div>
+
+        <div class="result" id="result" aria-live="polite"></div>
+
+        <div class="actions" id="actions"></div>
+        <a class="verdict" id="verdict" href="./brent/index.html"></a>
+      </section>
+    </main>
     <script type="module" src="./src/main.ts"></script>
   </body>
 </html>
