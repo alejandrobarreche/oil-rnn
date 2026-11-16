@@ -397,7 +397,7 @@ git pull --rebase
 git push
 ```
 
-## 18. Windows GPU · 16/11/2026 · ⏳: la red pequeña hasta converger (GRU, 5 días)
+## 18. Windows GPU · 16/11/2026 · ✅: la red pequeña hasta converger (GRU, 5 días)
 
 - **Pregunta**: entrenada hasta que pare el early stopping, ¿iguala la red de 16 unidades a la GRU de 256 de la rejilla (`cv_skill_vs_baseline` −0,1 %, `cv_pinball_skill` +2,6 %)?
 - **Qué cambia frente a la entrada 17**: tasa de aprendizaje 0,0001 y 0,0003 (antes 0,00003), tope de 400 épocas y paciencia 20. No cambia código ni `configs/config.yaml`.
@@ -418,4 +418,31 @@ git pull --rebase
 git push
 ```
 
-- **Qué pasarle a Claude**: avisa cuando estén subidos; la época mejor de cada pliegue está en `metrics.json`.
+- **Resultado (16/11)**: runs `20261116-224931_mini-gru-h5-lr1e4_omen-pc` y `20261116-225152_mini-gru-h5-lr3e4_omen-pc`, subidos en `ccd3776`.
+- **Curva**: con tasa 0,0001 para el early stopping en los 4 pliegues (mejor época 132, 130, 62 y 116) y la pérdida de ajuste queda junto a la de parada (0,226 / 0,191 en el pliegue 1). La GRU de 256 acababa con 0,128 / 0,272: memorizaba.
+- **Métricas de validación (una semilla)**: tasa 0,0001: `cv_skill_vs_baseline` −0,3 %, `cv_pinball_skill` +1,5 %, cobertura 77 %. GRU de 256 de la rejilla: −0,1 %, +2,6 %, 78 %. Tasa 0,0003: −2,7 % y −0,4 %, con un pliegue en −7,3 %; se descarta.
+- **Conclusión**: la red pequeña arregla la curva y deja de memorizar, pero a 5 días no mejora las métricas. La diferencia con la grande (1,1 puntos de `pinball_skill`) es menor que la variación entre pliegues y hay una sola semilla: no se puede decir cuál es mejor.
+
+## 19. Windows GPU · 16/11/2026 · ⏳: rejilla m1, redes pequeñas en los cuatro horizontes
+
+- **Pregunta**: con 16 o 32 unidades, ventana de 20 días y tasa 0,0001, ¿iguala cada red (RNN, LSTM, GRU) a su mejor configuración de la rejilla `g1` en 5, 21, 63 y 252 días, con curvas que convergen?
+- **Qué hace**: 24 runs de `make cv` (3 redes × 4 horizontes × 2 tamaños), sin cambiar código ni `configs/config.yaml`. Es reanudable: si se corta, el mismo comando sigue donde iba.
+- **Duración estimada**: unos 45 min (el run de la entrada 18 con tasa 0,0001 tardó 1 min 47 s); más si varios llegan al tope de 400 épocas.
+- **Comprobado por Claude**: `--dry-run` en el Mac lista las 24 combinaciones. El entrenamiento no se ha ejecutado.
+- **Límite**: cambian a la vez el tamaño y la ventana (60 → 20). Si `m1` queda por debajo de `g1`, hará falta repetirla con ventana 60 para separar las dos causas.
+
+```powershell
+make sweep ARGS="--set sweep.prefix=m1 --set sweep.hidden_size=[16,32] --set sweep.depth=[[1,0.0]] --set sweep.learning_rate=[0.0001] --set data.window=20 --set train.batch_size=128 --set train.epochs=400 --set train.patience=20"
+make compare ARGS="--set sweep.prefix=m1 --set sweep.hidden_size=[16,32] --set sweep.depth=[[1,0.0]] --set sweep.learning_rate=[0.0001]"
+```
+
+- **Para subirlos**: solo los runs de esta rejilla.
+
+```powershell
+git add runs/*_m1-* artifacts/*_m1-*
+git commit -m "chore(runs): rejilla m1 de redes pequeñas (24 runs de cv)"
+git pull --rebase
+git push
+```
+
+- **Qué pasarle a Claude**: la salida de `make compare` y un aviso cuando estén subidos.
