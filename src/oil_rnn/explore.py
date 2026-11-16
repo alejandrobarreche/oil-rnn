@@ -615,7 +615,7 @@ def _records(df: pd.DataFrame) -> list[dict]:
 
 
 def explain_data(cfg: dict) -> dict:
-    """Todo lo que dibuja la página explicativa (web/explica.html), salvo el histórico y los
+    """Todo lo que dibuja la página explicativa y las figuras del README, salvo el histórico y los
     sucesos, que lee de market.json. Solo cifras ya guardadas: no entrena ni evalúa."""
     manifest = json.loads((WEB_MODEL_DIR / "manifest.json").read_text(encoding="utf-8"))
     market = json.loads((WEB_DATA_DIR / "market.json").read_text(encoding="utf-8"))
