@@ -307,19 +307,162 @@
   line-height: 28px;
   font-weight: 700;
 }
-.tiles {
+/* Cartera: valor total y reparto entre efectivo y Brent */
+.pf {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: var(--space-3);
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr);
+  align-items: center;
+  gap: var(--space-6);
 }
-.tile-v {
-  font-size: 26px;
-  line-height: 32px;
+.pf-total {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 4px;
+}
+.pf-v {
+  font-size: 34px;
+  line-height: 40px;
   font-weight: 700;
-  margin: 4px 0 2px;
+  font-variant-numeric: tabular-nums;
 }
-.tile-s {
+.pf-bar {
+  display: flex;
+  justify-content: flex-end;
+  height: 10px;
+  border-radius: var(--radius-pill);
+  background: var(--pill-active);
+  overflow: hidden;
+}
+.pf-bar i {
+  background: var(--forecast);
+}
+.pf-keys {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-3);
+  margin-top: var(--space-2);
   font-size: 13px;
+  color: var(--ink-2);
+}
+.pf-keys b {
+  font-weight: 600;
+  color: var(--ink);
+}
+.pf-keys i {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  margin-right: 6px;
+  border-radius: 50%;
+  background: var(--forecast);
+}
+
+/* Cartera: previsión como rangos sobre una misma escala */
+.rg-row {
+  display: grid;
+  grid-template-columns: 96px minmax(0, 1fr) 112px;
+  align-items: center;
+  gap: var(--space-4);
+  padding: 10px 0;
+  border-top: 1px solid var(--line);
+}
+.rg .sub {
+  font-size: 12px;
+  line-height: 16px;
+  color: var(--ink-3);
+}
+.rg .sub.bx-up-text {
+  color: var(--up-text);
+}
+.rg .sub.bx-down-text {
+  color: var(--down-text);
+}
+.rg-v {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+.rg-track {
+  position: relative;
+  height: 28px;
+}
+.rg-track i {
+  position: absolute;
+  top: 50%;
+  transform: translate(-50%, -50%);
+}
+.rg-band {
+  height: 10px;
+  border-radius: var(--radius-pill);
+  background: var(--forecast-band);
+  transform: translateY(-50%) !important;
+}
+.rg-now {
+  width: 2px;
+  height: 28px;
+  background: var(--ink);
+}
+.rg-mid {
+  width: 4px;
+  height: 18px;
+  border-radius: 2px;
+  background: var(--forecast);
+}
+.rg-axis {
+  padding: 0;
+  border-top: 0;
+}
+.rg-axis .rg-track {
+  height: 16px;
+  font-size: 12px;
+  color: var(--ink-3);
+}
+.rg-axis span {
+  position: absolute;
+  top: 0;
+  white-space: nowrap;
+}
+.rg-axis span:last-child {
+  transform: translateX(-100%);
+}
+
+/* Cartera: operaciones plegadas */
+.fold summary {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: 15px;
+  line-height: 22px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.fold summary .bx-muted {
+  font-weight: 400;
+}
+.fold summary::-webkit-details-marker {
+  display: none;
+}
+.fold summary::after {
+  content: "";
+  width: 7px;
+  height: 7px;
+  margin-left: auto;
+  border-right: 1.5px solid var(--ink-2);
+  border-bottom: 1.5px solid var(--ink-2);
+  transform: rotate(45deg);
+  transition: transform 150ms ease-out;
+}
+.fold[open] summary::after {
+  transform: rotate(-135deg);
+}
+@media (prefers-reduced-motion: reduce) {
+  .fold summary::after {
+    transition: none;
+  }
+}
+.fold[open] summary {
+  margin-bottom: var(--space-4);
 }
 
 /* Tablas de cartera e historial */
@@ -516,14 +659,24 @@
   font-weight: 600;
 }
 
-@media (max-width: 1100px) {
-  .tiles {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-}
 @media (max-width: 640px) {
-  .tiles {
+  .pf {
     grid-template-columns: minmax(0, 1fr);
+    gap: var(--space-4);
+  }
+  .rg-row {
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 2px var(--space-3);
+  }
+  .rg-row .rg-track {
+    grid-column: 1 / -1;
+    grid-row: 2;
+  }
+  .rg-axis > div:not(.rg-track) {
+    display: none;
+  }
+  .ch {
+    flex-wrap: wrap;
   }
   .tbl {
     display: block;

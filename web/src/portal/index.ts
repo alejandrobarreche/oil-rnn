@@ -129,8 +129,6 @@ export function mountPortal(ctx: PortalContext): void {
   // ── Mi cartera ─────────────────────────────────────────────
   function renderCartera() {
     const sm = summary(state, price);
-    const tile = (l: string, v: string, sub: Html) =>
-      `<div class="bx-card tile"><div class="bx-metric-l">${l}</div><div class="tile-v">${v}</div><div class="tile-s">${sub}</div></div>`;
     const positions = state.positions.length
       ? `<table class="tbl"><thead><tr><th>Abierta</th><th>Barriles</th><th>Precio de entrada</th><th>Valor hoy</th><th>Ganancia</th><th></th></tr></thead><tbody>${state.positions
           .map((p) => {
@@ -141,14 +139,29 @@ export function mountPortal(ctx: PortalContext): void {
           })
           .join("")}</tbody></table>`
       : `<p class="empty">No hay posiciones abiertas. <button type="button" class="linkbtn" data-act="open-position">Abrir una posición</button></p>`;
-    const expected = `<table class="tbl"><thead><tr><th>Dentro de</th><th>Valor previsto</th><th>Rango probable (80 %)</th><th>Ganancia prevista</th></tr></thead><tbody>${forecasts
-      .map((f) => {
-        const mid = sm.cash + sm.barrels * f.mid;
-        return `<tr><td>${horizonLabel(f.h)}<div class="sub">${S.fmt.longDate(S.tradingDays(dataDate, f.h)[f.h - 1])}</div></td><td>${money(mid)}</td>
-          <td>${money(sm.cash + sm.barrels * f.lo)} – ${money(sm.cash + sm.barrels * f.hi)}</td>
-          <td class="${tone(mid - state.initial)}">${signedMoney(mid - state.initial)}<div class="sub">${signedPct(mid / state.initial - 1)}</div></td></tr>`;
-      })
-      .join("")}</tbody></table>`;
+    // Previsión: un rango por horizonte sobre la misma escala de dinero, con el valor de hoy como referencia
+    const fc = forecasts.map((f) => ({
+      f,
+      lo: sm.cash + sm.barrels * f.lo,
+      mid: sm.cash + sm.barrels * f.mid,
+      hi: sm.cash + sm.barrels * f.hi,
+    }));
+    const min = Math.min(sm.total, ...fc.map((x) => x.lo));
+    const max = Math.max(sm.total, ...fc.map((x) => x.hi));
+    const pos = (v: number) => (((v - min) / (max - min || 1)) * 100).toFixed(2);
+    const expected = sm.barrels
+      ? `<div class="rg">${fc
+          .map(
+            ({ f, lo, mid, hi }) => `<div class="rg-row">
+            <div class="rg-l">${horizonLabel(f.h)}<div class="sub">${S.fmt.longDate(S.tradingDays(dataDate, f.h)[f.h - 1])}</div></div>
+            <div class="rg-track" role="img" aria-label="Entre ${money(lo)} y ${money(hi)}; previsto ${money(mid)}">
+              <i class="rg-band" style="left:${pos(lo)}%;width:${(Number(pos(hi)) - Number(pos(lo))).toFixed(2)}%"></i>
+              <i class="rg-now" style="left:${pos(sm.total)}%"></i><i class="rg-mid" style="left:${pos(mid)}%"></i></div>
+            <div class="rg-v">${money(mid)}<div class="sub ${tone(mid - sm.total)}">${signedMoney(mid - sm.total)}</div></div></div>`,
+          )
+          .join("")}
+          <div class="rg-row rg-axis"><div></div><div class="rg-track"><span style="left:0">${money(min)}</span><span style="left:100%">${money(max)}</span></div><div></div></div></div>`
+      : '<p class="empty">Sin barriles, tu cartera no cambia con el precio.</p>';
     const trades = state.trades.length
       ? `<table class="tbl"><thead><tr><th>Fecha</th><th>Operación</th><th>Barriles</th><th>Precio</th><th>Importe</th><th>Ganancia</th></tr></thead><tbody>${state.trades
           .map(
@@ -157,24 +170,26 @@ export function mountPortal(ctx: PortalContext): void {
               <td class="${t.pnl == null ? "bx-muted" : tone(t.pnl)}">${t.pnl == null ? "—" : signedMoney(t.pnl)}</td></tr>`,
           )
           .join("")}</tbody></table>`
-      : '<p class="empty">Todavía no hay movimientos.</p>';
+      : "";
     $("view-cartera").innerHTML = `
       ${walletHead(
         "cartera",
         `${btn("Solicitar evaluación", "evaluate")}${btn("Abrir posición", "open-position", "primary")}
         ${moreMenu([["Exportar cartera (JSON)", "export"], ["Importar cartera", "import"], ["Empezar de cero", "reset", true]])}`,
       )}
-      <div class="tiles">
-        ${tile("Valor total", money(sm.total), S.ui.chg(sm.total - state.initial, sm.ret))}
-        ${tile("Efectivo", money(sm.cash), `<span class="bx-muted">De ${money(state.initial)} iniciales</span>`)}
-        ${tile("Invertido en Brent", money(sm.value), `<span class="bx-muted">${S.fmt.num(sm.barrels, 2)} barriles a ${money(price)}</span>`)}
-        ${tile("Ganancia", signedMoney(sm.unrealized + sm.realized), `<span class="bx-muted">Abierta ${signedMoney(sm.unrealized)} · cerrada ${signedMoney(sm.realized)}</span>`)}
-      </div>
+      <section class="bx-card pf">
+        <div><div class="bx-metric-l">Valor total</div>
+          <div class="pf-total"><span class="pf-v">${money(sm.total)}</span>${S.ui.chg(sm.total - state.initial, sm.ret)}</div></div>
+        <div class="pf-split">
+          <div class="pf-bar" role="img" aria-label="Efectivo ${money(sm.cash)}, Brent ${money(sm.value)}"><i style="width:${((sm.value / sm.total) * 100).toFixed(2)}%"></i></div>
+          <div class="pf-keys"><span><b>${money(sm.cash)}</b> en efectivo</span><span><i></i><b>${money(sm.value)}</b> en Brent${sm.barrels ? ` · ${S.fmt.num(sm.barrels, 2)} barriles` : ""}</span></div>
+        </div>
+      </section>
       <div class="bx-ws-pair">
-        <section class="bx-card">${cardHead("Posiciones abiertas", "Barriles comprados y su valor al último precio")}${positions}</section>
-        <section class="bx-card">${cardHead("Previsión de tu cartera", "Efectivo más tus barriles al precio que prevé cada modelo")}${expected}</section>
+        <section class="bx-card">${cardHead("Posiciones abiertas")}${positions}</section>
+        <section class="bx-card">${cardHead("Previsión de tu cartera", "", sm.barrels ? '<div class="legend"><span><i class="lg-last"></i>Hoy</span><span><i class="lg-mid"></i>Previsto</span><span><i class="lg-band"></i>Rango probable (80 %)</span></div>' : "")}${expected}</section>
       </div>
-      <section class="bx-card">${cardHead("Operaciones", "Aperturas y cierres de posiciones")}${trades}</section>`;
+      ${state.trades.length ? `<details class="bx-card fold"><summary>Operaciones<span class="bx-muted">${state.trades.length}</span></summary>${trades}</details>` : ""}`;
   }
 
   // ── Calculadora ───────────────────────────────────────────
