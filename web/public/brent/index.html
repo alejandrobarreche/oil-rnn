@@ -1,0 +1,1501 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>El precio del Brent</title>
+<meta name="description" content="Veintiséis años de precios, quince mercados y cuatro redes neuronales que intentan anticipar el barril de Brent.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='7' fill='%230d0f12'/><circle cx='16' cy='17' r='7' fill='%23f2b84b'/></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,100..900&family=Geist:wght@300..700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+<link rel="stylesheet" href="scrollcraft.css">
+<style>
+  :root {
+    --sc-canvas:     #0b1a21;
+    --sc-surface:    #15181d;
+    --sc-ink:        #eef0f2;
+    --sc-ink-soft:   #b4c2c8;
+    --sc-accent:     #f2b84b;
+    --sc-accent-ink: #15110a;
+    --sc-font-display: "Archivo", system-ui, sans-serif;
+    --sc-font-text:    "Geist", system-ui, sans-serif;
+    --sheen: #76d3c6;          /* reflejo del crudo: sucesos y datos de entrada */
+    --persist: #8d96a1;        /* la referencia trivial */
+    --hair: color-mix(in srgb, var(--sc-ink) 12%, transparent);
+  }
+  html { scroll-behavior: auto; }
+  #bg { position: fixed; inset: 0; width: 100%; height: 100%; z-index: 0; pointer-events: none; display: block; }
+  #gl { position: fixed; inset: 0; width: 100%; height: 100%; z-index: 3; pointer-events: none; display: block; }
+  .labels { position: fixed; inset: 0; z-index: 4; pointer-events: none; }
+  .labels span { position: absolute; transform: translate(-50%, 0); white-space: nowrap; opacity: 0;
+    font-family: var(--sc-font-display); font-stretch: 112%; font-weight: 560; font-size: var(--sc-t-sm); letter-spacing: 0.01em; }
+  .labels span em { display: block; font-style: normal; font-family: var(--sc-font-text); font-stretch: 100%; font-weight: 400; color: var(--sc-ink-soft); font-size: var(--sc-t-xs); text-align: center; margin-top: 2px; }
+  main, .site-bar { position: relative; z-index: 2; }
+  .sc-display { font-stretch: 112%; font-weight: 640; }
+  b, strong { font-weight: 620; color: var(--sc-ink); }
+
+  /* Barra */
+  .site-bar { position: fixed; inset: 0 0 auto 0; z-index: 6; display: flex; justify-content: space-between; align-items: center;
+    padding: var(--sc-4) var(--sc-gutter); background: linear-gradient(to bottom, var(--sc-canvas) 30%, transparent); }
+  .mark { font-family: var(--sc-font-display); font-stretch: 125%; font-weight: 700; letter-spacing: 0.02em; text-decoration: none; color: var(--sc-ink); font-size: var(--sc-t-sm); }
+  .mark i { font-style: normal; color: var(--sc-accent); }
+  .cta { display: inline-flex; align-items: center; gap: .5em; font-weight: 560; text-decoration: none; color: var(--sc-accent-ink);
+    background: var(--sc-accent); border-radius: 999px; padding: .62em 1.15em; font-size: var(--sc-t-sm);
+    transition: transform 140ms var(--sc-ease-out), background-color 160ms var(--sc-ease-out); }
+  .cta:hover { background: #f6c86d; }
+  .cta:active { transform: scale(0.97); }
+  .cta:focus-visible { outline: 2px solid var(--sc-accent); outline-offset: 3px; }
+  .cta--big { font-size: var(--sc-t-base); padding: .85em 1.5em; }
+
+  /* Escenas: la gota narra, el texto a la izquierda */
+  .scene { min-height: 120svh; display: flex; align-items: center; padding: 18vh var(--sc-gutter); }
+  .scene__copy { max-width: min(42rem, 48vw); }
+  .scene h1, .scene h2 { margin: 0; font-stretch: 118%; }
+  .scene h2.sc-display--lg { font-size: var(--sc-t-4xl); line-height: .95; }
+  .scene .lede { margin: var(--sc-5) 0 0; font-family: var(--sc-font-display); font-stretch: 100%; font-size: var(--sc-t-2xl); line-height: 1.12; font-weight: 340; letter-spacing: -0.015em; max-width: 20ch; text-wrap: balance; }
+  .scene h1, .scene h2, .scene .lede, .scene .sub, .step { text-shadow: 0 2px 28px rgba(4, 12, 16, 0.75); }
+  .scene .sub { margin: var(--sc-6) 0 0; padding-left: var(--sc-5); border-left: 1px solid color-mix(in srgb, var(--sheen) 55%, transparent); font-size: var(--sc-t-lg); line-height: 1.55; color: var(--sc-ink-soft); max-width: 40ch; text-wrap: pretty; }
+  .scene--hero { min-height: 100svh; align-items: flex-end; padding-bottom: 16vh; }
+  .scene--center { justify-content: center; text-align: center; }
+  .scene--center .scene__copy { max-width: 40rem; margin-top: 38vh; }
+  .scene--center .lede, .scene--center .sub { margin-inline: auto; }
+
+  /* Capítulos: gráfico fijo a la derecha, pasos a la izquierda */
+  .story { position: relative; display: grid; grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr); gap: var(--sc-8); padding-inline: var(--sc-gutter); }
+  .story__graphic { position: sticky; top: 0; height: 100svh; grid-column: 2; grid-row: 1; display: flex; align-items: center; justify-content: center; padding: 7rem 0 2rem; }
+  .story__steps { grid-column: 1; grid-row: 1; padding: 30vh 0 40vh; }
+  .step { min-height: 78vh; display: flex; flex-direction: column; justify-content: center; opacity: .18; transition: opacity 320ms var(--sc-ease-out); }
+  .step.is-active { opacity: 1; }
+  .step h2 { margin: 0 0 var(--sc-5); }
+  .step h3 { margin: 0 0 var(--sc-3); font-family: var(--sc-font-display); font-stretch: 112%; font-weight: 640; font-size: var(--sc-t-2xl); line-height: 1.05; letter-spacing: -0.01em; }
+  .step p { margin: 0; font-size: var(--sc-t-lg); line-height: 1.55; max-width: 36ch; text-wrap: pretty; }
+  .step p + p { margin-top: var(--sc-4); }
+  .step .when { display: block; font-family: var(--sc-font-display); font-stretch: 100%; font-weight: 300; font-size: var(--sc-t-3xl); line-height: 1; letter-spacing: -0.03em; color: var(--sheen); margin-bottom: var(--sc-3); font-variant-numeric: tabular-nums; }
+  .step .when small { font-size: .38em; letter-spacing: 0; color: var(--sc-ink-soft); font-weight: 400; margin-left: .3em; }
+  .k { color: var(--sheen); }
+  .a { color: var(--sc-accent); }
+  .step .when.a { color: var(--sc-accent); }
+
+  .graphic { position: relative; width: 100%; height: 100%; max-height: 760px; }
+  .graphic::before, .scene__viz::before { content: ""; position: absolute; inset: -8% -10%; z-index: -1; pointer-events: none;
+    background: radial-gradient(closest-side, rgba(6, 16, 21, .78), rgba(6, 16, 21, .45) 60%, transparent); }
+  .scene__viz { position: relative; }
+  .graphic svg { width: 100%; height: 100%; display: block; overflow: visible; }
+  .layer { position: absolute; inset: 0; opacity: 0; pointer-events: none; transition: opacity 360ms var(--sc-ease-out); display: flex; flex-direction: column; justify-content: center; }
+  .layer.is-on { opacity: 1; pointer-events: auto; }
+
+  /* Ejes y textos SVG */
+  .ax text, .lbl { fill: var(--sc-ink-soft); font: 400 13px var(--sc-font-text); font-variant-numeric: tabular-nums; }
+  .ax line, .ax path { stroke: var(--hair); }
+  .grid line { stroke: var(--hair); }
+  .evt-label { fill: var(--sc-ink); font: 600 16px var(--sc-font-display); font-stretch: 112%; }
+  .evt-sub { fill: var(--sc-ink-soft); font: 400 13px var(--sc-font-text); }
+  .spark-name { fill: var(--sc-ink); font: 500 14px var(--sc-font-text); }
+  .spark-grp { fill: var(--sheen); font: 600 11px var(--sc-font-display); font-stretch: 112%; letter-spacing: .06em; text-transform: uppercase; }
+  .tip { fill: var(--sc-ink); font: 600 14px var(--sc-font-text); font-variant-numeric: tabular-nums; }
+
+  /* Paneles tipográficos dentro del gráfico */
+  .formula { font-size: clamp(1.6rem, 2.8vw, 2.7rem); color: var(--sc-ink); }
+  .formula .katex { font-size: 1em; }
+  .formula-cap { margin-top: var(--sc-6); font-size: var(--sc-t-lg); color: var(--sc-ink-soft); max-width: 34ch; line-height: 1.45; }
+
+    opacity: .28; transition: opacity 260ms var(--sc-ease-out); }
+
+  .table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
+  .table th { text-align: left; font-weight: 500; color: var(--sc-ink-soft); font-size: var(--sc-t-sm); padding: 0 var(--sc-3) var(--sc-3) 0; }
+  .table td { padding: var(--sc-4) var(--sc-3) var(--sc-4) 0; border-top: 1px solid var(--hair); font-size: var(--sc-t-lg); }
+  .table td:first-child { font-family: var(--sc-font-display); font-stretch: 112%; font-weight: 640; }
+  .table .net { color: var(--sc-accent); font-weight: 600; }
+
+  /* Lecciones */
+  .lessons { padding: 22vh var(--sc-gutter) 10vh; max-width: 70rem; margin: 0 auto; }
+  .lessons h2 { margin: 0 0 var(--sc-8); }
+  .lesson { display: grid; grid-template-columns: minmax(0, 17rem) minmax(0, 1fr); gap: var(--sc-6); padding: var(--sc-7) 0; border-top: 1px solid var(--hair); align-items: baseline; }
+  .lesson__n { font-family: var(--sc-font-display); font-stretch: 100%; font-weight: 250; font-size: var(--sc-t-3xl); line-height: 1; letter-spacing: -0.03em; color: var(--sheen); font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .lesson p { margin: 0; font-size: var(--sc-t-lg); line-height: 1.5; max-width: 52ch; }
+  .improve { list-style: none; padding: 0; margin: 0; }
+  .improve li { padding: var(--sc-4) 0; border-top: 1px solid var(--hair); font-size: var(--sc-t-lg); display: flex; gap: var(--sc-4); align-items: baseline; }
+  .improve li::before { content: ""; flex: none; width: .6rem; height: .6rem; border-radius: 50%; background: var(--sc-accent); transform: translateY(-.1em); }
+  .lessons .h2b { margin-top: var(--sc-11); }
+
+
+  /* Gráficos de escena y de capítulo */
+  .scene__viz { flex: 1 1 0; min-width: 0; margin-left: clamp(2rem, 5vw, 5rem); height: min(64vh, 580px); opacity: 0; transform: translateY(18px); transition: opacity 700ms var(--sc-ease-out), transform 900ms var(--sc-ease-out); }
+  .scene:has(.scene__viz) h2.sc-display--lg { font-size: var(--sc-t-3xl); }
+  .scene__viz.is-in { opacity: 1; transform: none; }
+  .scene__viz svg, .fill svg, #g-morph svg, #g-hist svg, #g-fut svg { width: 100%; height: 100%; display: block; overflow: visible; }
+  .fill { width: 100%; height: 100%; }
+  .eq { text-align: left; margin-bottom: var(--sc-5); transition: opacity 400ms var(--sc-ease-out); }
+  .eq .formula { font-size: clamp(1.4rem, 2.3vw, 2.2rem); }
+  .eq .katex-display { margin: .2em 0; text-align: left; }
+  .eq .katex-display > .katex { text-align: left; }
+  .formula--ej { color: var(--sheen); }
+  .eq-cap { margin: 0; color: var(--sc-ink-soft); font-size: var(--sc-t-sm); }
+  .eq--fade { opacity: 0; }
+  .eq--fade.is-on { opacity: 1; }
+  .cap { fill: var(--sc-ink); font: 600 15px var(--sc-font-display); font-stretch: 112%; }
+  .cap-big { fill: var(--sc-ink); font: 640 19px var(--sc-font-display); font-stretch: 112%; }
+  .num { fill: var(--sc-ink); font: 500 14px var(--sc-font-text); font-variant-numeric: tabular-nums; }
+  .flow { stroke-dasharray: 3 27; animation: flow 1.5s linear infinite; }
+  @keyframes flow { to { stroke-dashoffset: -30; } }
+  @media (prefers-reduced-motion: reduce) { .flow { animation: none; } .scene__viz { transition: none; } }
+
+  .foot { margin-top: 12vh; font-size: var(--sc-t-xs); color: var(--sc-ink-soft); }
+
+  @media (max-width: 860px) {
+    .scene__copy { max-width: none; }
+    .scene { align-items: flex-end; padding-bottom: 10vh; min-height: 110svh; }
+    .scene--center .scene__copy { margin-top: 40vh; }
+    .story { grid-template-columns: 1fr; }
+    .story__graphic { grid-column: 1; height: 62svh; top: 3.5rem; padding: 1rem 0; }
+    .story__steps { grid-column: 1; grid-row: 2; padding: 4vh 0 30vh; position: relative; z-index: 3; }
+    .step { min-height: 70vh; justify-content: flex-end; }
+    .step > * { background: color-mix(in srgb, var(--sc-canvas) 88%, transparent); }
+    .lesson { grid-template-columns: 1fr; gap: var(--sc-3); }
+    .scene:has(.scene__viz) { flex-direction: column; justify-content: flex-end; align-items: stretch; }
+    .scene__viz { margin: var(--sc-6) 0 0; height: 46vh; }
+  }
+  @media (max-width: 700px) { .scene--hero h1 { font-size: var(--sc-t-2xl); } }
+</style>
+</head>
+<body>
+
+<span data-sc-progress></span>
+<div class="sc-grain" aria-hidden="true"></div>
+<canvas id="bg" aria-hidden="true"></canvas>
+<canvas id="gl" aria-hidden="true"></canvas>
+<div class="labels" id="labels" aria-hidden="true"></div>
+
+<header class="site-bar">
+  <a class="mark" href="#top">BRENT<i>.</i></a>
+  <a class="cta" href="https://alejandrobarreche.github.io/oil-rnn/">Abrir Sonda</a>
+</header>
+
+<main id="top">
+
+  <!-- ============ Portada ============ -->
+  <section class="scene scene--hero" data-form="hero">
+    <div class="scene__copy">
+      <h1 class="sc-display sc-display--xl">El precio del Brent</h1>
+      <p class="sub">Veintiséis años de precios, quince mercados y cuatro redes neuronales que intentan anticipar el barril.</p>
+    </div>
+  </section>
+
+  <!-- ============ El petróleo ============ -->
+  <section class="scene" data-form="center">
+    <div class="scene__copy">
+      <h2 class="sc-display sc-display--lg">El petróleo</h2>
+      <p class="lede">La materia prima más negociada del mundo.</p>
+    </div>
+  </section>
+
+  <section class="scene" data-form="orbit">
+    <div class="scene__copy">
+      <p class="lede">Su precio llega a casi todo.</p>
+      <p class="sub">Entra en la inflación, en el coste del transporte y de la energía, en los márgenes de las empresas y en las decisiones de los bancos centrales. Por eso productores, aerolíneas, refinerías, analistas y fondos intentan anticiparlo: para cubrir riesgos, planificar compras y buscar rentabilidad.</p>
+    </div>
+  </section>
+
+  <section class="scene" data-form="two">
+    <div class="scene__copy">
+      <p class="lede">No existe un único precio del crudo.</p>
+      <p class="sub">Se negocia con referencias. El <b>Brent</b>, del Mar del Norte, marca el precio en Europa y, por tanto, en España. El <b>WTI</b> (<i>West Texas Intermediate</i>) es la referencia de Estados Unidos.</p>
+    </div>
+  </section>
+
+  <section class="scene" data-form="none">
+    <div class="scene__copy">
+      <p class="lede">Cuatro plazos, cuatro modelos.</p>
+      <p class="sub">Este trabajo predice el Brent a <b>una semana, un mes, tres meses y un año</b>, con un modelo distinto para cada plazo. Cuanto más lejos, más se abre lo que puede pasar.</p>
+    </div>
+    <div class="scene__viz" id="v-plazos" role="img" aria-label="Los cuatro plazos sobre una línea de 252 días hábiles: 5, 21, 63 y 252 días; el abanico de posibilidades se abre con la distancia."></div>
+  </section>
+
+  <section class="scene" data-form="none">
+    <div class="scene__copy">
+      <p class="lede">Un precio y un rango.</p>
+      <p class="sub">Para cada plazo, el modelo da un precio central y un rango en el que el precio real debería caer <b>ocho de cada diez veces</b>. Después se compara con la apuesta más simple posible: suponer que el precio no cambia.</p>
+    </div>
+    <div class="scene__viz" id="v-rango" role="img" aria-label="Esquema: desde hoy, la predicción da un precio central y un rango; de diez resultados posibles, ocho caen dentro, uno por encima y uno por debajo."></div>
+  </section>
+
+  <!-- ============ El Brent: historia ============ -->
+  <section class="story" id="story-brent" data-story="brent">
+    <div class="story__graphic"><div class="graphic" id="g-brent"></div></div>
+    <div class="story__steps">
+      <div class="step" data-step="0">
+        <h2 class="sc-display sc-display--lg">El Brent</h2>
+        <p>Cerca de dos tercios del petróleo mundial se negocian tomándolo como base. La serie que usamos es su precio <b>spot</b> diario, el de entrega inmediata, en dólares por barril.</p>
+        <p>La publica la EIA, la agencia de información energética de Estados Unidos, con unos días de retraso.</p>
+      </div>
+      <div class="step" data-step="1">
+        <span class="when">143,95 $<small>3 de julio de 2008</small></span>
+        <h3>El máximo de la serie</h3>
+        <p>Llega al final de la expansión previa a la crisis financiera.</p>
+      </div>
+      <div class="step" data-step="2">
+        <span class="when">33,73 $<small>26 de diciembre de 2008</small></span>
+        <h3>La crisis financiera</h3>
+        <p>En menos de seis meses pierde tres cuartas partes de su valor: la crisis lleva a la economía mundial a una recesión.</p>
+      </div>
+      <div class="step" data-step="3">
+        <span class="when">26,01 $<small>20 de enero de 2016</small></span>
+        <h3>Exceso de oferta</h3>
+        <p>Entre 2014 y 2016 se produce más crudo del que se consume y el precio se hunde durante dos años.</p>
+      </div>
+      <div class="step" data-step="4">
+        <span class="when">9,12 $<small>21 de abril de 2020</small></span>
+        <h3>La pandemia</h3>
+        <p>La actividad y la demanda se paran. Un día antes, el WTI llegó a cotizar en negativo: <b>−36,98 $</b>. Había quien pagaba por que se llevaran su crudo.</p>
+      </div>
+      <div class="step" data-step="5">
+        <span class="when">133,18 $<small>8 de marzo de 2022</small></span>
+        <h3>La invasión de Ucrania</h3>
+        <p>Doce días después de la invasión, el Brent vuelve a superar los 130 dólares por primera vez desde 2008.</p>
+      </div>
+      <div class="step" data-step="6">
+        <span class="when">138,21 $<small>7 de abril de 2026</small></span>
+        <h3>La subida más reciente</h3>
+        <p>Es el último gran movimiento de la serie. El último dato disponible, del 3 de noviembre de 2026, es <b>107,03 $</b>.</p>
+      </div>
+      <div class="step" data-step="7">
+        <h3>Saltos que no avisan</h3>
+        <p>Cada gran movimiento tiene detrás un suceso económico o geopolítico, y ninguno estaba en los datos del día anterior.</p>
+        <p>Por eso predecir el Brent es difícil.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ Los datos ============ -->
+  <section class="scene" data-form="ring">
+    <div class="scene__copy">
+      <h2 class="sc-display sc-display--lg">Los datos</h2>
+      <p class="lede">Para predecir el Brent, la red no mira solo el Brent.</p>
+      <p class="sub">Lee cada día quince series de los mercados mundiales que se relacionan con el crudo.</p>
+    </div>
+  </section>
+
+  <section class="story" id="story-data" data-story="data">
+    <div class="story__graphic">
+      <div class="graphic">
+        <div class="layer is-on" data-layer="sparks"><div id="g-sparks" style="height:100%"></div></div>
+        <div class="layer" data-layer="vol"><div id="g-vol" class="fill"></div></div>
+        <div class="layer" data-layer="align"><div id="g-align" class="fill"></div></div>
+        <div class="layer" data-layer="logret">
+          <div class="eq"><div class="formula" id="f-logret"></div><div class="formula formula--ej" id="f-logret-ej"></div><p class="eq-cap">31 de diciembre de 2007 → 2 de enero de 2008</p></div>
+          <div id="g-morph" style="height:58%"></div>
+        </div>
+        <div class="layer" data-layer="hist">
+          <div class="eq eq--fade" id="eq-scale"><div class="formula" id="f-scale"></div></div>
+          <div id="g-hist" style="height:72%"></div>
+        </div>
+        <div class="layer" data-layer="clip"><div id="g-clip" class="fill"></div></div>
+      </div>
+    </div>
+    <div class="story__steps">
+      <div class="step" data-step="0"><h3>Otras referencias del crudo</h3><p>El Brent, el WTI y el futuro del WTI: precio de apertura, máximo, mínimo, cierre y volumen negociado. Es el propio mercado del petróleo.</p></div>
+      <div class="step" data-step="1"><h3>Energía</h3><p>El gas natural Henry Hub, un sustituto energético del crudo.</p></div>
+      <div class="step" data-step="2"><h3>Divisas</h3><p>El dólar frente al euro, el yuan frente al dólar y el índice del dólar. El crudo se paga en dólares: si el dólar cambia, el precio también.</p></div>
+      <div class="step" data-step="3"><h3>Tipos de interés</h3><p>La facilidad de depósito del Banco Central Europeo: el coste del dinero.</p></div>
+      <div class="step" data-step="4"><h3>Materias primas</h3><p>El cobre, que sigue la actividad industrial, y el oro, el activo refugio.</p></div>
+      <div class="step" data-step="5"><h3>Riesgo</h3><p>El VIX, que mide el miedo en los mercados.</p></div>
+      <div class="step" data-step="6"><h3>La volatilidad</h3><p>A las quince series se suma una calculada con el propio Brent: su <b>volatilidad</b>, la desviación típica de sus últimos 21 cambios diarios. Dice cuánto se está moviendo el precio.</p><p>En junio de 2014 era del 0,8&nbsp;% diario; en enero de 2009, del 7,3&nbsp;%. Con ella, cada día entran <b>16 números</b>. La cesta de la OPEP no entra porque no está disponible, ni el futuro del Brent, que empieza en 2007.</p></div>
+      <div class="step" data-step="7"><h3>Los calendarios</h3><p>Cada mercado cierra en sus festivos. El 26 de mayo de 2003 Londres cotizó el Brent, pero Estados Unidos cerró por el <i>Memorial Day</i>: el dólar, el VIX, el oro y el cobre no tienen valor ese día.</p><p>Se usan los días con precio del Brent y cada hueco se rellena con <b>el último valor conocido</b>, nunca con uno posterior. En las 15 series hay 2&nbsp;901 huecos.</p></div>
+      <div class="step" data-step="8"><h3>Los cambios diarios</h3><p>La red no recibe precios, sino cuánto cambian de un día a otro. Un barril a 100&nbsp;$ no significa lo mismo en 2008 que en 2014; una subida del 3&nbsp;% sí.</p><p>Se usa el <b>rendimiento logarítmico</b>: casi igual que el porcentaje de cambio, pero los cambios de varios días se suman. El tipo del BCE, que puede ser negativo, entra como diferencia.</p></div>
+      <div class="step" data-step="9"><h3>Las unidades</h3><p>Aun en cambios diarios, cada serie se mueve a su manera. El dólar frente al euro cambia típicamente un <b>0,63&nbsp;%</b> al día; el VIX, un <b>7,06&nbsp;%</b>.</p><p>Sin corregirlo, la red atendería sobre todo a lo que más se mueve.</p></div>
+      <div class="step" data-step="10"><h3>La misma escala</h3><p>A cada serie se le resta su media y se divide por su desviación típica. Todas pasan a medirse igual: <b>desviaciones respecto a lo normal</b>.</p><p>La media y la desviación salen solo del entrenamiento (2000–2019), para que el modelo no vea nada del futuro.</p></div>
+      <div class="step" data-step="11"><h3>Los valores extremos</h3><p>El 20 de abril de 2020 el WTI cerró a <b>−36,98&nbsp;$</b>. Un logaritmo no admite precios negativos, así que el WTI tiene un suelo de 1&nbsp;$. Aun así, ese día su cambio equivale a <b>118 desviaciones</b>.</p><p>Para que un solo día no domine el entrenamiento, todo lo que pasa de ±5 desviaciones se recorta a 5.</p></div>
+    </div>
+  </section>
+
+  <!-- ============ Las soluciones ============ -->
+  <section class="scene" data-form="row">
+    <div class="scene__copy">
+      <h2 class="sc-display sc-display--lg">Las soluciones</h2>
+      <p class="lede">Un modelo solo sirve si gana a la referencia más simple.</p>
+      <p class="sub">Se compararon seis formas de predecir, de la más simple a la más compleja.</p>
+    </div>
+  </section>
+
+  <section class="story" id="story-models" data-story="models">
+    <div class="story__graphic">
+      <div class="graphic">
+        <div class="layer is-on" data-layer="persist"><div id="g-persist" class="fill"></div></div>
+        <div class="layer" data-layer="fut">
+          <div id="g-fut" style="height:70%"></div>
+          <div class="eq"><div class="formula" id="f-fut"></div></div>
+        </div>
+        <div class="layer" data-layer="cell"><div id="g-cell" class="fill"></div></div>
+        <div class="layer" data-layer="grid"><div id="g-grid" class="fill"></div></div>
+        <div class="layer" data-layer="folds"><div id="g-folds" class="fill"></div></div>
+        <div class="layer" data-layer="val"><div id="g-val" class="fill"></div></div>
+      </div>
+    </div>
+    <div class="story__steps">
+      <div class="step" data-step="0"><h3>La persistencia</h3><p>La primera referencia repite el último precio. El 1 de junio de 2017 el Brent cerró a 50,41&nbsp;$; la persistencia dice que tres meses después seguirá igual. Acabó en 51,64&nbsp;$: falló por 1,23&nbsp;$.</p><p>Parece una broma, pero en los mercados es muy difícil de batir. Es la vara con la que se mide el error de las redes.</p></div>
+      <div class="step" data-step="1"><h3>Los cuantiles históricos</h3><p>Para el rango, la referencia mira el pasado: en el entrenamiento, ocho de cada diez veces el Brent cambió en tres meses entre un <b>−21&nbsp;%</b> y un <b>+25&nbsp;%</b>.</p><p>Aplicado al 1 de junio de 2017, da un rango de 39,87&nbsp;$ a 62,84&nbsp;$. Es la vara con la que se mide el rango de las redes.</p></div>
+      <div class="step" data-step="2"><h3>El ingenuo con futuros</h3><p>El precio spot de la EIA se publica con días de retraso, pero el del futuro del Brent se conoce al momento.</p><p>Esta regla toma el último spot publicado y lo mueve lo mismo que se ha movido el futuro desde entonces. No hay red ni entrenamiento: es una cuenta.</p></div>
+      <div class="step" data-step="3"><h3>La red recurrente</h3><p>Lee los últimos 60 días en orden. Cada día mezcla los 16 números nuevos con un resumen de lo leído hasta entonces, su <b>estado oculto</b>, y pasa ese resumen al día siguiente.</p><p>Al final del día 60, el resumen se convierte en la predicción.</p></div>
+      <div class="step" data-step="4"><h3>La LSTM</h3><p>Con una mezcla simple, lo antiguo se diluye en pocos pasos. La LSTM añade una <b>memoria aparte</b> y tres puertas que deciden, cada día, qué olvidar, qué añadir y qué sacar.</p></div>
+      <div class="step" data-step="5"><h3>La GRU</h3><p>Simplifica la LSTM: una sola memoria y dos puertas, reiniciar y actualizar. Hace lo mismo con menos parámetros que ajustar.</p></div>
+      <div class="step" data-step="6"><h3>La rejilla</h3><p>Cada red se probó en cada plazo con 36 configuraciones: 4 tamaños (de 32 a 256 neuronas), 3 formas (una capa, dos capas, dos capas con <i>dropout</i>, que apaga neuronas al azar para no memorizar) y 3 velocidades de aprendizaje.</p><p>Cada punto es uno de los <b>432 entrenamientos</b>. Solo 45 quedan por delante de la persistencia, y 36 de ellos son a 3 meses.</p></div>
+      <div class="step" data-step="7"><h3>La validación temporal</h3><p>Cada configuración se examina cuatro veces. Cada vez entrena con todo el pasado disponible, reserva el último año para decidir cuándo parar y se examina en los dos años siguientes, como si se hubiera usado entonces.</p><p>De 2023 en adelante no se mira nada hasta el final: es la prueba.</p></div>
+      <div class="step" data-step="8"><h3>La promesa de la validación</h3><p>La mejor configuración de cada red se repitió con tres semillas. Solo a 3 meses una red ganaba con claridad: la GRU, con un <b class="a">4,8&nbsp;%</b> menos de error que la persistencia.</p><p>A 1 semana y a 1 mes, empate; a 1 año, todas peor. Y a 1 semana la regla con futuros, sin red, ganaba un <b class="k">8,5&nbsp;%</b>.</p></div>
+    </div>
+  </section>
+
+  <!-- ============ La red ============ -->
+  <section class="scene" data-form="layers">
+    <div class="scene__copy">
+      <h2 class="sc-display sc-display--lg">La red</h2>
+      <p class="lede">Un modelo por plazo, y en cada uno gana una red distinta.</p>
+    </div>
+  </section>
+
+  <section class="story" id="story-net" data-story="net">
+    <div class="story__graphic">
+      <div class="graphic">
+        <div class="layer is-on" data-layer="table">
+          <table class="table">
+            <thead><tr><th>Plazo</th><th>Red</th><th>Neuronas · capas</th><th>Parámetros</th><th>Entrenamiento</th></tr></thead>
+            <tbody>
+              <tr><td>1 semana</td><td class="net">GRU</td><td>256 · 1</td><td>211 203</td><td>17 s</td></tr>
+              <tr><td>1 mes</td><td class="net">LSTM</td><td>64 · 1</td><td>21 187</td><td>11 s</td></tr>
+              <tr><td>3 meses</td><td class="net">GRU</td><td>128 · 2</td><td>155 523</td><td>29 s</td></tr>
+              <tr><td>1 año</td><td class="net">RNN</td><td>256 · 2</td><td>202 499</td><td>10 s</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="layer" data-layer="arch"><div id="g-arch" style="height:100%"></div></div>
+        <div class="layer" data-layer="pinball"><div class="formula" id="f-pinball"></div><div id="g-pinball" style="height:46%; margin-top: 1.5rem"></div></div>
+        <div class="layer" data-layer="curves"><div id="g-curves" style="height:100%"></div></div>
+      </div>
+    </div>
+    <div class="story__steps">
+      <div class="step" data-step="0"><h3>Una red para cada plazo</h3><p>Se eligió la que tenía menor error en validación con tres semillas. Ganó la GRU a 1 semana y a 3 meses, la LSTM a 1 mes y la RNN simple a 1 año.</p><p>Todas se entrenan en segundos en la GPU de un portátil (RTX 3050 Ti).</p></div>
+      <div class="step" data-step="1"><h3>Lo que entra</h3><p>Tomamos como ejemplo la GRU de 3 meses. Cada predicción mira los últimos <b>60 días</b>. Cada día es un vector de <b>16 números</b>: las 15 series y la volatilidad.</p></div>
+      <div class="step" data-step="2"><h3>Lo que recuerda</h3><p>Dos capas de 128 neuronas leen los 60 días en orden. En cada día, una <b>puerta de actualización</b> decide cuánto del recuerdo se sustituye, y una <b>puerta de reinicio</b>, cuánto del pasado se usa para el dato nuevo.</p></div>
+      <div class="step" data-step="3"><h3>Lo que sale</h3><p>Del último día sale un resumen, y una capa final lo convierte en tres números: el cambio que deja un 10&nbsp;% de probabilidad por debajo, la mediana y el que deja un 10&nbsp;% por encima.</p><p>Entre el primero y el último queda el <b class="a">rango del 80&nbsp;%</b>. Después se convierten en precios a partir del último Brent publicado.</p></div>
+      <div class="step" data-step="4"><h3>Cómo aprende</h3><p>Con la pérdida <b>pinball</b>, que castiga de forma asimétrica. Para el techo del rango (τ&nbsp;=&nbsp;0,9), quedarse corto cuesta nueve veces más que pasarse. Así cada salida aprende su propio cuantil.</p></div>
+      <div class="step" data-step="5"><h3>Cuándo parar</h3><p>Hasta 60 épocas (pasadas completas por los datos). El último año de entrenamiento se reserva: si el error en ese año no mejora en 10 épocas, se para y se quedan los mejores pesos.</p><p>A 1 semana y a 1 año, la mejor época es la 3 y la 1: casi no aprende. A 1 y 3 meses, el error baja un 21 y un 23&nbsp;%.</p></div>
+      <div class="step" data-step="6"><h3>El modelo final</h3><p>Con la configuración elegida, cada red se reentrena una vez con todos los datos de 2000 a 2023 y se examina <b>una sola vez</b> en el periodo de prueba.</p></div>
+    </div>
+  </section>
+
+  <!-- ============ El resultado ============ -->
+  <section class="scene" data-form="none">
+    <div class="scene__copy">
+      <h2 class="sc-display sc-display--lg">El resultado</h2>
+      <p class="lede">955 días que la red nunca vio.</p>
+      <p class="sub">Del 25 de enero de 2023 al 3 de noviembre de 2026. Para cada día se compara lo que dijo la red con lo que pasó, y con lo que habría dicho repetir el último precio.</p>
+    </div>
+    <div class="scene__viz" id="v-marcador" role="img" aria-label="Error medio en dólares en la prueba: en los cuatro plazos, repetir el último precio se equivoca menos que la red."></div>
+  </section>
+
+  <section class="story" id="story-result" data-story="result">
+    <div class="story__graphic"><div class="graphic" id="g-result"></div></div>
+    <div class="story__steps">
+      <div class="step" data-step="0"><h3>Cómo leer el gráfico</h3><p>La línea <b>blanca</b> es el precio real. La <b class="a">ámbar</b> es lo que predijo la red y la franja ámbar, su rango del 80&nbsp;%. La <b style="color:var(--persist)">gris discontinua</b> es la persistencia: el precio de hace h días.</p><p>Abajo, el error típico (RMSE) de cada una en los cuatro plazos.</p></div>
+      <div class="step" data-step="1"><span class="when a">5,55 $<small>frente a 5,36 $</small></span><h3>A una semana</h3><p>La red casi empata: falla un <b>3,6&nbsp;%</b> más que repetir el precio. Su rango acierta el 78&nbsp;% de los días, tan bien como los cuantiles históricos.</p></div>
+      <div class="step" data-step="2"><span class="when a">11,56 $<small>frente a 10,69 $</small></span><h3>A un mes</h3><p>La franja se ensancha y la red se queda un <b>8,1&nbsp;%</b> por detrás. El rango acierta el 86&nbsp;% de los días.</p></div>
+      <div class="step" data-step="3"><span class="when a">28,24 $<small>frente a 17,54 $</small></span><h3>A tres meses</h3><p>El peor caso: un <b>61&nbsp;%</b> más de error. Fíjate en cómo la línea ámbar exagera cada subida.</p></div>
+      <div class="step" data-step="4"><h3>Acierta la dirección, no el tamaño</h3><p>A 3 meses, la red acierta si el precio sube o baja el <b>60&nbsp;%</b> de los días. Pero de media predice una subida del <b>11&nbsp;%</b>, cuando la real fue del 1,7&nbsp;%.</p></div>
+      <div class="step" data-step="5"><span class="when a">33,03 $<small>frente a 22,71 $</small></span><h3>A un año</h3><p>El rango contiene el precio real el <b>92&nbsp;%</b> de los días, pero porque es tan ancho que cabe casi todo.</p></div>
+      <div class="step" data-step="6"><h3>Peor, pero no se puede asegurar</h3><p>En ningún plazo la red mejora a la persistencia. Tampoco se puede afirmar que sea peor: ninguna diferencia es significativa (contraste de Diebold-Mariano, p&nbsp;&gt;&nbsp;0,05).</p><p>A 3 meses y a 1 año solo hay unos 15 y 3 pronósticos independientes: demasiado pocos para distinguirlas.</p></div>
+      <div class="step" data-step="7"><h3>2026</h3><p>Con el precio subiendo en 2026, el rango de los tres plazos cortos solo cubrió entre el <b>48 y el 58&nbsp;%</b> de los días, en vez del 80&nbsp;%. El modelo no predice sucesos.</p></div>
+    </div>
+  </section>
+
+  <!-- ============ Lecciones ============ -->
+  <section class="lessons" data-sc-act="flow">
+    <h2 class="sc-display sc-display--lg" data-sc-in>Lo que se aprende</h2>
+    <div data-sc-in data-sc-stagger="70">
+      <div class="lesson"><div class="lesson__n">78 %</div><p>El dato más fiable es el <b>rango a una semana</b>: cubre el 78&nbsp;% de los casos, tan bien como los cuantiles históricos.</p></div>
+      <div class="lesson"><div class="lesson__n">+8,5 %</div><p>Buena parte de la dificultad a una semana es el <b>retraso de publicación</b> del precio, no la red: corregirlo con el futuro del Brent gana a la persistencia en validación.</p></div>
+      <div class="lesson"><div class="lesson__n">1 de 4</div><p>La mejora de validación a tres meses venía casi entera de <b>un solo pliegue</b> (2021–2023). Elegir entre muchas configuraciones encuentra la que tuvo suerte.</p></div>
+      <div class="lesson"><div class="lesson__n">60 %</div><p>A tres meses la dirección del cambio lleva algo de información; lo que falla es la <b>magnitud</b>.</p></div>
+    </div>
+    <h2 class="sc-display sc-display--md h2b" data-sc-in>Lo que se podría mejorar</h2>
+    <ul class="improve" data-sc-in data-sc-stagger="60">
+      <li>Probar solo el Brent como entrada, para saber si las otras 14 series aportan algo.</li>
+      <li>Entrenar con una ventana deslizante, para olvidar épocas antiguas del mercado.</li>
+      <li>Marcar los datos que faltan en lugar de repetir el último valor.</li>
+      <li>Añadir la cesta de la OPEP.</li>
+      <li>Usar el futuro del Brent como entrada y modelar el retraso real de publicación.</li>
+      <li>Evaluar el periodo de prueba con varias semillas.</li>
+    </ul>
+  </section>
+
+  <!-- ============ Sonda ============ -->
+  <section class="scene" data-form="sonda" style="min-height:110svh">
+    <div class="scene__copy" data-sc-in data-sc-stagger="70">
+      <h2 class="sc-display sc-display--xl">Sonda</h2>
+      <p class="sub">El histórico del Brent con sus sucesos y, para cada plazo, el precio previsto, su rango y un texto que explica cuánto fiarse. Los cuatro modelos funcionan dentro del navegador, sin servidor, y hay un portal para invertir con dinero ficticio.</p>
+      <p style="margin-top:var(--sc-8)"><a class="cta cta--big" href="https://alejandrobarreche.github.io/oil-rnn/">Abrir Sonda</a></p>
+      <div class="foot">Aprendizaje Automático · Caso 2 · Datos: EIA (serie DCOILBRENTEU) y mercados vía FRED</div>
+    </div>
+  </section>
+
+</main>
+
+<script src="scrollcraft.js"></script>
+<script>ScrollCraft.mount(document.body);</script>
+<script src="https://cdn.jsdelivr.net/npm/d3@7.9.0/dist/d3.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+
+<script type="importmap">
+{ "imports": {
+  "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js",
+  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"
+} }
+</script>
+<script type="module">
+import * as THREE from "three";
+import { RoomEnvironment } from "three/addons/environments/RoomEnvironment.js";
+
+const DATA = await (await fetch("data.json")).json();
+const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
+const nf2 = new Intl.NumberFormat("es-ES", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const MONTHS = ["ene","feb","mar","abr","may","jun","jul","ago","sep","oct","nov","dic"];
+const clamp01 = (x) => Math.min(1, Math.max(0, x));
+const $ = (s, r = document) => r.querySelector(s);
+const $$ = (s, r = document) => [...r.querySelectorAll(s)];
+const parse = d3.utcParse("%Y-%m-%d");
+const AMBER = "#f2b84b", SHEEN = "#76d3c6", INK = "#eef0f2", SOFT = "#a3abb5", PERSIST = "#8d96a1";
+const D2 = await (await fetch("data2.json")).json();
+const DV = {};
+const LAV = "#b9a3f0", ROSE = "#e59fb5";
+const fmtN = (v, d = 2) => new Intl.NumberFormat("es-ES", { minimumFractionDigits: d, maximumFractionDigits: d }).format(v);
+const sgn = (v, d = 1) => (v > 0.0001 ? "+" : v < -0.0001 ? "−" : "") + fmtN(Math.abs(v), d) + " %";
+const mk = (sel, W, H) => d3.select(sel).append("svg").attr("viewBox", `0 0 ${W} ${H}`).attr("preserveAspectRatio", "xMidYMid meet");
+const ftext = (g, cls, x, y, t, anchor = "start") => g.append("text").attr("class", cls).attr("x", x).attr("y", y).attr("text-anchor", anchor).text(t);
+
+
+/* ================= Fórmulas ================= */
+const tex = (id, s) => katex.render(s, document.getElementById(id), { displayMode: true, throwOnError: false });
+tex("f-logret", String.raw`r_t \;=\; \ln\!\left(\frac{P_t}{P_{t-1}}\right)`);
+tex("f-scale", String.raw`z \;=\; \frac{x - \mu_{\text{train}}}{\sigma_{\text{train}}}`);
+tex("f-logret-ej", String.raw`\ln\!\left(\frac{97{,}01}{93{,}68}\right) \;=\; 0{,}035 \;\approx\; +3{,}5\,\%`);
+tex("f-fut", String.raw`\hat{P}_{\text{hoy}} \;=\; P_{t}\cdot\frac{F_{\text{hoy}}}{F_{t}}`);
+tex("f-pinball", String.raw`L_\tau(y, q) = \begin{cases} \tau\,(y - q) & \text{si } y \ge q \\ (1-\tau)\,(q - y) & \text{si } y < q \end{cases}`);
+
+/* ================= Pasos: qué paso está activo ================= */
+const stories = {};
+function onStep(name, fn) { stories[name] = fn; }
+const stepIO = new IntersectionObserver((ents) => {
+  for (const e of ents) {
+    if (!e.isIntersecting) continue;
+    const step = e.target, story = step.closest("[data-story]");
+    $$(".step", story).forEach((s) => s.classList.toggle("is-active", s === step));
+    stories[story.dataset.story]?.(+step.dataset.step);
+  }
+}, { rootMargin: "-46% 0px -46% 0px" });
+function showLayer(root, name) { $$(".layer", root).forEach((l) => l.classList.toggle("is-on", l.dataset.layer === name)); }
+
+/* ================= Gráfico: historia del Brent ================= */
+{
+  const W = 820, H = 520, m = { l: 56, r: 24, t: 44, b: 36 };
+  const S = DATA.daily.map(([d, v]) => ({ d: parse(d), v }));
+  const x = d3.scaleUtc().domain(d3.extent(S, (p) => p.d)).range([m.l, W - m.r]);
+  const y = d3.scaleLinear().domain([0, 160]).range([H - m.b, m.t]);
+  const svg = d3.select("#g-brent").append("svg").attr("viewBox", `0 0 ${W} ${H}`).attr("preserveAspectRatio", "xMidYMid meet");
+  const defs = svg.append("defs");
+  const gr = defs.append("linearGradient").attr("id", "oilfill").attr("x1", 0).attr("x2", 0).attr("y1", 0).attr("y2", 1);
+  gr.append("stop").attr("offset", "0%").attr("stop-color", SHEEN).attr("stop-opacity", 0.32);
+  gr.append("stop").attr("offset", "55%").attr("stop-color", "#9a7bd8").attr("stop-opacity", 0.10);
+  gr.append("stop").attr("offset", "100%").attr("stop-color", "#0d0f12").attr("stop-opacity", 0);
+  const clip = defs.append("clipPath").attr("id", "bclip").append("rect").attr("y", 0).attr("height", H).attr("x", m.l).attr("width", W - m.l - m.r);
+
+  svg.append("g").attr("class", "grid").selectAll("line").data([50, 100, 150]).join("line")
+    .attr("x1", m.l).attr("x2", W - m.r).attr("y1", y).attr("y2", y);
+  svg.append("g").attr("class", "ax").selectAll("text").data([50, 100, 150]).join("text")
+    .attr("x", m.l - 10).attr("y", (v) => y(v) + 4).attr("text-anchor", "end").text((v) => `${v} $`);
+  svg.append("g").attr("class", "ax").attr("transform", `translate(0,${H - m.b + 24})`).selectAll("text")
+    .data([2000, 2004, 2008, 2012, 2016, 2020, 2024]).join("text")
+    .attr("x", (yr) => x(new Date(Date.UTC(yr, 0, 1)))).attr("text-anchor", "middle").text((v) => v);
+
+  const area = d3.area().x((p) => x(p.d)).y0(y(0)).y1((p) => y(p.v)).curve(d3.curveMonotoneX);
+  const line = d3.line().x((p) => x(p.d)).y((p) => y(p.v)).curve(d3.curveMonotoneX);
+  const dim = svg.append("g").attr("opacity", 0.22);
+  dim.append("path").attr("d", line(S)).attr("fill", "none").attr("stroke", INK).attr("stroke-width", 1.2);
+  const lit = svg.append("g").attr("clip-path", "url(#bclip)");
+  lit.append("path").attr("d", area(S)).attr("fill", "url(#oilfill)");
+  lit.append("path").attr("d", line(S)).attr("fill", "none").attr("stroke", INK).attr("stroke-width", 1.6).attr("stroke-linejoin", "round");
+
+  const EV = [
+    null,
+    { d: "2008-07-03", v: 143.95, a: "2007-06-01", b: "2008-08-31", t: "Máximo" },
+    { d: "2008-12-26", v: 33.73, a: "2008-06-01", b: "2009-03-31", t: "Crisis financiera" },
+    { d: "2016-01-20", v: 26.01, a: "2014-06-01", b: "2016-12-31", t: "Exceso de oferta" },
+    { d: "2020-04-21", v: 9.12, a: "2019-12-01", b: "2020-12-31", t: "Pandemia" },
+    { d: "2022-03-08", v: 133.18, a: "2021-10-01", b: "2022-12-31", t: "Ucrania" },
+    { d: "2026-04-07", v: 138.21, a: "2025-10-01", b: "2026-11-03", t: "2026" },
+    null,
+  ];
+  const marks = svg.append("g").selectAll("g").data(EV.filter(Boolean)).join("g").attr("opacity", 0)
+    .attr("transform", (e) => `translate(${x(parse(e.d))},${y(e.v)})`);
+  marks.append("circle").attr("r", 13).attr("fill", SHEEN).attr("opacity", 0.18);
+  marks.append("circle").attr("r", 5.5).attr("fill", SHEEN).attr("stroke", "#0d0f12").attr("stroke-width", 2);
+  // Arriba del punto si es un máximo; a la derecha si es un mínimo, para no pisar el eje
+  const hiE = (e) => e.v > 80, right = (e) => x(parse(e.d)) > W - 120;
+  marks.append("text").attr("class", "evt-label").attr("x", (e) => (hiE(e) ? 0 : 18)).attr("y", (e) => (hiE(e) ? -24 : -2))
+    .attr("text-anchor", (e) => (right(e) ? "end" : hiE(e) ? "middle" : "start")).text((e) => e.t);
+  marks.append("text").attr("class", "evt-sub").attr("x", (e) => (hiE(e) ? 0 : 18)).attr("y", (e) => (hiE(e) ? -8 : 14))
+    .attr("text-anchor", (e) => (right(e) ? "end" : hiE(e) ? "middle" : "start")).text((e) => `${nf2.format(e.v)} $`);
+
+  // Puntero: fecha y precio bajo el ratón
+  const hov = svg.append("g").style("display", "none");
+  hov.append("line").attr("y1", m.t).attr("y2", H - m.b).attr("stroke", SOFT).attr("stroke-dasharray", "2 3");
+  hov.append("circle").attr("r", 4).attr("fill", INK);
+  const ht = hov.append("text").attr("class", "tip").attr("y", m.t - 16);
+  const bis = d3.bisector((p) => p.d).center;
+  svg.append("rect").attr("x", m.l).attr("y", m.t).attr("width", W - m.l - m.r).attr("height", H - m.t - m.b).attr("fill", "transparent")
+    .on("pointermove", (ev) => {
+      const [px] = d3.pointer(ev), p = S[bis(S, x.invert(px))];
+      hov.style("display", null).attr("transform", `translate(${x(p.d)},0)`);
+      hov.select("circle").attr("cy", y(p.v));
+      ht.attr("text-anchor", x(p.d) > W - 160 ? "end" : "start").attr("x", x(p.d) > W - 160 ? -8 : 8)
+        .text(`${p.d.getUTCDate()} ${MONTHS[p.d.getUTCMonth()]} ${p.d.getUTCFullYear()} · ${nf2.format(p.v)} $`);
+    })
+    .on("pointerleave", () => hov.style("display", "none"));
+
+  onStep("brent", (k) => {
+    const e = EV[k], T = d3.transition().duration(reduced ? 0 : 700).ease(d3.easeCubicOut);
+    const a = e ? x(parse(e.a)) : m.l, b = e ? x(parse(e.b)) : W - m.r;
+    clip.transition(T).attr("x", a).attr("width", b - a);
+    marks.transition(T).attr("opacity", (d) => (d === e ? 1 : k === 7 ? 0.85 : 0));
+  });
+}
+
+/* ================= Gráfico: las 15 series ================= */
+{
+  const NAMES = {
+    brent: "Brent", wti: "WTI", wti_fut_open: "Futuro WTI · apertura", wti_fut_high: "Futuro WTI · máximo", wti_fut_low: "Futuro WTI · mínimo",
+    wti_fut_close: "Futuro WTI · cierre", wti_fut_volume: "Futuro WTI · volumen", henry_hub: "Gas natural Henry Hub",
+    usd_per_eur: "Dólares por euro", cny_per_usd: "Yuanes por dólar", dollar_index: "Índice del dólar",
+    ecb_deposit_rate: "Depósito del BCE", copper: "Cobre", gold: "Oro", vix: "VIX",
+  };
+  const GROUPS = [
+    ["Crudo", ["brent", "wti", "wti_fut_open", "wti_fut_high", "wti_fut_low", "wti_fut_close", "wti_fut_volume"]],
+    ["Energía", ["henry_hub"]], ["Divisas", ["usd_per_eur", "cny_per_usd", "dollar_index"]],
+    ["Tipos", ["ecb_deposit_rate"]], ["Materias primas", ["copper", "gold"]], ["Riesgo", ["vix"]],
+  ];
+  const keys = GROUPS.flatMap(([, k]) => k);
+  const gOf = Object.fromEntries(GROUPS.flatMap(([, k], i) => k.map((c) => [c, i])));
+  const W = 820, H = 600, cols = 3, rows = 5, cw = W / cols, ch = H / rows;
+  const svg = d3.select("#g-sparks").append("svg").attr("viewBox", `0 0 ${W} ${H}`).attr("preserveAspectRatio", "xMidYMid meet");
+  const X = d3.scaleLinear().domain([0, DATA.months.length - 1]).range([12, cw - 24]);
+  const cells = svg.selectAll("g").data(keys).join("g").attr("transform", (_, i) => `translate(${(i % cols) * cw},${Math.floor(i / cols) * ch})`);
+  cells.append("text").attr("class", "spark-grp").attr("x", 12).attr("y", 22).text((c) => GROUPS[gOf[c]][0]);
+  cells.append("text").attr("class", "spark-name").attr("x", 12).attr("y", 41).text((c) => NAMES[c]);
+  cells.append("path").attr("fill", "none").attr("stroke-width", 1.4).attr("stroke-linejoin", "round")
+    .attr("stroke", (c) => (c === "brent" ? INK : SHEEN))
+    .attr("d", (c) => {
+      const v = DATA.series[c], ext = d3.extent(v.filter((z) => z != null));
+      const Y = d3.scaleLinear().domain(ext).range([ch - 14, 54]);
+      return d3.line().defined((z) => z != null).x((_, i) => X(i)).y((z) => Y(z))(v);
+    });
+  const root = $("#story-data");
+  onStep("data", (k) => {
+    if (k <= 5) {
+      showLayer(root, "sparks");
+      cells.transition().duration(reduced ? 0 : 400).attr("opacity", (c) => (gOf[c] === k ? 1 : 0.14));
+    } else if (k === 6) { showLayer(root, "vol"); DV.volIn(); }
+    else if (k === 7) { showLayer(root, "align"); DV.alignIn(); }
+    else if (k === 8) { showLayer(root, "logret"); DV.morphIn(); }
+    else if (k <= 10) { showLayer(root, "hist"); DV.hist(k === 10); }
+    else { showLayer(root, "clip"); DV.clipIn(); }
+  });
+}
+
+const GL = (svg, x1, x2, ys, y) => svg.append("g").selectAll("line").data(ys).join("line")
+  .attr("x1", x1).attr("x2", x2).attr("y1", y).attr("y2", y).attr("stroke", "rgba(238,240,242,.12)");
+
+/* ================= Volatilidad ================= */
+{
+  const R = D2.ret, t = R.t.map(parse);
+  const W = 820, H = 610, m = { l: 62, r: 24 };
+  const svg = mk("#g-vol", W, H);
+  const x = d3.scaleUtc().domain(d3.extent(t)).range([m.l, W - m.r]);
+  const yP = d3.scaleLinear().domain([0, 150]).range([236, 44]);
+  const yR = d3.scaleLinear().domain([-12, 12]).range([566, 330]).clamp(true);
+  ftext(svg, "cap", m.l, 22, "Precio del Brent ($)");
+  ftext(svg, "cap", m.l, 300, "Cambio diario (%) y volatilidad de 21 días");
+  GL(svg, m.l, W - m.r, [50, 100, 150], yP);
+  GL(svg, m.l, W - m.r, [-10, 0, 10], yR);
+  svg.append("g").attr("class", "ax").selectAll("text").data([50, 100, 150]).join("text").attr("x", m.l - 10).attr("y", (v) => yP(v) + 4).attr("text-anchor", "end").text((v) => v);
+  svg.append("g").attr("class", "ax").selectAll("text").data([-10, 0, 10]).join("text").attr("x", m.l - 10).attr("y", (v) => yR(v) + 4).attr("text-anchor", "end").text((v) => (v > 0 ? "+" : v < 0 ? "−" : "") + Math.abs(v) + " %");
+  svg.append("g").attr("class", "ax").selectAll("text").data([2002, 2006, 2010, 2014, 2018]).join("text")
+    .attr("x", (v) => x(new Date(Date.UTC(v, 0, 1)))).attr("y", H - 14).attr("text-anchor", "middle").text((v) => v);
+  svg.append("path").attr("fill", "none").attr("stroke", INK).attr("stroke-width", 1.3)
+    .attr("d", d3.line().defined((_, i) => R.p[i] != null).x((d) => x(d)).y((_, i) => yP(R.p[i]))(t));
+  let bars = "";
+  t.forEach((d, i) => { if (R.r[i] != null) bars += `M${x(d).toFixed(1)},${yR(0).toFixed(1)}V${yR(R.r[i]).toFixed(1)}`; });
+  svg.append("path").attr("d", bars).attr("stroke", SOFT).attr("stroke-width", 0.7).attr("opacity", 0.5);
+  const clip = svg.append("defs").append("clipPath").attr("id", "vclip").append("rect").attr("x", m.l).attr("y", 0).attr("height", H).attr("width", W - m.l - m.r);
+  const band = svg.append("g").attr("clip-path", "url(#vclip)");
+  const ok = (_, i) => R.v[i] != null;
+  band.append("path").attr("fill", SHEEN).attr("opacity", 0.22).attr("d", d3.area().defined(ok).x((d) => x(d)).y0((_, i) => yR(-R.v[i])).y1((_, i) => yR(R.v[i]))(t));
+  [1, -1].forEach((s) => band.append("path").attr("fill", "none").attr("stroke", SHEEN).attr("stroke-width", 1.5)
+    .attr("d", d3.line().defined(ok).x((d) => x(d)).y((_, i) => yR(s * R.v[i]))(t)));
+  const ann = svg.append("g");
+  [["2009-01-06", "enero de 2009 · 7,3 % al día", 1], ["2014-06-19", "junio de 2014 · 0,8 %", -1]].forEach(([d, label, side]) => {
+    const i = R.t.indexOf(d), px = x(t[i]), py = side > 0 ? yR(R.v[i]) : yR(-R.v[i]);
+    ann.append("circle").attr("cx", px).attr("cy", py).attr("r", 5).attr("fill", SHEEN).attr("stroke", "#0b1a21").attr("stroke-width", 2);
+    ann.append("line").attr("x1", px).attr("x2", px).attr("y1", side > 0 ? py - 6 : py + 6).attr("y2", side > 0 ? py - 34 : yR(-10.5)).attr("stroke", SHEEN).attr("opacity", 0.6);
+    ftext(ann, "cap", px + (side > 0 ? 8 : -8), side > 0 ? py - 38 : yR(-10.5) + 4, label, side > 0 ? "start" : "end");
+  });
+  DV.volIn = () => {
+    clip.interrupt().attr("width", reduced ? W - m.l - m.r : 0).transition().duration(reduced ? 0 : 1400).ease(d3.easeCubicInOut).attr("width", W - m.l - m.r);
+    ann.interrupt().attr("opacity", reduced ? 1 : 0).transition().delay(reduced ? 0 : 1200).duration(500).attr("opacity", 1);
+  };
+}
+
+/* ================= Calendarios ================= */
+{
+  const A = D2.align, W = 820, H = 540;
+  const svg = mk("#g-align", W, H);
+  const NM = { brent: "Brent", usd_per_eur: "Dólares por euro", vix: "VIX", gold: "Oro", copper: "Cobre", dollar_index: "Índice del dólar" };
+  const DEC = { brent: 2, usd_per_eur: 4, vix: 2, gold: 1, copper: 4, dollar_index: 2 };
+  const DOW = ["dom", "lun", "mar", "mié", "jue", "vie", "sáb"];
+  const days = A.t.map(parse), x0 = 176, cw = (W - x0) / days.length, y0 = 150, rh = 60;
+  const hol = A.t.indexOf("2003-05-26"), hx = x0 + hol * cw;
+  svg.append("rect").attr("x", hx + 3).attr("y", y0 - 52).attr("width", cw - 6).attr("height", rh * A.cols.length + 60).attr("rx", 12).attr("fill", SHEEN).attr("opacity", 0.12);
+  ftext(svg, "cap-big", hx + cw / 2, 40, "Memorial Day", "middle");
+  ftext(svg, "evt-sub", hx + cw / 2, 62, "Londres abre, EE. UU. cierra", "middle");
+  ftext(svg, "cap", 0, 40, "Mayo de 2003");
+  days.forEach((d, j) => ftext(svg, "lbl", x0 + j * cw + cw / 2, y0 - 24, `${DOW[d.getUTCDay()]} ${d.getUTCDate()}`, "middle"));
+  const fills = svg.append("g"), arrows = svg.append("g");
+  A.cols.forEach((c, i) => {
+    const y = y0 + i * rh;
+    svg.append("line").attr("x1", 0).attr("x2", W).attr("y1", y - 4).attr("y2", y - 4).attr("stroke", "rgba(238,240,242,.08)");
+    ftext(svg, c === "brent" ? "cap" : "spark-name", 0, y + rh / 2, NM[c]);
+    A.raw[c].forEach((v, j) => {
+      const cx = x0 + j * cw + cw / 2, cy = y + rh / 2;
+      if (v != null) {
+        ftext(svg, "num", cx, cy, fmtN(v, DEC[c]), "middle").style("fill", c === "brent" ? INK : SOFT).style("font-weight", c === "brent" ? 600 : 400);
+      } else {
+        svg.append("rect").attr("x", cx - cw / 2 + 8).attr("y", cy - 22).attr("width", cw - 16).attr("height", 34).attr("rx", 8)
+          .attr("fill", "none").attr("stroke", SHEEN).attr("stroke-dasharray", "3 4").attr("opacity", 0.7);
+        ftext(fills, "num", cx, cy, fmtN(A.fill[c][j], DEC[c]), "middle").style("fill", SHEEN).style("font-weight", 600);
+        const px = cx - cw + 22;
+        arrows.append("path").attr("d", `M${px},${cy - 16} Q${(px + cx) / 2},${cy - 36} ${cx - 26},${cy - 16}`).attr("fill", "none")
+          .attr("stroke", SHEEN).attr("stroke-width", 1.4).attr("marker-end", "url(#arrS)");
+      }
+    });
+  });
+  svg.append("defs").append("marker").attr("id", "arrS").attr("viewBox", "0 0 10 10").attr("refX", 8).attr("refY", 5).attr("markerWidth", 6).attr("markerHeight", 6).attr("orient", "auto")
+    .append("path").attr("d", "M0,0 L10,5 L0,10 z").attr("fill", SHEEN);
+  ftext(svg, "evt-sub", hx + cw / 2, y0 + rh * A.cols.length + 30, "se repite el último valor conocido", "middle");
+  DV.alignIn = () => {
+    [fills, arrows].forEach((g) => g.interrupt().attr("opacity", reduced ? 1 : 0).transition().delay(reduced ? 0 : 900).duration(600).attr("opacity", 1));
+  };
+}
+
+/* ================= De precios a cambios ================= */
+{
+  const R = D2.ret, idx = d3.range(1, R.t.length, 2).filter((i) => R.r[i] != null && R.p[i] != null);
+  const t = idx.map((i) => parse(R.t[i])), P = idx.map((i) => R.p[i]), Rr = idx.map((i) => R.r[i]);
+  const W = 820, H = 330, m = { l: 62, r: 24, t: 34, b: 30 };
+  const svg = mk("#g-morph", W, H);
+  const x = d3.scaleUtc().domain(d3.extent(t)).range([m.l, W - m.r]);
+  const yP = d3.scaleLinear().domain([0, 150]).range([H - m.b, m.t]);
+  const yR = d3.scaleLinear().domain([-12, 12]).range([H - m.b, m.t]).clamp(true);
+  const zero = svg.append("line").attr("x1", m.l).attr("x2", W - m.r).attr("y1", yR(0)).attr("y2", yR(0)).attr("stroke", "rgba(238,240,242,.2)");
+  svg.append("g").attr("class", "ax").selectAll("text").data([2002, 2006, 2010, 2014, 2018]).join("text")
+    .attr("x", (v) => x(new Date(Date.UTC(v, 0, 1)))).attr("y", H - 4).attr("text-anchor", "middle").text((v) => v);
+  const path = svg.append("path").attr("fill", "none").attr("stroke", INK).attr("stroke-width", 1.1).attr("stroke-linejoin", "round");
+  const gen = (u) => { let s = ""; for (let i = 0; i < t.length; i++) s += (i ? "L" : "M") + x(t[i]).toFixed(1) + "," + ((1 - u) * yP(P[i]) + u * yR(Rr[i])).toFixed(1); return s; };
+  const lp = ftext(svg, "cap", m.l, 14, "Precio ($)"), lr = ftext(svg, "cap", m.l, 14, "Cambio diario (%)");
+  DV.morphIn = () => {
+    const d = reduced ? 0 : 800, dur = reduced ? 0 : 1600;
+    path.interrupt().attr("d", gen(reduced ? 1 : 0)).transition().delay(d).duration(dur).ease(d3.easeCubicInOut).attrTween("d", () => gen);
+    lp.interrupt().attr("opacity", reduced ? 0 : 1).transition().delay(d).duration(400).attr("opacity", 0);
+    lr.interrupt().attr("opacity", reduced ? 1 : 0).transition().delay(d + dur - 400).duration(400).attr("opacity", 1);
+    zero.interrupt().attr("opacity", reduced ? 1 : 0).transition().delay(d + dur - 400).duration(400).attr("opacity", 1);
+  };
+}
+
+/* ================= Unidades y escala ================= */
+{
+  const Hh = D2.hist, keys = ["usd_per_eur", "gold", "brent", "vix"];
+  const NM = { usd_per_eur: "Dólares por euro", gold: "Oro", brent: "Brent", vix: "VIX" };
+  const COL = { usd_per_eur: LAV, gold: ROSE, brent: INK, vix: SHEEN };
+  const W = 820, H = 440, m = { l: 20, r: 20, t: 70, b: 56 };
+  const svg = mk("#g-hist", W, H);
+  const x = d3.scaleLinear().domain([0, 59]).range([m.l, W - m.r]);
+  const maxRaw = d3.max(keys, (k) => d3.max(Hh[k].h)), maxZ = d3.max(keys, (k) => d3.max(Hh[k].hz));
+  const area = (arr, mx) => d3.area().x((_, i) => x(i)).y0(H - m.b).y1((v) => H - m.b - (v / mx) * (H - m.b - m.t)).curve(d3.curveBasis)(arr);
+  svg.append("line").attr("x1", m.l).attr("x2", W - m.r).attr("y1", H - m.b).attr("y2", H - m.b).attr("stroke", "rgba(238,240,242,.25)");
+  const shapes = keys.map((k) => svg.append("path").attr("fill", COL[k]).attr("fill-opacity", 0.1).attr("stroke", COL[k]).attr("stroke-width", 2).attr("d", area(Hh[k].h, maxRaw)));
+  const leg = svg.append("g");
+  const sdT = keys.map((k, i) => {
+    const g = leg.append("g").attr("transform", `translate(${m.l + i * 200},16)`);
+    g.append("rect").attr("width", 14).attr("height", 3).attr("y", -4).attr("fill", COL[k]);
+    ftext(g, "spark-name", 22, 0, NM[k]);
+    return ftext(g, "num", 22, 22, `σ ${fmtN(Hh[k].sd, 2)} %`).style("fill", SOFT);
+  });
+  const bx = (v, w, lo) => x((v - lo) / w - 0.5);
+  const tRaw = svg.append("g"), tZ = svg.append("g");
+  [-10, -5, 0, 5, 10].forEach((v) => ftext(tRaw, "lbl", bx(v, 0.5, -15), H - m.b + 22, (v > 0 ? "+" : v < 0 ? "−" : "") + Math.abs(v) + " %", "middle"));
+  [-4, -2, 0, 2, 4].forEach((v) => ftext(tZ, "lbl", bx(v, 0.2, -6), H - m.b + 22, (v > 0 ? "+" : v < 0 ? "−" : "") + Math.abs(v), "middle"));
+  ftext(tRaw, "evt-sub", W / 2, H - 6, "cambio diario, en %", "middle");
+  ftext(tZ, "evt-sub", W / 2, H - 6, "desviaciones respecto a lo normal", "middle");
+  let state = null;
+  DV.hist = (z) => {
+    $("#eq-scale").classList.toggle("is-on", z);
+    if (state === z) return;
+    const from = state; state = z;
+    const dur = reduced || from === null ? 0 : 1200;
+    shapes.forEach((p, i) => {
+      const k = keys[i], a = z ? Hh[k].h : Hh[k].hz, b = z ? Hh[k].hz : Hh[k].h, ma = z ? maxRaw : maxZ, mb = z ? maxZ : maxRaw;
+      if (!dur) return p.attr("d", area(b, mb));
+      const ia = d3.interpolateArray(a, b), im = d3.interpolateNumber(ma, mb);
+      p.interrupt().transition().duration(dur).ease(d3.easeCubicInOut).attrTween("d", () => (u) => area(ia(u), im(u)));
+    });
+    tRaw.transition().duration(dur / 2 || 0).attr("opacity", z ? 0 : 1);
+    tZ.transition().duration(dur / 2 || 0).attr("opacity", z ? 1 : 0);
+    sdT.forEach((s, i) => s.text(z ? "σ = 1" : `σ ${fmtN(Hh[keys[i]].sd, 2)} %`));
+  };
+}
+
+/* ================= Valores extremos ================= */
+{
+  const C = D2.clip, t = C.t.map(parse);
+  const W = 820, H = 540, m = { l: 70, r: 24, t: 60, b: 40 };
+  const svg = mk("#g-clip", W, H);
+  const x = d3.scaleUtc().domain(d3.extent(t)).range([m.l, W - m.r]);
+  const y = d3.scaleLinear().domain([-125, 100]).range([H - m.b, m.t]);
+  ftext(svg, "cap", m.l, 24, "Cambio diario del WTI, en desviaciones · 2020");
+  GL(svg, m.l, W - m.r, [-100, -50, 50], y);
+  svg.append("g").attr("class", "ax").selectAll("text").data([-100, -50, 0, 50]).join("text").attr("x", m.l - 10).attr("y", (v) => y(v) + 4).attr("text-anchor", "end").text((v) => (v > 0 ? "+" : v < 0 ? "−" : "") + Math.abs(v));
+  svg.append("g").attr("class", "ax").selectAll("text").data(["2020-02-01", "2020-03-01", "2020-04-01", "2020-05-01", "2020-06-01"]).join("text")
+    .attr("x", (d) => x(parse(d))).attr("y", H - 12).attr("text-anchor", "start").text((d) => MONTHS[parse(d).getUTCMonth()]);
+  svg.append("rect").attr("x", m.l).attr("width", W - m.l - m.r).attr("y", y(5)).attr("height", y(-5) - y(5)).attr("fill", SHEEN).attr("opacity", 0.3);
+  const raw = svg.append("path").attr("fill", "none").attr("stroke", SOFT).attr("stroke-width", 1.4)
+    .attr("d", d3.line().defined((v) => v != null).x((_, i) => x(t[i])).y((v) => y(v))(C.z));
+  const cut = svg.append("path").attr("fill", "none").attr("stroke", SHEEN).attr("stroke-width", 2.4)
+    .attr("d", d3.line().defined((v) => v != null).x((_, i) => x(t[i])).y((v) => y(Math.max(-5, Math.min(5, v))))(C.z));
+  const ann = svg.append("g");
+  [["2020-04-20", "20 abr · −118", "el WTI cierra a −36,98 $"], ["2020-04-21", "21 abr · +89", "rebota desde el suelo de 1 $"]].forEach(([d, a, b]) => {
+    const i = C.t.indexOf(d), px = x(t[i]), py = y(C.z[i]);
+    ann.append("circle").attr("cx", px).attr("cy", py).attr("r", 5).attr("fill", INK);
+    ftext(ann, "cap", px + 14, py + (C.z[i] < 0 ? -4 : 12), a);
+    ftext(ann, "evt-sub", px + 14, py + (C.z[i] < 0 ? 14 : 30), b);
+  });
+  const lab = svg.append("g");
+  ftext(lab, "cap", W - m.r, y(5) - 26, "±5: lo que sale de la franja", "end").style("fill", SHEEN);
+  ftext(lab, "cap", W - m.r, y(5) - 8, "se recorta a 5", "end").style("fill", SHEEN);
+  DV.clipIn = () => {
+    raw.interrupt().attr("opacity", 1).transition().delay(reduced ? 0 : 1000).duration(600).attr("opacity", 0.35);
+    [cut, lab].forEach((g) => g.interrupt().attr("opacity", reduced ? 1 : 0).transition().delay(reduced ? 0 : 1000).duration(600).attr("opacity", 1));
+  };
+}
+
+/* ================= Soluciones ================= */
+{
+  const root = $("#story-models");
+
+  /* Persistencia y cuantiles: un ejemplo real de train */
+  {
+    const Pp = D2.persist, pt = Pp.pt.map(parse), ft = Pp.ft.map(parse), p0 = Pp.past.at(-1), pe = Pp.fut.at(-1);
+    const W = 820, H = 540, m = { l: 56, r: 170, t: 50, b: 60 };
+    const svg = mk("#g-persist", W, H);
+    const x = d3.scaleUtc().domain([pt[0], ft.at(-1)]).range([m.l, W - m.r]);
+    const y = d3.scaleLinear().domain([34, 68]).range([H - m.b, m.t]);
+    GL(svg, m.l, W - m.r, [40, 50, 60], y);
+    svg.append("g").attr("class", "ax").selectAll("text").data([40, 50, 60]).join("text").attr("x", m.l - 10).attr("y", (v) => y(v) + 4).attr("text-anchor", "end").text((v) => `${v} $`);
+    ftext(svg, "cap", m.l, 22, "Brent, 2017 ($)");
+    const x0 = x(ft[0]), xe = x(ft.at(-1));
+    const fanL = Pp.fan["0.1"], fanH = Pp.fan["0.9"];
+    const cone = svg.append("g");
+    cone.append("path").attr("fill", PERSIST).attr("opacity", 0.2).attr("d", d3.area().x((d) => x(d)).y0((_, i) => y(fanL[i])).y1((_, i) => y(fanH[i]))(ft));
+    cone.append("rect").attr("x", xe - 5).attr("width", 10).attr("y", y(fanH.at(-1))).attr("height", y(fanL.at(-1)) - y(fanH.at(-1))).attr("rx", 5).attr("fill", PERSIST);
+    ftext(cone, "cap", xe + 16, y(fanH.at(-1)) + 5, `techo · ${fmtN(fanH.at(-1))} $`);
+    ftext(cone, "cap", xe + 16, y(fanL.at(-1)) + 5, `suelo · ${fmtN(fanL.at(-1))} $`);
+    svg.append("line").attr("x1", x0).attr("x2", x0).attr("y1", m.t).attr("y2", H - m.b).attr("stroke", SOFT).attr("stroke-dasharray", "2 4");
+    ftext(svg, "cap", x0, m.t - 8, "1 jun 2017", "middle");
+    svg.append("path").attr("fill", "none").attr("stroke", INK).attr("stroke-width", 1.8).attr("d", d3.line().x((d) => x(d)).y((_, i) => y(Pp.past[i]))(pt));
+    const clip = svg.append("defs").append("clipPath").attr("id", "pclip").append("rect").attr("x", x0).attr("y", 0).attr("height", H).attr("width", xe - x0 + 4);
+    const real = svg.append("g").attr("clip-path", "url(#pclip)");
+    real.append("path").attr("fill", "none").attr("stroke", INK).attr("stroke-width", 1.8).attr("d", d3.line().x((d) => x(d)).y((_, i) => y(Pp.fut[i]))(ft));
+    const pers = svg.append("g");
+    pers.append("line").attr("x1", x0).attr("x2", xe).attr("y1", y(p0)).attr("y2", y(p0)).attr("stroke", PERSIST).attr("stroke-width", 2.2).attr("stroke-dasharray", "6 5");
+    ftext(pers, "cap", xe + 16, y(p0) + 18, `persistencia · ${fmtN(p0)} $`).style("fill", PERSIST);
+    const endG = svg.append("g");
+    endG.append("circle").attr("cx", xe).attr("cy", y(pe)).attr("r", 5).attr("fill", INK);
+    ftext(endG, "cap", xe + 16, y(pe) - 6, `real · ${fmtN(pe)} $`);
+    svg.append("circle").attr("cx", x0).attr("cy", y(p0)).attr("r", 6).attr("fill", INK).attr("stroke", "#0b1a21").attr("stroke-width", 2);
+    svg.append("path").attr("d", `M${x0},${H - m.b + 16} V${H - m.b + 22} H${xe} V${H - m.b + 16}`).attr("fill", "none").attr("stroke", SOFT);
+    ftext(svg, "lbl", (x0 + xe) / 2, H - m.b + 42, "63 días hábiles ≈ 3 meses", "middle");
+    DV.persist = (k) => {
+      if (k === 0) {
+        clip.interrupt().attr("width", reduced ? xe - x0 + 4 : 0).transition().delay(reduced ? 0 : 500).duration(reduced ? 0 : 1300).ease(d3.easeCubicInOut).attr("width", xe - x0 + 4);
+        endG.interrupt().attr("opacity", reduced ? 1 : 0).transition().delay(reduced ? 0 : 1700).duration(400).attr("opacity", 1);
+      }
+      cone.interrupt().transition().duration(reduced ? 0 : 600).attr("opacity", k === 1 ? 1 : 0);
+      pers.interrupt().transition().duration(reduced ? 0 : 600).attr("opacity", k === 1 ? 0.35 : 1);
+    };
+  }
+
+  /* Ingenuo con futuros: esquema */
+  {
+    const W = 820, H = 380, svg = mk("#g-fut", W, H);
+    const X = (i) => 50 + i * 14, iS = 28, iH = 40;
+    const base = (i) => 200 - 16 * Math.sin(i / 5) - 9 * Math.sin(i / 2.3 + 1) - i * 0.4;
+    const fut = (i) => base(i) - 18 - (i > iS ? (i - iS) * 5 : 0), spot = (i) => base(i) + 12;
+    const dF = fut(iH) - fut(iS);
+    ftext(svg, "cap", 0, 22, "Esquema");
+    [[iS, "último spot publicado"], [iH, "hoy"]].forEach(([i, t]) => {
+      svg.append("line").attr("x1", X(i)).attr("x2", X(i)).attr("y1", 50).attr("y2", 330).attr("stroke", SOFT).attr("stroke-dasharray", "2 4");
+      ftext(svg, "lbl", X(i), 352, t, "middle");
+    });
+    svg.append("path").attr("fill", "none").attr("stroke", SHEEN).attr("stroke-width", 2).attr("d", d3.line().x(X).y(fut)(d3.range(0, iH + 1)));
+    svg.append("path").attr("fill", "none").attr("stroke", INK).attr("stroke-width", 2).attr("d", d3.line().x(X).y(spot)(d3.range(0, iS + 1)));
+    ftext(svg, "cap", X(iH) + 24, fut(iH) - 16, "Futuro del Brent").style("fill", SHEEN);
+    ftext(svg, "evt-sub", X(iH) + 24, fut(iH) + 2, "se conoce al momento");
+    ftext(svg, "cap", X(8), spot(8) + 34, "Spot de la EIA");
+    ftext(svg, "evt-sub", X(8), spot(8) + 52, "llega con días de retraso");
+    [[fut(iS), SHEEN, 0], [spot(iS), INK, 1]].forEach(([y0, c, k]) => {
+      svg.append("line").attr("x1", X(iS)).attr("x2", X(iH) + k * 10).attr("y1", y0).attr("y2", y0).attr("stroke", c).attr("opacity", 0.35).attr("stroke-dasharray", "2 3");
+      svg.append("line").attr("x1", X(iH) + k * 10).attr("x2", X(iH) + k * 10).attr("y1", y0).attr("y2", y0 + dF + 6).attr("stroke", c).attr("stroke-width", 2).attr("marker-end", k ? "url(#arrI)" : "url(#arrF)");
+    });
+    svg.append("path").attr("d", `M${X(iS)},${spot(iS)} L${X(iH) + 10},${spot(iS) + dF}`).attr("fill", "none").attr("stroke", INK).attr("stroke-width", 2).attr("stroke-dasharray", "6 5");
+    svg.append("circle").attr("cx", X(iH) + 10).attr("cy", spot(iS) + dF).attr("r", 6).attr("fill", INK);
+    ftext(svg, "cap", X(iH) + 24, spot(iS) + dF + 22, "spot estimado de hoy");
+    ftext(svg, "evt-sub", X(iH) + 24, spot(iS) + dF + 40, "se mueve lo mismo que el futuro");
+    const dfs = svg.append("defs");
+    [["arrF", SHEEN], ["arrI", INK]].forEach(([id, c]) => dfs.append("marker").attr("id", id).attr("viewBox", "0 0 10 10").attr("refX", 8).attr("refY", 5).attr("markerWidth", 6).attr("markerHeight", 6).attr("orient", "auto")
+      .append("path").attr("d", "M0,0 L10,5 L0,10 z").attr("fill", c));
+  }
+
+  /* Celdas recurrentes */
+  {
+    const W = 820, H = 500, svg = mk("#g-cell", W, H), hy = 340, cy = 186;
+    const cellsG = svg.append("g");
+    [[40, 170, 0.35, "día t−1"], [270, 550, 1, "día t"], [650, 780, 0.35, "día t+1"]].forEach(([a, b, o, t]) => {
+      const g = cellsG.append("g").attr("opacity", o);
+      g.append("rect").attr("x", a).attr("y", 110).attr("width", b - a).attr("height", 290).attr("rx", 24).attr("fill", "#0f242c").attr("stroke", SHEEN).attr("stroke-opacity", 0.55);
+      g.append("line").attr("x1", (a + b) / 2).attr("x2", (a + b) / 2).attr("y1", 470).attr("y2", 404).attr("stroke", SOFT).attr("stroke-width", 1.6).attr("marker-end", "url(#arrC)");
+      ftext(g, "lbl", (a + b) / 2, 492, t, "middle");
+    });
+    svg.append("defs").append("marker").attr("id", "arrC").attr("viewBox", "0 0 10 10").attr("refX", 8).attr("refY", 5).attr("markerWidth", 6).attr("markerHeight", 6).attr("orient", "auto")
+      .append("path").attr("d", "M0,0 L10,5 L0,10 z").attr("fill", SOFT);
+    ftext(svg, "evt-sub", 410, 455, "16 números del día", "middle").attr("dx", 70);
+    const line = (y, c) => { const g = svg.append("g"); g.append("line").attr("x1", 0).attr("x2", W).attr("y1", y).attr("y2", y).attr("stroke", c).attr("stroke-opacity", 0.35).attr("stroke-width", 2);
+      g.append("line").attr("class", "flow").attr("x1", 0).attr("x2", W).attr("y1", y).attr("y2", y).attr("stroke", c).attr("stroke-width", 4).attr("stroke-linecap", "round"); return g; };
+    line(hy, AMBER);
+    ftext(svg, "cap", 220, hy - 14, "resumen", "middle").style("fill", AMBER);
+    ftext(svg, "cap", 600, hy - 14, "resumen", "middle").style("fill", AMBER);
+    const cG = line(cy, SHEEN);
+    ftext(cG, "cap", 220, cy - 14, "memoria", "middle").style("fill", SHEEN);
+    const gate = (g, px, py, t, sym) => {
+      g.append("circle").attr("cx", px).attr("cy", py).attr("r", 22).attr("fill", "#14323c").attr("stroke", INK).attr("stroke-width", 1.4);
+      ftext(g, "cap", px, py + 5, sym, "middle");
+      ftext(g, "lbl", px, py + 42, t, "middle");
+    };
+    const title = (g, t) => ftext(g, "cap-big", 410, 146, t, "middle");
+    const vRNN = svg.append("g"), vLSTM = svg.append("g"), vGRU = svg.append("g");
+    title(vRNN, "RNN"); gate(vRNN, 410, hy, "mezcla", "tanh");
+    title(vLSTM, "LSTM · 3 puertas");
+    vLSTM.append("line").attr("x1", 410).attr("x2", 410).attr("y1", hy).attr("y2", cy).attr("stroke", INK).attr("stroke-opacity", 0.4);
+    vLSTM.append("line").attr("x1", 490).attr("x2", 490).attr("y1", cy).attr("y2", hy).attr("stroke", INK).attr("stroke-opacity", 0.4);
+    gate(vLSTM, 330, cy, "olvidar", "×"); gate(vLSTM, 410, cy, "añadir", "+"); gate(vLSTM, 490, hy, "sacar", "σ");
+    title(vGRU, "GRU · 2 puertas"); gate(vGRU, 360, hy, "reiniciar", "σ"); gate(vGRU, 460, hy, "actualizar", "σ");
+    DV.cell = (k) => {
+      const on = (g, v) => g.interrupt().transition().duration(reduced ? 0 : 450).attr("opacity", v ? 1 : 0);
+      on(vRNN, k === 3); on(vLSTM, k === 4); on(vGRU, k === 5); on(cG, k === 4);
+    };
+  }
+
+  /* Rejilla: los 432 entrenamientos */
+  {
+    const W = 820, H = 620, m = { l: 150, r: 28, t: 100, b: 70 };
+    const svg = mk("#g-grid", W, H);
+    const HZ4 = [5, 21, 63, 252], NM = ["1 semana", "1 mes", "3 meses", "1 año"];
+    const NC = { rnn: LAV, lstm: SHEEN, gru: AMBER }, NN = { rnn: "RNN", lstm: "LSTM", gru: "GRU" };
+    const x = d3.scaleLinear().domain([-20, 8]).range([m.l, W - m.r]).clamp(true);
+    const bandH = (H - m.t - m.b) / 4, rowY = (h) => m.t + HZ4.indexOf(h) * bandH + bandH / 2;
+    const nodes = D2.grid.map(([net, h, n, l, d, lr, sk]) => ({ net, h, n, l, d, lr, sk, x: x(sk), y: rowY(h) }));
+    const sim = d3.forceSimulation(nodes).force("x", d3.forceX((d) => x(d.sk)).strength(1)).force("y", d3.forceY((d) => rowY(d.h)).strength(0.07)).force("c", d3.forceCollide(4.4)).stop();
+    for (let i = 0; i < 240; i++) sim.tick();
+    HZ4.forEach((h, i) => {
+      const yy = m.t + i * bandH;
+      if (i) svg.append("line").attr("x1", 0).attr("x2", W).attr("y1", yy).attr("y2", yy).attr("stroke", "rgba(238,240,242,.08)");
+      const n = D2.grid.filter((g) => g[1] === h && g[6] > 0).length;
+      ftext(svg, "cap", 0, rowY(h) - 2, NM[i]);
+      ftext(svg, "evt-sub", 0, rowY(h) + 17, `${n} de 108 por delante`);
+    });
+    svg.append("line").attr("x1", x(0)).attr("x2", x(0)).attr("y1", m.t - 16).attr("y2", H - m.b).attr("stroke", INK).attr("stroke-opacity", 0.5).attr("stroke-dasharray", "3 4");
+    ftext(svg, "cap", x(0), m.t - 24, "persistencia", "middle");
+    [-20, -15, -10, -5, 0, 5].forEach((v) => ftext(svg, "lbl", x(v), H - m.b + 24, v === -20 ? "≤ −20 %" : (v > 0 ? "+" : v < 0 ? "−" : "") + Math.abs(v) + " %", "middle"));
+    ftext(svg, "evt-sub", m.l, H - 12, "← peor que repetir el precio");
+    ftext(svg, "evt-sub", W - m.r, H - 12, "mejor →", "end");
+    const leg = svg.append("g").attr("transform", "translate(0,26)");
+    ["rnn", "lstm", "gru"].forEach((k, i) => {
+      leg.append("circle").attr("cx", 6 + i * 110).attr("cy", -5).attr("r", 5).attr("fill", NC[k]);
+      ftext(leg, "spark-name", 18 + i * 110, 0, NN[k]);
+    });
+    ftext(leg, "evt-sub", 340, 0, "cada punto, un entrenamiento evaluado en validación");
+    const dots = svg.append("g").selectAll("circle").data(nodes).join("circle").attr("cx", (d) => d.x).attr("cy", (d) => d.y).attr("r", 3.7).attr("fill", (d) => NC[d.net]).attr("opacity", 0.92);
+    dots.append("title").text((d) => `${NN[d.net]} · ${d.n} neuronas · ${d.l} capa${d.l > 1 ? "s" : ""}${d.d !== "0" ? " · dropout " + d.d.replace(".", ",") : ""} · lr ${d.lr.replace(".", ",")}: ${sgn(d.sk, 2)}`);
+    let shown = false;
+    DV.grid = () => {
+      if (shown || reduced) return; shown = true;
+      dots.attr("opacity", 0).attr("r", 0).transition().delay((d) => (d.x - m.l) * 2.2).duration(400).attr("opacity", 0.92).attr("r", 3.7);
+    };
+  }
+
+  /* Pliegues de validación */
+  {
+    const W = 820, H = 440, m = { l: 96, r: 24, t: 40, b: 40 };
+    const x = d3.scaleUtc().domain([parse("2000-08-30"), parse("2026-11-03")]).range([m.l, W - m.r]);
+    const svg = mk("#g-folds", W, H);
+    const rowH = 46, gap = 26, yr = (i) => m.t + i * (rowH + gap);
+    const YEAR = 365.25 * 864e5;
+    DATA.folds.forEach(([a, b], i) => {
+      const A = parse(a), B = parse(b), hold = new Date(+A - YEAR - 5 * 864e5);
+      const g = svg.append("g").attr("transform", `translate(0,${yr(i)})`);
+      ftext(g, "lbl", m.l - 14, rowH / 2 + 4, `Examen ${i + 1}`, "end");
+      g.append("rect").attr("x", x(parse("2000-08-30"))).attr("width", x(hold) - x(parse("2000-08-30"))).attr("height", rowH).attr("rx", 6).attr("fill", INK).attr("opacity", 0.16);
+      if (i === 0) ftext(g, "lbl", x(parse("2000-08-30")) + 14, rowH / 2 + 4, "entrena con todo el pasado");
+      g.append("rect").attr("x", x(hold)).attr("width", x(A) - x(hold) - 4).attr("height", rowH).attr("rx", 6).attr("fill", SHEEN).attr("opacity", 0.45);
+      g.append("rect").attr("x", x(A)).attr("width", x(B) - x(A)).attr("height", rowH).attr("rx", 6).attr("fill", AMBER);
+      ftext(g, "lbl", (x(A) + x(B)) / 2, -7, `${A.getUTCFullYear()}–${String(B.getUTCFullYear()).slice(2)}`, "middle").style("fill", AMBER);
+    });
+    const ty = yr(4);
+    const tx0 = x(parse("2023-01-25")), tx1 = x(parse("2026-11-03"));
+    svg.append("rect").attr("x", tx0).attr("y", m.t).attr("width", tx1 - tx0).attr("height", ty - m.t - gap).attr("rx", 6)
+      .attr("fill", "none").attr("stroke", SOFT).attr("stroke-dasharray", "4 4");
+    ftext(svg, "cap", (tx0 + tx1) / 2, m.t + 120, "prueba", "middle");
+    ftext(svg, "lbl", (tx0 + tx1) / 2, m.t + 140, "no se toca", "middle");
+    svg.append("g").attr("class", "ax").attr("transform", `translate(0,${ty})`).selectAll("text").data([2000, 2005, 2010, 2015, 2020, 2025]).join("text")
+      .attr("x", (v) => x(new Date(Date.UTC(v, 0, 1)))).attr("text-anchor", "middle").text((v) => v);
+    const leg = svg.append("g").attr("transform", `translate(${m.l},${ty + 40})`);
+    [["Entrenamiento", INK, 0.3], ["Año para decidir cuándo parar", SHEEN, 0.6], ["Examen (2 años)", AMBER, 1]].forEach(([t, c, o], i) => {
+      const g = leg.append("g").attr("transform", `translate(${i * 220},0)`);
+      g.append("rect").attr("width", 14).attr("height", 14).attr("rx", 3).attr("fill", c).attr("opacity", o).attr("y", -11);
+      ftext(g, "lbl", 22, 0, t);
+    });
+  }
+
+  /* Lo que prometía la validación: mejora del RMSE, media ± desviación en 3 semillas (README) */
+  {
+    const V = { 5: [["gru", -1.1, 0.9, 1], ["rnn", -0.7, 0.6], ["lstm", -2.0, 2.1]], 21: [["lstm", 0.0, 1.0, 1], ["rnn", -3.2, 0.1], ["gru", -4.0, 2.6]],
+      63: [["gru", 4.8, 0.6, 1], ["rnn", 1.4, 1.0], ["lstm", 0.1, 0.3]], 252: [["rnn", -4.3, 3.4, 1], ["gru", -5.3, 3.6], ["lstm", -5.0, 2.4]] };
+    const NC = { rnn: LAV, lstm: SHEEN, gru: AMBER }, NN = { rnn: "RNN", lstm: "LSTM", gru: "GRU" };
+    const W = 820, H = 580, m = { l: 150, r: 40, t: 110, b: 70 };
+    const svg = mk("#g-val", W, H);
+    const x = d3.scaleLinear().domain([-10, 10]).range([m.l, W - m.r]);
+    const HZ4 = [5, 21, 63, 252], NM = ["1 semana", "1 mes", "3 meses", "1 año"], bandH = (H - m.t - m.b) / 4;
+    const leg = svg.append("g").attr("transform", "translate(0,26)");
+    ["rnn", "lstm", "gru"].forEach((k, i) => {
+      leg.append("circle").attr("cx", 6 + i * 110).attr("cy", -5).attr("r", 5).attr("fill", NC[k]);
+      ftext(leg, "spark-name", 18 + i * 110, 0, NN[k]);
+    });
+    leg.append("circle").attr("cx", 346).attr("cy", -5).attr("r", 7).attr("fill", "none").attr("stroke", INK).attr("stroke-width", 2);
+    ftext(leg, "spark-name", 360, 0, "elegida para la prueba");
+    ftext(svg, "evt-sub", 0, 58, "Menos error que la persistencia en validación · media ± desviación en 3 semillas");
+    svg.append("line").attr("x1", x(0)).attr("x2", x(0)).attr("y1", m.t - 16).attr("y2", H - m.b).attr("stroke", INK).attr("stroke-opacity", 0.5).attr("stroke-dasharray", "3 4");
+    ftext(svg, "cap", x(0), m.t - 24, "persistencia", "middle");
+    [-10, -5, 0, 5, 10].forEach((v) => ftext(svg, "lbl", x(v), H - m.b + 24, (v > 0 ? "+" : v < 0 ? "−" : "") + Math.abs(v) + " %", "middle"));
+    ftext(svg, "evt-sub", m.l, H - 12, "← peor");
+    ftext(svg, "evt-sub", W - m.r, H - 12, "mejor →", "end");
+    const marks = svg.append("g");
+    HZ4.forEach((h, i) => {
+      const yc = m.t + i * bandH + bandH / 2;
+      if (i) svg.append("line").attr("x1", 0).attr("x2", W).attr("y1", m.t + i * bandH).attr("y2", m.t + i * bandH).attr("stroke", "rgba(238,240,242,.08)");
+      ftext(svg, "cap", 0, yc + 5, NM[i]);
+      V[h].forEach(([net, v, s, chosen], j) => {
+        const yy = yc + (j - 1) * 18, g = marks.append("g");
+        g.append("line").attr("x1", x(v - s)).attr("x2", x(v + s)).attr("y1", yy).attr("y2", yy).attr("stroke", NC[net]).attr("stroke-width", 2).attr("opacity", 0.6);
+        g.append("circle").attr("cx", x(v)).attr("cy", yy).attr("r", chosen ? 7 : 5).attr("fill", NC[net]).attr("stroke", chosen ? INK : "none").attr("stroke-width", 2);
+        if (chosen) ftext(g, "cap", x(v + s) + 12, yy + 5, sgn(v));
+      });
+      if (h === 5) {
+        const yy = yc - 40, g = marks.append("g");
+        g.append("path").attr("d", d3.symbol(d3.symbolDiamond, 150)()).attr("transform", `translate(${x(8.5)},${yy})`).attr("fill", INK);
+        ftext(g, "cap", x(8.5) - 14, yy + 5, "regla con futuros, sin red · +8,5 %", "end");
+      }
+    });
+    let shown = false;
+    DV.val = () => {
+      if (shown || reduced) return; shown = true;
+      marks.selectAll("g").attr("opacity", 0).transition().delay((_, i) => 150 + i * 70).duration(400).attr("opacity", 1);
+    };
+  }
+
+  onStep("models", (k) => {
+    if (k <= 1) { showLayer(root, "persist"); DV.persist(k); }
+    else if (k === 2) showLayer(root, "fut");
+    else if (k <= 5) { showLayer(root, "cell"); DV.cell(k); }
+    else if (k === 6) { showLayer(root, "grid"); DV.grid(); }
+    else if (k === 7) showLayer(root, "folds");
+    else { showLayer(root, "val"); DV.val(); }
+  });
+}
+
+/* ================= Gráficos de escena: plazos, rango y marcador ================= */
+const vizFns = {};
+{
+  const W = 820, H = 440, svg = mk("#v-plazos", W, H);
+  const x0 = 50, x1 = 790, ay = 250, x = d3.scaleLinear().domain([0, 252]).range([x0, x1]);
+  const hw = (d) => 150 * Math.sqrt(d / 252);
+  const gr = svg.append("defs").append("linearGradient").attr("id", "coneG");
+  gr.append("stop").attr("offset", "0%").attr("stop-color", SHEEN).attr("stop-opacity", 0.35);
+  gr.append("stop").attr("offset", "100%").attr("stop-color", SHEEN).attr("stop-opacity", 0.08);
+  const clip = svg.select("defs").append("clipPath").attr("id", "coneC").append("rect").attr("x", x0).attr("y", 0).attr("height", H).attr("width", x1 - x0 + 10);
+  const g = svg.append("g").attr("clip-path", "url(#coneC)");
+  const pts = d3.range(0, 253, 2);
+  g.append("path").attr("fill", "url(#coneG)").attr("d", d3.area().x((d) => x(d)).y0((d) => ay + hw(d)).y1((d) => ay - hw(d))(pts));
+  [1, -1].forEach((s) => g.append("path").attr("fill", "none").attr("stroke", SHEEN).attr("stroke-opacity", 0.6).attr("d", d3.line().x((d) => x(d)).y((d) => ay - s * hw(d))(pts)));
+  g.append("line").attr("x1", x0).attr("x2", x1).attr("y1", ay).attr("y2", ay).attr("stroke", INK).attr("stroke-opacity", 0.5);
+  svg.append("circle").attr("cx", x0).attr("cy", ay).attr("r", 7).attr("fill", INK);
+  ftext(svg, "cap", x0 - 8, ay + 30, "hoy", "start");
+  const labs = [[5, "1 semana", "5 días hábiles", 1], [21, "1 mes", "21 días", -1], [63, "3 meses", "63 días", -1], [252, "1 año", "252 días", -1]].map(([d, a, b, side]) => {
+    const lg = svg.append("g"), px = x(d), anc = d === 252 ? "end" : "middle";
+    lg.append("line").attr("x1", px).attr("x2", px).attr("y1", ay - hw(d)).attr("y2", ay + hw(d)).attr("stroke", INK).attr("stroke-opacity", 0.55);
+    lg.append("circle").attr("cx", px).attr("cy", ay).attr("r", 5).attr("fill", INK);
+    const yl = side > 0 ? ay + hw(d) + 34 : ay - hw(d) - 34;
+    ftext(lg, "cap-big", px + (d === 5 ? 6 : 0), yl, a, d === 5 ? "start" : anc);
+    ftext(lg, "evt-sub", px + (d === 5 ? 6 : 0), yl + 19, b, d === 5 ? "start" : anc);
+    return lg;
+  });
+  ftext(svg, "evt-sub", x1, H - 6, "cuanto más lejos, más se abre el abanico de precios posibles", "end");
+  vizFns["v-plazos"] = () => {
+    clip.interrupt().attr("width", reduced ? x1 - x0 + 10 : 0).transition().duration(reduced ? 0 : 1600).ease(d3.easeCubicInOut).attr("width", x1 - x0 + 10);
+    labs.forEach((l, i) => l.interrupt().attr("opacity", reduced ? 1 : 0).transition().delay(reduced ? 0 : 300 + i * 320).duration(500).attr("opacity", 1));
+  };
+}
+{
+  const W = 820, H = 470, svg = mk("#v-rango", W, H);
+  const N = 60, X = (i) => 20 + i * 6, yv = (i) => 255 - 24 * Math.sin(i / 7) - 11 * Math.sin(i / 2.6 + 1) - i * 0.35;
+  const xh = X(N), p0 = yv(N), xp = 600, yc = p0 - 18, hi = yc - 100, lo = yc + 100;
+  const past = svg.append("path").attr("fill", "none").attr("stroke", INK).attr("stroke-width", 2).attr("d", d3.line().x(X).y(yv)(d3.range(0, N + 1)));
+  const fc = svg.append("g");
+  fc.append("path").attr("d", `M${xh},${p0} L${xp},${hi} L${xp},${lo} Z`).attr("fill", AMBER).attr("opacity", 0.14);
+  fc.append("rect").attr("x", xp - 6).attr("width", 12).attr("y", hi).attr("height", lo - hi).attr("rx", 6).attr("fill", AMBER).attr("opacity", 0.45);
+  fc.append("line").attr("x1", xh).attr("x2", xp).attr("y1", p0).attr("y2", yc).attr("stroke", AMBER).attr("stroke-width", 2);
+  fc.append("circle").attr("cx", xp).attr("cy", yc).attr("r", 8).attr("fill", AMBER);
+  ftext(fc, "cap", (xh + xp) / 2 + 40, yc - 30, "8 de cada 10", "middle").style("fill", AMBER);
+  ftext(fc, "cap", 666, hi + 5, "techo del rango");
+  ftext(fc, "evt-sub", 666, hi + 23, "1 de cada 10 queda por encima");
+  ftext(fc, "cap", 666, yc + 5, "precio central").style("fill", AMBER);
+  ftext(fc, "cap", 666, lo + 5, "suelo del rango");
+  ftext(fc, "evt-sub", 666, lo + 23, "1 de cada 10 queda por debajo");
+  const pers = svg.append("g");
+  pers.append("line").attr("x1", xh).attr("x2", xp).attr("y1", p0).attr("y2", p0).attr("stroke", PERSIST).attr("stroke-width", 2).attr("stroke-dasharray", "6 5");
+  ftext(pers, "evt-sub", xh + 8, p0 + 22, "persistencia: el precio no cambia");
+  const outs = [hi - 22, yc - 78, yc - 56, yc - 34, yc - 12, yc + 12, yc + 34, yc + 56, yc + 80, lo + 22];
+  const dots = svg.append("g").selectAll("circle").data(outs).join("circle").attr("cx", (_, i) => 636 + (i % 2) * 8).attr("cy", (d) => d).attr("r", 5)
+    .attr("fill", (d) => (d < hi || d > lo ? "none" : INK)).attr("stroke", INK).attr("stroke-width", 1.6);
+  [[xh, "hoy"], [xp, "dentro del plazo"]].forEach(([px, t]) => {
+    svg.append("line").attr("x1", px).attr("x2", px).attr("y1", 420).attr("y2", 428).attr("stroke", SOFT);
+    ftext(svg, "lbl", px, 448, t, "middle");
+  });
+  svg.append("line").attr("x1", 20).attr("x2", xp + 40).attr("y1", 420).attr("y2", 420).attr("stroke", "rgba(238,240,242,.2)");
+  ftext(svg, "cap", 20, 24, "Esquema");
+  vizFns["v-rango"] = () => {
+    const L = past.node().getTotalLength();
+    past.interrupt().attr("stroke-dasharray", `${L} ${L}`).attr("stroke-dashoffset", reduced ? 0 : L).transition().duration(reduced ? 0 : 1000).ease(d3.easeCubicOut).attr("stroke-dashoffset", 0);
+    [fc, pers].forEach((g) => g.interrupt().attr("opacity", reduced ? 1 : 0).transition().delay(reduced ? 0 : 900).duration(600).attr("opacity", 1));
+    dots.interrupt().attr("opacity", reduced ? 1 : 0).transition().delay((_, i) => (reduced ? 0 : 1500 + i * 120)).duration(300).attr("opacity", 1);
+  };
+}
+{
+  const W = 820, H = 430, svg = mk("#v-marcador", W, H), m = { l: 110, r: 150, t: 100, b: 40 };
+  const x = d3.scaleLinear().domain([0, 40]).range([m.l, W - m.r]);
+  const NM = ["1 semana", "1 mes", "3 meses", "1 año"];
+  const leg = svg.append("g").attr("transform", "translate(0,24)");
+  leg.append("circle").attr("cx", 7).attr("cy", -5).attr("r", 7).attr("fill", AMBER);
+  ftext(leg, "spark-name", 22, 0, "red neuronal");
+  leg.append("circle").attr("cx", 157).attr("cy", -5).attr("r", 7).attr("fill", PERSIST);
+  ftext(leg, "spark-name", 172, 0, "repetir el último precio");
+  ftext(svg, "evt-sub", 0, 60, "Error medio en dólares (RMSE) en la prueba · menos es mejor");
+  [0, 10, 20, 30, 40].forEach((v) => {
+    svg.append("line").attr("x1", x(v)).attr("x2", x(v)).attr("y1", m.t - 10).attr("y2", H - m.b).attr("stroke", "rgba(238,240,242,.08)");
+    ftext(svg, "lbl", x(v), H - m.b + 22, `${v} $`, "middle");
+  });
+  const rows = [5, 21, 63, 252].map((h, i) => {
+    const r = DATA.h[h], yy = m.t + 20 + i * 72, g = svg.append("g");
+    ftext(svg, "cap-big", 0, yy + 6, NM[i]);
+    const bar = g.append("line").attr("y1", yy).attr("y2", yy).attr("stroke", INK).attr("stroke-opacity", 0.22).attr("stroke-width", 8).attr("stroke-linecap", "round");
+    const pb = g.append("circle").attr("cy", yy).attr("r", 9).attr("fill", PERSIST);
+    const pn = g.append("circle").attr("cy", yy).attr("r", 9).attr("fill", AMBER);
+    const tb = ftext(g, "num", 0, yy + 28, `${fmtN(r.rmse_b)} $`, "end").style("fill", PERSIST);
+    const tn = ftext(g, "num", 0, yy + 28, `${fmtN(r.rmse)} $`, "start").style("fill", AMBER);
+    ftext(g, "cap", W, yy + 5, `${fmtN((r.rmse / r.rmse_b - 1) * 100, r.rmse / r.rmse_b > 1.2 ? 0 : 1)} % más de error`, "end");
+    return { r, bar, pb, pn, tb, tn };
+  });
+  const place = (u) => rows.forEach(({ r, bar, pb, pn, tb, tn }) => {
+    const b = x(r.rmse_b * u), n = x(r.rmse * u);
+    bar.attr("x1", b).attr("x2", n); pb.attr("cx", b); pn.attr("cx", n); tb.attr("x", b - 6); tn.attr("x", n + 6);
+  });
+  place(1);
+  vizFns["v-marcador"] = () => {
+    if (reduced) return place(1);
+    svg.interrupt().transition().duration(1400).ease(d3.easeCubicOut).tween("p", () => place);
+  };
+}
+{
+  const vizIO = new IntersectionObserver((ents) => {
+    for (const e of ents) {
+      e.target.classList.toggle("is-in", e.isIntersecting);
+      if (e.isIntersecting) vizFns[e.target.id]?.();
+    }
+  }, { threshold: 0.4 });
+  $$(".scene__viz").forEach((el) => vizIO.observe(el));
+}
+
+/* ================= La red: arquitectura, pinball, curvas ================= */
+{
+  const root = $("#story-net");
+  const W = 820, H = 470;
+  const svg = d3.select("#g-arch").append("svg").attr("viewBox", `0 0 ${W} ${H}`).attr("preserveAspectRatio", "xMidYMid meet");
+  svg.append("defs").append("marker").attr("id", "arr").attr("viewBox", "0 0 10 10").attr("refX", 9).attr("refY", 5).attr("markerWidth", 7).attr("markerHeight", 7).attr("orient", "auto")
+    .append("path").attr("d", "M0,0 L10,5 L0,10 z").attr("fill", SOFT);
+  const inp = svg.append("g"), mid = svg.append("g"), out = svg.append("g"), wires = svg.append("g");
+  const cs = 4.2, gx = 20, gy = 100;
+  for (let d = 0; d < 60; d++) for (let s = 0; s < 16; s++)
+    inp.append("rect").attr("x", gx + d * cs).attr("y", gy + s * 16.5).attr("width", cs - 1).attr("height", 14).attr("rx", 1)
+      .attr("fill", s === 15 ? INK : SHEEN).attr("opacity", 0.25 + 0.6 * Math.abs(Math.sin(d * 0.37 + s * 1.7)));
+  inp.append("text").attr("class", "evt-label").attr("x", gx).attr("y", gy - 32).text("60 días × 16 números");
+  inp.append("text").attr("class", "evt-sub").attr("x", gx).attr("y", gy - 13).text("del más antiguo al más reciente →");
+  [{ x: 330, t: "Capa 1" }, { x: 480, t: "Capa 2" }].forEach((l) => {
+    const g = mid.append("g").attr("transform", `translate(${l.x},${gy - 10})`);
+    g.append("rect").attr("width", 110).attr("height", 280).attr("rx", 18).attr("fill", "#15181d").attr("stroke", SHEEN).attr("stroke-opacity", 0.6);
+    for (let i = 0; i < 9; i++) g.append("circle").attr("cx", 55).attr("cy", 30 + i * 28).attr("r", 8).attr("fill", "#2a2f37").attr("stroke", SHEEN).attr("stroke-opacity", 0.5);
+    g.append("text").attr("class", "evt-label").attr("x", 55).attr("y", -14).attr("text-anchor", "middle").text(l.t);
+    g.append("text").attr("class", "evt-sub").attr("x", 55).attr("y", 304).attr("text-anchor", "middle").text("128 neuronas GRU");
+  });
+  mid.append("text").attr("class", "evt-sub").attr("x", 465).attr("y", gy + 336).attr("text-anchor", "middle").text("puertas de actualización y de reinicio en cada día");
+  [["10 %", "suelo"], ["50 %", "central"], ["90 %", "techo"]].forEach(([q, t], i) => {
+    const g = out.append("g").attr("transform", `translate(700,${gy + 50 + i * 80})`);
+    g.append("circle").attr("r", 22).attr("fill", AMBER).attr("opacity", i === 1 ? 1 : 0.55);
+    g.append("text").attr("class", "evt-label").attr("x", 34).attr("y", -2).text(q);
+    g.append("text").attr("class", "evt-sub").attr("x", 34).attr("y", 15).text(t);
+  });
+  [[gx + 60 * cs + 8, 322], [442, 478], [592, 670]].forEach(([a, b]) =>
+    wires.append("path").attr("d", `M${a},${gy + 130} L${b},${gy + 130}`).attr("stroke", SOFT).attr("stroke-width", 1.4).attr("marker-end", "url(#arr)"));
+
+  {
+    const W2 = 820, H2 = 300, m = { l: 40, r: 20, t: 20, b: 34 };
+    const s2 = d3.select("#g-pinball").append("svg").attr("viewBox", `0 0 ${W2} ${H2}`).attr("preserveAspectRatio", "xMidYMid meet");
+    const x = d3.scaleLinear().domain([-1, 1]).range([m.l, W2 - m.r]), y = d3.scaleLinear().domain([0, 0.95]).range([H2 - m.b, m.t]);
+    s2.append("line").attr("x1", x(0)).attr("x2", x(0)).attr("y1", m.t).attr("y2", H2 - m.b).attr("stroke", "rgba(238,240,242,.12)");
+    s2.append("line").attr("x1", m.l).attr("x2", W2 - m.r).attr("y1", y(0)).attr("y2", y(0)).attr("stroke", "rgba(238,240,242,.12)");
+    [[0.1, 0.45], [0.5, 0.7], [0.9, 1]].forEach(([tau, o]) => {
+      const pts = d3.range(-1, 1.001, 0.02).map((u) => [u, u >= 0 ? tau * u : (tau - 1) * u]);
+      s2.append("path").attr("d", d3.line().x((p) => x(p[0])).y((p) => y(p[1]))(pts)).attr("fill", "none").attr("stroke", AMBER).attr("stroke-width", 2.2).attr("opacity", o);
+      const right = tau >= 0.5;
+      s2.append("text").attr("class", "lbl").attr("x", x(right ? 0.98 : -0.98)).attr("y", y(right ? tau * 0.98 : (1 - tau) * 0.98) - 8)
+        .attr("text-anchor", right ? "end" : "start").text(`τ = ${String(tau).replace(".", ",")}`);
+    });
+    s2.append("text").attr("class", "lbl").attr("x", x(0.55)).attr("y", H2 - 8).attr("text-anchor", "middle").text("el real queda por encima →");
+    s2.append("text").attr("class", "lbl").attr("x", x(-0.55)).attr("y", H2 - 8).attr("text-anchor", "middle").text("← el real queda por debajo");
+  }
+
+  {
+    const W3 = 820, H3 = 540, cw = W3 / 2, ch = (H3 - 30) / 2;
+    const s3 = d3.select("#g-curves").append("svg").attr("viewBox", `0 0 ${W3} ${H3}`).attr("preserveAspectRatio", "xMidYMid meet");
+    [["5", "1 semana · GRU"], ["21", "1 mes · LSTM"], ["63", "3 meses · GRU"], ["252", "1 año · RNN"]].forEach(([h, t], i) => {
+      const c = DATA.curves[h], g = s3.append("g").attr("transform", `translate(${(i % 2) * cw},${Math.floor(i / 2) * ch})`);
+      const x = d3.scaleLinear().domain([1, 30]).range([16, cw - 30]);
+      const y = d3.scaleLinear().domain(d3.extent([...c.train, ...c.val])).nice().range([ch - 40, 60]);
+      g.append("text").attr("class", "evt-label").attr("x", 16).attr("y", 26).text(t);
+      g.append("text").attr("class", "evt-sub").attr("x", 16).attr("y", 45).text(`mejor época: ${c.best}`);
+      g.append("path").attr("d", d3.line().x((_, j) => x(j + 1)).y((v) => y(v))(c.train)).attr("fill", "none").attr("stroke", SOFT).attr("stroke-width", 1.4).attr("stroke-dasharray", "3 3");
+      g.append("path").attr("d", d3.line().x((_, j) => x(j + 1)).y((v) => y(v))(c.val)).attr("fill", "none").attr("stroke", AMBER).attr("stroke-width", 2);
+      g.append("circle").attr("cx", x(c.best)).attr("cy", y(c.val[c.best - 1])).attr("r", 5).attr("fill", AMBER).attr("stroke", "#0d0f12").attr("stroke-width", 2);
+      g.append("line").attr("x1", 16).attr("x2", cw - 30).attr("y1", ch - 40).attr("y2", ch - 40).attr("stroke", "rgba(238,240,242,.12)");
+      g.append("text").attr("class", "lbl").attr("x", cw - 30).attr("y", ch - 22).attr("text-anchor", "end").text("épocas →");
+    });
+    const lg = s3.append("g").attr("transform", `translate(16,${H3 - 6})`);
+    lg.append("line").attr("x2", 22).attr("stroke", AMBER).attr("stroke-width", 2).attr("y1", -4).attr("y2", -4);
+    lg.append("text").attr("class", "lbl").attr("x", 30).text("error en el año reservado");
+    lg.append("line").attr("x1", 250).attr("x2", 272).attr("stroke", SOFT).attr("stroke-dasharray", "3 3").attr("y1", -4).attr("y2", -4);
+    lg.append("text").attr("class", "lbl").attr("x", 280).text("error en entrenamiento");
+  }
+
+  const hi = (sel, on) => sel.transition().duration(reduced ? 0 : 350).attr("opacity", on ? 1 : 0.18);
+  onStep("net", (k) => {
+    if (k === 0 || k === 6) return showLayer(root, "table");
+    if (k <= 3) { showLayer(root, "arch"); hi(inp, k === 1); hi(mid, k === 2); hi(out, k === 3); hi(wires, false); return; }
+    showLayer(root, k === 4 ? "pinball" : "curves");
+  });
+}
+
+/* ================= El resultado ================= */
+{
+  const HZ = [5, 21, 63, 252].map((h) => DATA.h[h]);
+  const NAMES = ["1 semana", "1 mes", "3 meses", "1 año"];
+  const W = 820, H = 660, m = { l: 56, r: 18, t: 70, b: 30 }, CH = 440;
+  const T = HZ[0].t.map(parse);
+  const x = d3.scaleUtc().domain(d3.extent(T)).range([m.l, W - m.r]);
+  const y = d3.scaleLinear().domain([40, 180]).range([CH, m.t]).clamp(true);
+  const svg = d3.select("#g-result").append("svg").attr("viewBox", `0 0 ${W} ${H}`).attr("preserveAspectRatio", "xMidYMid meet");
+  svg.append("defs").append("clipPath").attr("id", "rclip").append("rect").attr("x", m.l).attr("y", m.t).attr("width", W - m.l - m.r).attr("height", CH - m.t);
+  svg.append("g").attr("class", "grid").selectAll("line").data([50, 100, 150]).join("line").attr("x1", m.l).attr("x2", W - m.r).attr("y1", y).attr("y2", y);
+  svg.append("g").attr("class", "ax").selectAll("text").data([50, 100, 150]).join("text").attr("x", m.l - 10).attr("y", (v) => y(v) + 4).attr("text-anchor", "end").text((v) => `${v} $`);
+  svg.append("g").attr("class", "ax").attr("transform", `translate(0,${CH + 22})`).selectAll("text").data([2023, 2024, 2025, 2026]).join("text")
+    .attr("x", (v) => x(new Date(Date.UTC(v, 5, 1)))).attr("text-anchor", "middle").text((v) => v);
+  const shade2026 = svg.append("rect").attr("x", x(parse("2026-01-01"))).attr("width", x(T[T.length - 1]) - x(parse("2026-01-01"))).attr("y", m.t).attr("height", CH - m.t).attr("fill", SHEEN).attr("opacity", 0);
+
+  const plot = svg.append("g").attr("clip-path", "url(#rclip)");
+  const band = plot.append("path").attr("fill", AMBER).attr("opacity", 0.16);
+  const base = plot.append("path").attr("fill", "none").attr("stroke", PERSIST).attr("stroke-width", 1.4).attr("stroke-dasharray", "4 4");
+  const real = plot.append("path").attr("fill", "none").attr("stroke", INK).attr("stroke-width", 2).attr("stroke-linejoin", "round");
+  const pred = plot.append("path").attr("fill", "none").attr("stroke", AMBER).attr("stroke-width", 2).attr("stroke-linejoin", "round");
+  const ln = () => d3.line().x((_, i) => x(T[i])).y((v) => y(v)).curve(d3.curveMonotoneX);
+  const ar = d3.area().x((_, i) => x(T[i])).y0((p) => y(p[0])).y1((p) => y(p[1])).curve(d3.curveMonotoneX);
+  real.attr("d", ln()(HZ[0].y));
+
+  const lg = svg.append("g").attr("transform", `translate(${m.l},22)`);
+  [["Precio real", "line", INK], ["Predicción de la red", "line", AMBER], ["Rango del 80 %", "fill", AMBER], ["Repetir el último precio", "dash", PERSIST]].reduce((ox, [t, kind, c]) => {
+    const g = lg.append("g").attr("transform", `translate(${ox},0)`);
+    if (kind === "fill") g.append("rect").attr("y", -9).attr("width", 20).attr("height", 12).attr("rx", 3).attr("fill", c).attr("opacity", 0.3);
+    else g.append("line").attr("x2", 20).attr("y1", -3).attr("y2", -3).attr("stroke", c).attr("stroke-width", 2).attr("stroke-dasharray", kind === "dash" ? "4 3" : null);
+    g.append("text").attr("class", "lbl").attr("x", 28).attr("y", 1).text(t);
+    return ox + 44 + t.length * 7;
+  }, 0);
+  const hzLabel = svg.append("text").attr("class", "evt-label").attr("x", W - m.r).attr("y", m.t + 26).attr("text-anchor", "end").style("font-size", "24px");
+
+  const by = CH + 84, bh = H - by - 40;
+  const bx = d3.scaleBand().domain(d3.range(4)).range([m.l, W - m.r]).padding(0.32);
+  const bv = d3.scaleLinear().domain([0, 36]).range([0, bh]);
+  const bars = svg.append("g").selectAll("g").data(HZ).join("g").attr("transform", (_, i) => `translate(${bx(i)},${by})`);
+  const bw = bx.bandwidth() / 2 - 4;
+  bars.append("rect").attr("x", 0).attr("width", bw).attr("y", (d) => bh - bv(d.rmse)).attr("height", (d) => bv(d.rmse)).attr("rx", 3).attr("fill", AMBER);
+  bars.append("rect").attr("x", bw + 8).attr("width", bw).attr("y", (d) => bh - bv(d.rmse_b)).attr("height", (d) => bv(d.rmse_b)).attr("rx", 3).attr("fill", PERSIST);
+  bars.append("text").attr("class", "lbl").attr("x", bw / 2).attr("y", (d) => bh - bv(d.rmse) - 6).attr("text-anchor", "middle").style("fill", AMBER).text((d) => nf2.format(d.rmse));
+  bars.append("text").attr("class", "lbl").attr("x", bw * 1.5 + 8).attr("y", (d) => bh - bv(d.rmse_b) - 6).attr("text-anchor", "middle").text((d) => nf2.format(d.rmse_b));
+  bars.append("text").attr("class", "spark-name").attr("x", bw + 4).attr("y", bh + 22).attr("text-anchor", "middle").text((_, i) => NAMES[i]);
+  svg.append("text").attr("class", "lbl").attr("x", m.l).attr("y", by - 22).text("Error típico (RMSE), en dólares: red y persistencia");
+
+  let cur = -1;
+  function setH(k) {
+    if (k === cur) return; cur = k;
+    const D = HZ[k], tr = d3.transition().duration(reduced ? 0 : 800).ease(d3.easeCubicInOut);
+    band.transition(tr).attr("d", ar(D.lo.map((v, i) => [v, D.hi[i]])));
+    pred.transition(tr).attr("d", ln()(D.p));
+    base.transition(tr).attr("d", ln()(D.b));
+    hzLabel.text(`A ${NAMES[k]}`);
+    bars.transition(tr).attr("opacity", (_, i) => (i === k ? 1 : 0.3));
+  }
+  onStep("result", (k) => {
+    setH([0, 0, 1, 2, 2, 3, 3, 0][k]);
+    if (k === 6) bars.transition().duration(400).attr("opacity", 1);
+    shade2026.transition().duration(400).attr("opacity", k === 7 ? 0.1 : 0);
+  });
+  setH(0);
+}
+$$(".step").forEach((s) => stepIO.observe(s));
+
+/* ================= La gota: personaje en 3D ================= */
+const canvas = $("#gl");
+const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+renderer.setPixelRatio(Math.min(devicePixelRatio, 1.75));
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.setClearColor(0x000000, 0);
+const scene = new THREE.Scene();
+const pmrem = new THREE.PMREMGenerator(renderer);
+const room = new RoomEnvironment();
+scene.environment = pmrem.fromScene(room, 0.04).texture;
+scene.environmentIntensity = 0.9;
+room.dispose(); pmrem.dispose();
+const camera = new THREE.PerspectiveCamera(32, 1, 0.1, 100);
+const CAM = new THREE.Vector3(0, 0, 14);
+const key = new THREE.DirectionalLight(0xfff1dc, 2.2); key.position.set(4, 6, 6); scene.add(key);
+const rim = new THREE.DirectionalLight(0xf2b84b, 1.4); rim.position.set(-6, 2, -4); scene.add(rim);
+scene.add(new THREE.HemisphereLight(0x9fb2c8, 0x0d0f12, 0.25));
+const oilMat = new THREE.MeshPhysicalMaterial({ color: 0x060607, roughness: 0.12, clearcoat: 1, clearcoatRoughness: 0.04,
+  iridescence: 0.55, iridescenceIOR: 1.32, iridescenceThicknessRange: [180, 560] });
+
+const dropGeo = new THREE.IcosahedronGeometry(1, 40);
+const base0 = dropGeo.attributes.position.array.slice();
+const main = new THREE.Mesh(dropGeo, oilMat); scene.add(main);
+function wobble(t) {
+  const p = dropGeo.attributes.position.array;
+  for (let i = 0; i < p.length; i += 3) {
+    const X = base0[i], Y = base0[i + 1], Z = base0[i + 2];
+    const d = 1 + 0.055 * Math.sin(2.1 * X + t * 0.9) * Math.cos(1.7 * Y + t * 0.7) + 0.035 * Math.sin(3.3 * Z - t * 1.1 + Y * 1.4) + 0.07 * Math.max(0, -Y) ** 2;
+    p[i] = X * d; p[i + 1] = Y * d; p[i + 2] = Z * d;
+  }
+  dropGeo.attributes.position.needsUpdate = true; dropGeo.computeVertexNormals();
+}
+const NI = 16;
+const mini = new THREE.InstancedMesh(new THREE.IcosahedronGeometry(1, 12), oilMat, NI); scene.add(mini);
+const wireMat = new THREE.LineBasicMaterial({ color: 0xf2b84b, transparent: true, opacity: 0 });
+const wireGeo = new THREE.BufferGeometry(); wireGeo.setAttribute("position", new THREE.BufferAttribute(new Float32Array(400 * 6), 3));
+const wireLines = new THREE.LineSegments(wireGeo, wireMat); scene.add(wireLines);
+
+// Formaciones: x en fracción del ancho visible, y y radio en fracción del alto
+const ring = (n, cx, r, s, t) => Array.from({ length: n }, (_, i) => { const a = (i / n) * Math.PI * 2 + t * 0.15; return { x: cx + Math.cos(a) * r * 0.62, y: Math.sin(a) * r, s, z: Math.sin(a) * 0.5 }; });
+const FORMS = {
+  hero:   () => ({ main: { x: 0.2, y: 0.03, s: 0.3 }, drops: [] }),
+  center: () => ({ main: { x: 0.22, y: 0, s: 0.2 }, drops: [] }),
+  orbit:  () => ({ main: { x: 0.24, y: 0, s: 0.15 }, drops: [] }),
+  two:    () => ({ main: { x: 0.22, y: 0, s: 0 }, drops: [{ x: 0.12, y: 0.02, s: 0.14, l: "Brent", e: "Mar del Norte · Europa" }, { x: 0.33, y: -0.02, s: 0.115, l: "WTI", e: "Texas · Estados Unidos" }] }),
+  ring:   () => ({ main: { x: 0.25, y: 0, s: 0.11 }, drops: [] }),
+  row:    () => ({ main: { x: 0.25, y: 0, s: 0.09 }, drops: [] }),
+  layers: () => { const cols = [[0.04, 5], [0.17, 4], [0.3, 4], [0.43, 3]], d = [];
+    cols.forEach(([x, n], c) => { for (let i = 0; i < n; i++) d.push({ x, y: (i - (n - 1) / 2) * 0.13, s: c === 3 ? 0.04 : 0.03, col: c }); });
+    return { main: { x: 0.22, y: 0, s: 0 }, drops: d, wires: true }; },
+  none:   () => ({ main: { x: 0.3, y: 0, s: 0 }, drops: [] }),
+  sonda:  () => ({ main: { x: 0.24, y: 0.02, s: 0.17 }, drops: [] }),
+};
+const labelsEl = $("#labels"), labelPool = Array.from({ length: NI }, () => { const s = document.createElement("span"); labelsEl.appendChild(s); return s; });
+const cur = { main: { x: 0.2, y: 0.03, s: 0.3 }, drops: Array.from({ length: NI }, () => ({ x: 0.2, y: 0, s: 0, z: 0 })) };
+let visW = 1, visH = 1, mobile = false;
+function layout() {
+  renderer.setSize(innerWidth, innerHeight, false);
+  camera.aspect = innerWidth / innerHeight; camera.updateProjectionMatrix();
+  visH = 2 * Math.tan(THREE.MathUtils.degToRad(camera.fov / 2)) * CAM.z; visW = visH * camera.aspect;
+  mobile = innerWidth < 860;
+}
+addEventListener("resize", layout); layout();
+const scenesEl = $$("[data-form]");
+const fine = matchMedia("(hover: hover) and (pointer: fine)").matches && !reduced;
+const ptr = { x: 0, y: 0, sx: 0, sy: 0 };
+if (fine) addEventListener("pointermove", (e) => { ptr.x = e.clientX / innerWidth - 0.5; ptr.y = e.clientY / innerHeight - 0.5; });
+const M4 = new THREE.Matrix4(), Qn = new THREE.Quaternion(), E = new THREE.Euler(), V = new THREE.Vector3(), SC = new THREE.Vector3(), P = new THREE.Vector3();
+const toWorld = (f) => { let x = f.x, y = f.y; if (mobile) { x = (x - 0.22) * 1.6; y = y + 0.18; } return [x * visW, y * visH]; };
+const clock = new THREE.Clock();
+
+
+/* ================= Fondo: mancha de crudo sobre agua ================= */
+const bgCanvas = $("#bg");
+const bgR = new THREE.WebGLRenderer({ canvas: bgCanvas, antialias: false });
+bgR.setPixelRatio(Math.min(devicePixelRatio, 2) * 0.5);   // es suave: media resolución basta
+const bgScene = new THREE.Scene(), bgCam = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
+const U = {
+  uRes: { value: new THREE.Vector2(1, 1) }, uTime: { value: 0 }, uCalm: { value: 0 }, uHue: { value: 0 },
+  uDrops: { value: Array.from({ length: 8 }, () => new THREE.Vector3()) },
+};
+const bgMat = new THREE.ShaderMaterial({
+  uniforms: U,
+  vertexShader: `varying vec2 vUv; void main(){ vUv = uv; gl_Position = vec4(position.xy, 0., 1.); }`,
+  fragmentShader: `
+    precision highp float;
+    uniform vec2 uRes; uniform float uTime, uCalm, uHue; uniform vec3 uDrops[8];
+    varying vec2 vUv;
+    vec2 hash(vec2 p){ p = vec2(dot(p, vec2(127.1, 311.7)), dot(p, vec2(269.5, 183.3))); return -1. + 2. * fract(sin(p) * 43758.5453); }
+    float noise(vec2 p){
+      const float K1 = .366025404, K2 = .211324865;
+      vec2 i = floor(p + (p.x + p.y) * K1), a = p - i + (i.x + i.y) * K2;
+      float m = step(a.y, a.x); vec2 o = vec2(m, 1. - m), b = a - o + K2, c = a - 1. + 2. * K2;
+      vec3 h = max(.5 - vec3(dot(a, a), dot(b, b), dot(c, c)), 0.);
+      vec3 n = h * h * h * h * vec3(dot(a, hash(i)), dot(b, hash(i + o)), dot(c, hash(i + 1.)));
+      return dot(n, vec3(70.));
+    }
+    float fbm(vec2 p){ float f = 0., a = .5; for (int i = 0; i < 5; i++) { f += a * noise(p); p = p * 2.03 + vec2(1.7, 9.2); a *= .5; } return f; }
+    vec3 film(float t){ return .5 + .5 * cos(6.28318 * (t + vec3(0., .33, .67))); }   // colores de película fina
+    void main(){
+      float asp = uRes.x / uRes.y;
+      vec2 uv = vUv, p = (uv - .5) * vec2(asp, 1.);
+      float t = uTime * .009;
+      // Ondas y sombra bajo cada gota
+      float ring = 0., pool = 0.;
+      for (int i = 0; i < 8; i++) {
+        vec3 d = uDrops[i]; if (d.z <= 0.001) continue;
+        float rr = length((uv - d.xy) * vec2(asp, 1.)) / d.z;
+        ring += sin(rr * 9. - uTime * .5) * exp(-max(rr - 1.1, 0.) * 1.1) * smoothstep(1., 1.5, rr);
+        pool += exp(-rr * rr * .55);
+      }
+      // Doble deformación: remolinos como los de una mancha real
+      vec2 q = vec2(fbm(p * .55 + t), fbm(p * .55 - t + 3.1));
+      vec2 r = vec2(fbm(p * .85 + 2.2 * q + vec2(1.7, 9.2) + t * .6), fbm(p * 1.4 + 2.2 * q + vec2(8.3, 2.8) - t * .4)); r *= 1.;
+      vec2 w = p + .9 * r + ring * .045;
+      float h  = fbm(w * .8 + vec2(t * .7, -t));
+      float h2 = fbm(w * .55 - vec2(t, t * .5) + 7.);
+      vec3 deep = vec3(.045, .11, .135), shallow = vec3(.10, .215, .245);
+      vec3 col = mix(deep, shallow, (smoothstep(-.7, .9, h2) * .8) * (1. - uCalm * .75) + uv.y * .25);
+      // Vetas finas: crestas del campo de espesor
+      float ridge = pow(1. - abs(fbm(w * 1.25 + 5.) ), 7.);
+      float sheet = smoothstep(-.05, .45, h2);
+      vec3 iri = film(h * 2.6 + h2 * 1.2 + uHue + ring * .2);
+      iri = mix(vec3(dot(iri, vec3(.333))), iri, .95);
+      float side = smoothstep(.1, .62, uv.x);
+      float amt = (ridge * .95 + .2) * sheet * mix(.25, 1., side) * (1. - uCalm * .94);
+      col += iri * amt * .3;
+      float e = .003;
+      float hx = fbm((w + vec2(e, 0.)) * .8 + vec2(t * .7, -t)) - h, hy = fbm((w + vec2(0., e)) * .8 + vec2(t * .7, -t)) - h;
+      vec3 n = normalize(vec3(-hx / e * .035, -hy / e * .035, 1.));
+      col += pow(max(dot(n, normalize(vec3(.35, .55, 1.))), 0.), 36.) * .1 * mix(.3, 1., side) * (1. - uCalm);
+      col *= 1. - clamp(pool, 0., 1.) * .45;
+      col *= mix(1., smoothstep(1.35, .2, length(p)), .5);
+      gl_FragColor = vec4(col, 1.);
+    }`,
+});
+bgScene.add(new THREE.Mesh(new THREE.PlaneGeometry(2, 2), bgMat));
+function bgLayout() { bgR.setSize(innerWidth, innerHeight, false); U.uRes.value.set(innerWidth, innerHeight); }
+addEventListener("resize", bgLayout); bgLayout();
+const sceneIndex = new Map($$("[data-form]").map((el, i) => [el, i]));
+let calm = 0, hue = 0; const bgClock = { t: 0, last: 0 };
+const dropUV = (x, y, r) => { V.set(x, y, 0).project(camera); return [(V.x + 1) / 2, (V.y + 1) / 2, r]; };
+renderer.setAnimationLoop(() => {
+  const t = reduced ? 0 : clock.getElapsedTime();
+  let best = null, bv = 0;
+  for (const el of scenesEl) {
+    const r = el.getBoundingClientRect(), vh = innerHeight;
+    const v = Math.min(clamp01((vh - r.top) / (0.5 * vh)), clamp01(r.bottom / (0.5 * vh)));
+    if (v > bv) { bv = v; best = el; }
+  }
+  canvas.style.opacity = bv.toFixed(3);
+  labelsEl.style.opacity = clamp01((bv - 0.6) / 0.3).toFixed(3);
+  calm += ((bv > 0.5 && !best.querySelector(".scene__viz") ? 0 : 1) - calm) * 0.04;
+  if (best) hue += (sceneIndex.get(best) * 0.085 - hue) * 0.03;
+  const now = performance.now() / 1000, dt = Math.min(0.1, now - (bgClock.last || now)); bgClock.last = now;
+  bgClock.t += reduced ? 0 : dt * (1 - calm * 0.92);
+  U.uTime.value = bgClock.t; U.uCalm.value = calm; U.uHue.value = hue;
+  if (bv < 0.01) { U.uDrops.value.forEach((d) => d.set(0, 0, 0)); bgR.render(bgScene, bgCam); renderer.clear(); return; }
+  const F = FORMS[best.dataset.form](t);
+  const k = reduced ? 1 : 0.075;
+  cur.main.x += (F.main.x - cur.main.x) * k; cur.main.y += (F.main.y - cur.main.y) * k; cur.main.s += (F.main.s - cur.main.s) * k;
+  ptr.sx += (ptr.x - ptr.sx) * 0.05; ptr.sy += (ptr.y - ptr.sy) * 0.05;
+  camera.position.set(ptr.sx * 0.6, -ptr.sy * 0.35, CAM.z); camera.lookAt(0, 0, 0);
+
+  const [mx, my] = toWorld(cur.main);
+  main.position.set(mx, my, 0); main.scale.setScalar(Math.max(0.0001, cur.main.s * visH));
+  main.visible = cur.main.s > 0.004; main.rotation.y = t * 0.12;
+  if (main.visible) wobble(t);
+  let nd = 0; const DU = U.uDrops.value;
+  if (main.visible) DU[nd++].set(...dropUV(mx, my, cur.main.s * bv));
+
+  for (let i = 0; i < NI; i++) {
+    const tgt = F.drops[i] || { x: F.main.x, y: F.main.y, s: 0, z: 0 }, c = cur.drops[i];
+    c.x += (tgt.x - c.x) * k; c.y += (tgt.y - c.y) * k; c.s += (tgt.s - c.s) * k; c.z = tgt.z || 0;
+    const [wx, wy] = toWorld(c);
+    const bob = reduced ? 0 : Math.sin(t * 1.3 + i) * 0.006 * visH;
+    P.set(wx, wy + bob, c.z); SC.setScalar(Math.max(0.0001, c.s * visH));
+    Qn.setFromEuler(E.set(0, t * 0.2 + i, 0)); M4.compose(P, Qn, SC); mini.setMatrixAt(i, M4);
+    if (nd < 8 && c.s > 0.012) DU[nd++].set(...dropUV(wx, wy, c.s * bv));
+    const L = labelPool[i];
+    if (tgt.l && c.s > 0.01) {
+      V.set(wx, wy - c.s * visH - 0.12, 0).project(camera);
+      L.style.left = ((V.x + 1) / 2 * innerWidth) + "px"; L.style.top = ((1 - V.y) / 2 * innerHeight) + "px";
+      L.innerHTML = tgt.l + (tgt.e ? `<em>${tgt.e}</em>` : ""); L.style.opacity = clamp01(c.s / Math.max(tgt.s, 0.001) * 1.2 - 0.2);
+    } else L.style.opacity = 0;
+  }
+  mini.instanceMatrix.needsUpdate = true;
+
+  const pos = wireGeo.attributes.position.array; let n = 0;
+  if (F.wires) {
+    const d = F.drops;
+    for (let a = 0; a < d.length; a++) for (let b = 0; b < d.length; b++) {
+      if (d[b].col !== d[a].col + 1) continue;
+      const [ax, ay] = toWorld(cur.drops[a]), [bx2, by2] = toWorld(cur.drops[b]);
+      pos.set([ax, ay, -0.2, bx2, by2, -0.2], n * 6); n++;
+    }
+  }
+  wireGeo.setDrawRange(0, n * 2); wireGeo.attributes.position.needsUpdate = true;
+  wireMat.opacity += ((F.wires ? 0.7 : 0) - wireMat.opacity) * 0.08;
+  for (let j = nd; j < 8; j++) DU[j].set(0, 0, 0);
+  bgR.render(bgScene, bgCam);
+  renderer.render(scene, camera);
+});
+</script>
+</body>
+</html>
