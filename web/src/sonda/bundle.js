@@ -307,6 +307,7 @@
         '</div>' +
         '<div class="bx-chart-main">' +
           '<div class="bx-chart-top"><div class="bx-readout" aria-live="polite"></div><div class="bx-spacer"></div>' +
+            '<div class="bx-pills" data-g="range" aria-label="Periodo del gráfico">' + RANGES.map(function (r) { return pill(r[0], { small: true, data: 'data-range="' + r[0] + '"' }); }).join('') + '</div>' +
             '<div class="bx-menu-wrap"><button type="button" class="bx-pill bx-pill-sm bx-pill-solid" data-act="menu" aria-expanded="false">' + icon('indicators') + 'Opciones' + icon('chevron', 14) + '</button>' +
             '<div class="bx-menu" role="menu">' + INDICATORS.filter(function (x) { return x[0] !== 'wti' || hasWti; }).map(function (x) {
               return '<label><input type="checkbox" data-ind="' + x[0] + '"' + (st.ind[x[0]] ? ' checked' : '') + '><i class="bx-key bx-key-' + x[0] + '"></i>' + x[1] + '</label>';
@@ -317,8 +318,6 @@
             '</div></div>' +
           '</div>' +
           '<div class="bx-chart-plot" tabindex="0" aria-label="Gráfico del precio. Flechas para moverte, más y menos para zoom."></div>' +
-          '<div class="bx-chart-bottom"><div class="bx-pills" data-g="range">' + RANGES.map(function (r) { return pill(r[0], { small: true, data: 'data-range="' + r[0] + '"' }); }).join('') + '</div>' +
-            '</div>' +
         '</div>' +
       '</div>';
     var $ = function (s) { return host.querySelector(s); };
@@ -381,7 +380,8 @@
     function line(ids, arr, cls) {
       var segs = [], cur = null;
       ids.forEach(function (i) { var v = arr[i]; if (v == null) { cur = null; return; } if (!cur) { cur = []; segs.push(cur); } cur.push([X(i), Y(v)]); });
-      var d = segs.map(smoothD).join('');
+      var straight = function (P) { return P.map(function (p, k) { return (k ? 'L' : 'M') + p[0].toFixed(1) + ' ' + p[1].toFixed(1); }).join(''); };
+      var d = segs.map(cls.indexOf('bx-l-fc') === 0 ? smoothD : straight).join('');
       return d ? el('path', { d: d, class: cls }) : null;
     }
     function area(ids, lo, hi, cls) {
@@ -450,7 +450,7 @@
         fi.forEach(function (i) { if (i === iNow) { lo[i] = hi[i] = mid[i] = close[iNow]; } else { var p = path[i - nh]; lo[i] = p.lo80; hi[i] = p.hi80; mid[i] = p.mid; } });
         // Mancha: capas anidadas entre la mediana y los extremos del 80 %. Solo los cuantiles 0,1, 0,5 y 0,9
         // salen de la red; la gradación interior es una ayuda visual, no una densidad calculada.
-        var stain = el('g', { class: 'bx-stain' }), LAYERS = 6;
+        var stain = el('g', { class: 'bx-stain' }), LAYERS = 14;
         for (var s = 1; s <= LAYERS; s++) {
           var lo2 = [], hi2 = [];
           fi.forEach(function (i) { lo2[i] = mid[i] - (mid[i] - lo[i]) * s / LAYERS; hi2[i] = mid[i] + (hi[i] - mid[i]) * s / LAYERS; });
@@ -467,7 +467,6 @@
         if (la) {
           var real = ids.filter(function (i) { return i <= iNow && close[i] != null; });
           if (real.length > 1) g.appendChild(el('path', { class: 'bx-area', fill: 'url(#' + clipId + 'g)', d: la.getAttribute('d') + 'L' + X(real[real.length - 1]).toFixed(1) + ' ' + (T + ph) + 'L' + X(real[0]).toFixed(1) + ' ' + (T + ph) + 'Z' }));
-          g.appendChild(el('path', { class: 'bx-l-sheen', d: la.getAttribute('d'), transform: 'translate(0 5)' }));
           g.appendChild(la);
         }
       }

@@ -57,8 +57,8 @@ const LABELS: Record<string, string> = {
 const CELL: Record<string, string> = { rnn: "RNN simple", lstm: "LSTM", gru: "GRU" };
 // Rango del gráfico según el horizonte elegido (Workspace: 1S → 3M, 1M → 6M, 3M → 1A, 1A → 5A)
 const RANGE: Record<number, string> = { 5: "3M", 21: "6M", 63: "1A", 252: "5A" };
-// Alto fijo alrededor del lienzo: leyenda (40), controles inferiores (44), huecos y relleno de la tarjeta
-const CHART_CHROME = 40 + 44 + 12 + 20 + 24;
+// Alto fijo alrededor del lienzo: fila de lectura y controles (40), hueco y relleno de la tarjeta
+const CHART_CHROME = 40 + 6 + 20 + 24;
 
 const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
 const base = import.meta.env.BASE_URL;

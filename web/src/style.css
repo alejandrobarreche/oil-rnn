@@ -1306,23 +1306,17 @@
 .bx-chart:not(.is-drawing) .bx-chart-tools {
   display: none;
 }
-.bx-l-actual {
-  stroke-width: 2;
+.bx-chart .bx-l-actual {
+  stroke-width: 1.5;
 }
-.bx-l-sheen {
-  fill: none;
-  stroke: var(--ink);
-  stroke-opacity: 0.09;
-  stroke-width: 7;
-  stroke-linejoin: round;
-}
+/* Bajo la línea, un velo neutro apenas visible: sin color ni bloque de relleno */
 .bx-area-top {
-  stop-color: var(--forecast);
-  stop-opacity: 0.22;
+  stop-color: var(--ink);
+  stop-opacity: 0.06;
 }
 .bx-area-bottom {
-  stop-color: var(--bg);
-  stop-opacity: 0.55;
+  stop-color: var(--ink);
+  stop-opacity: 0;
 }
 .bx-zone {
   fill: transparent;
@@ -1331,12 +1325,9 @@
   stroke-opacity: 0.55;
 }
 /* Previsión como mancha: más densa en el centro, se pierde hacia los bordes del rango */
-.bx-stain {
-  filter: blur(1.5px);
-}
 .bx-stain .bx-band {
   fill: var(--forecast);
-  fill-opacity: 0.075;
+  fill-opacity: 0.035;
 }
 .bx-l-fc,
 .bx-l-fc-est {
@@ -1360,4 +1351,12 @@
 }
 .bx-menu {
   min-width: 300px;
+}
+
+/* Periodo del gráfico: arriba a la derecha, en la misma fila que «Opciones» */
+.bx-chart .bx-chart-top {
+  height: auto;
+  min-height: 40px;
+  flex-wrap: wrap;
+  align-items: center;
 }
