@@ -374,3 +374,15 @@ make web-dev
 - **Si `curl` da 404**: la Release no existe o el repo es privado. Alternativa: copiar los `web/public/model/*.onnx` de Windows al Mac.
 - **Qué pasarle a Claude**: la salida de `ls` y lo que muestre la consola del navegador si sigue fallando.
 - **Resultado (13/11)**: los cuatro ONNX están en el Mac y su SHA-256 coincide con `manifest.json`; `make web-test` 25/25, con la paridad con Python en los 4 horizontes.
+
+## 17. Windows GPU · 16/11/2026 · ⏳: prueba de red pequeña con tasa de aprendizaje baja (GRU, 5 días)
+
+- **Pregunta**: ¿se alarga la curva de entrenamiento con una red de 16 unidades, tasa de aprendizaje 0,00003 y hasta 150 épocas? En el run final a 5 días (GRU de 256 unidades, 211.203 parámetros, tasa 0,001) la mejor época fue la 3 de 13.
+- **Qué hace**: validación walk-forward de 4 pliegues con valores sobrescritos; no cambia código ni `configs/config.yaml`. Es una prueba: sus resultados no son definitivos.
+- **Sin comprobar por Claude**: el comando no se ha ejecutado en el Mac.
+
+```powershell
+make cv NAME=mini-gru-h5 ARGS="--set data.horizon=5 --set data.window=20 --set model.cell=gru --set model.hidden_size=16 --set model.num_layers=1 --set model.dropout=0.0 --set train.learning_rate=0.00003 --set train.batch_size=128 --set train.epochs=150 --set train.patience=15"
+```
+
+- **Qué pasarle a Claude**: el id del run y la salida del comando (época mejor y épocas ejecutadas de cada pliegue).
