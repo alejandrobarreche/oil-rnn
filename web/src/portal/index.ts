@@ -156,7 +156,9 @@ export function mountPortal(ctx: PortalContext): void {
     const max = Math.max(sm.total, ...fc.map((x) => x.hi));
     const pos = (v: number) => (((v - min) / (max - min || 1)) * 100).toFixed(2);
     const expected = sm.barrels
-      ? `<div class="rg">${fc
+      ? `<div class="rg"><div class="rg-row rg-keys" aria-hidden="true"><div></div><div class="rg-track">
+          <span class="${fc[0].mid >= sm.total ? "k-l" : "k-r"}" style="left:${pos(sm.total)}%">hoy</span>
+          <span class="k-fc ${fc[0].mid >= sm.total ? "k-r" : "k-l"}" style="left:${pos(fc[0].mid)}%">previsto</span></div><div></div></div>${fc
           .map(
             ({ f, lo, mid, hi }) => `<div class="rg-row">
             <div class="rg-l">${horizonLabel(f.h)}<div class="sub">${S.fmt.longDate(S.tradingDays(dataDate, f.h)[f.h - 1])}</div></div>
@@ -193,7 +195,7 @@ export function mountPortal(ctx: PortalContext): void {
       </section>
       <div class="bx-ws-pair">
         <section class="bx-card">${cardHead("Posiciones abiertas")}${positions}</section>
-        <section class="bx-card">${cardHead("Previsión de tu cartera", "", sm.barrels ? '<div class="legend"><span><i class="lg-last"></i>Hoy</span><span><i class="lg-mid"></i>Previsto</span><span><i class="lg-band"></i>Rango probable (80 %)</span></div>' : "")}${expected}</section>
+        <section class="bx-card">${cardHead("Previsión de tu cartera")}${expected}</section>
       </div>
       ${state.trades.length ? `<details class="bx-card fold"><summary>Operaciones<span class="bx-muted">${state.trades.length}</span></summary>${trades}</details>` : ""}`;
   }

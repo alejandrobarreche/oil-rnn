@@ -186,9 +186,13 @@
       (q ? '<div style="margin-top:auto;padding-top:16px">' + badge(better ? 'Mejora a precio constante' : 'Orientativo: no mejora a precio constante', better ? 'up' : 'warn', true) + '</div>' : '');
   }
   /** Barra de intervalo: pista común a todas las tarjetas (min–max), banda 80 %, central y último precio. */
-  function intervalBar(last, f, min, max) {
+  function intervalBar(last, f, min, max, keys) {
     var x = function (v) { return ((v - min) / (max - min) * 100).toFixed(2) + '%'; };
-    return '<svg class="bx-ib" aria-hidden="true"><rect class="bx-ib-track" x="0" y="6" width="100%" height="6" rx="3"/>' +
+    // Con `keys`, las dos marcas llevan su nombre encima; cada nombre crece hacia fuera para no pisarse.
+    var up = f.mid >= last;
+    var names = keys ? '<span class="bx-ib-keys" aria-hidden="true"><span class="' + (up ? 'k-l' : 'k-r') + '" style="left:' + x(last) + '">hoy</span>' +
+      '<span class="k-fc ' + (up ? 'k-r' : 'k-l') + '" style="left:' + x(f.mid) + '">previsto</span></span>' : '';
+    return names + '<svg class="bx-ib" aria-hidden="true"><rect class="bx-ib-track" x="0" y="6" width="100%" height="6" rx="3"/>' +
       '<rect class="bx-ib-band" x="' + x(f.lo) + '" y="4" width="' + ((f.hi - f.lo) / (max - min) * 100).toFixed(2) + '%" height="10" rx="5"/>' +
       '<line class="bx-ib-last" x1="' + x(last) + '" x2="' + x(last) + '" y1="2" y2="16"/>' +
       '<rect class="bx-ib-mid" x="calc(' + x(f.mid) + ' - 2px)" y="2" width="4" height="14" rx="2"/></svg>';
@@ -204,7 +208,7 @@
         '<span class="bx-fcard-big" aria-hidden="true">' + H.short + '</span>' +
         '<span class="bx-fcard-h">' + H.label + ', ' + day(tradingDays(m.ts, f.h)[f.h - 1]) + '</span>' +
         '<span class="bx-fcard-v">' + num(f.mid) + ' $</span>' + chg(f.mid - m.last, f.mid / m.last - 1) +
-        intervalBar(m.last, f, min, max) +
+        intervalBar(m.last, f, min, max, f.h === sel) +
         '<span class="bx-fcard-range"><span>' + num(f.lo) + '</span><span>' + num(f.hi) + '</span></span></button>';
     }).join('') + '</div>';
   }

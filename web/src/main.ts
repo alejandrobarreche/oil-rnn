@@ -90,13 +90,28 @@ function forecastPanel(m: SondaMarket, f: Forecast): Html {
   const { num, longDate } = S.fmt;
   const target = S.tradingDays(m.ts, f.h)[f.h - 1];
   const q = f.quality;
-  const rows: [string, string][] = [["Rango probable (80 %)", `${num(f.lo)} – ${num(f.hi)} $`]];
-  if (q) rows.push(["Error medio", `${num(q.metrics.mae)} $<span>si no cambiara ${num(q.baseline.mae)} $</span>`]);
+  // Rango: banda entre los dos extremos sobre una escala que incluye el precio de hoy
+  const min = Math.min(f.lo, m.last);
+  const max = Math.max(f.hi, m.last);
+  const pos = (v: number) => (((v - min) / (max - min || 1)) * 100).toFixed(2);
+  const range = `<div class="fp-block"><div class="fp-l">Rango probable (80 %)</div>
+    <span class="bx-ib-keys" aria-hidden="true"><span class="${f.mid >= m.last ? "k-l" : "k-r"}" style="left:${pos(m.last)}%">hoy</span><span class="k-fc ${f.mid >= m.last ? "k-r" : "k-l"}" style="left:${pos(f.mid)}%">previsto</span></span>
+    <div class="rg-track" role="img" aria-label="Entre ${num(f.lo)} y ${num(f.hi)} dólares; hoy ${num(m.last)}">
+      <i class="rg-band" style="left:${pos(f.lo)}%;width:${(Number(pos(f.hi)) - Number(pos(f.lo))).toFixed(2)}%"></i>
+      <i class="rg-now" style="left:${pos(m.last)}%"></i><i class="rg-mid" style="left:${pos(f.mid)}%"></i></div>
+    <div class="fp-ends"><span style="left:${pos(f.lo)}%">${num(f.lo)} $</span><span style="left:${pos(f.hi)}%">${num(f.hi)} $</span></div></div>`;
+  // Error medio en test: la red frente a repetir el precio de hoy, dos barras en la misma escala
+  const top = q ? Math.max(q.metrics.mae, q.baseline.mae) : 1;
+  const bar = (name: string, v: number, ref: boolean) =>
+    `<div class="fp-bar${ref ? " is-ref" : ""}"><span>${name}</span><div><i style="width:${((v / top) * 100).toFixed(2)}%"></i></div><b>${num(v)} $</b></div>`;
+  const error = q
+    ? `<div class="fp-block"><div class="fp-l">Error medio en datos que no vio</div>${bar("Con la red", q.metrics.mae, false)}${bar("Sin modelo", q.baseline.mae, true)}</div>`
+    : "";
   return `<div class="ch"><div><div class="ch-t">Previsión a ${label(f.h)}</div><div class="ch-s">Para el ${longDate(target)}, con una red ${f.model ?? ""}</div></div></div>
     <div class="bx-fc-big"><span class="bx-fc-v">${num(f.mid)} $</span>${S.ui.chg(f.mid - m.last, f.mid / m.last - 1)}</div>
     <div style="height:14px"></div>
     ${S.ui.directionMeter(S.probUp(m.last, f))}
-    <dl class="bx-kv" style="margin-top:6px">${rows.map(([k, v]) => `<div><dt>${k}</dt><dd>${v}</dd></div>`).join("")}</dl>`;
+    ${range}${error}`;
 }
 
 /** Fiabilidad de los cuatro modelos en el test, cada cifra junto a su referencia trivial. */

@@ -1198,3 +1198,103 @@
   font-size: 14px;
   line-height: 20px;
 }
+
+/* Marcas con su nombre encima: sustituyen a la leyenda */
+.bx-ib-keys,
+.rg-keys .rg-track {
+  position: relative;
+  display: block;
+  height: 18px;
+  font-size: 13px;
+  line-height: 18px;
+  color: var(--ink);
+}
+.bx-ib-keys {
+  margin-top: 8px;
+}
+.bx-ib-keys + .bx-ib {
+  margin-top: 2px;
+}
+.bx-ib-keys span,
+.rg-keys span {
+  position: absolute;
+  top: 0;
+  white-space: nowrap;
+}
+.k-l {
+  transform: translateX(-100%);
+  padding-right: 6px;
+}
+.k-r {
+  padding-left: 6px;
+}
+.k-fc {
+  color: var(--forecast);
+}
+.rg-keys {
+  padding: 0 0 2px;
+  border-top: 0;
+}
+
+/* Panel de previsión: el rango y el error como gráficos */
+.fp-block {
+  margin-top: var(--space-5);
+}
+.fp-l {
+  margin-bottom: var(--space-2);
+  font-size: 14px;
+  line-height: 20px;
+  color: var(--ink-2);
+}
+.fp-ends {
+  position: relative;
+  height: 22px;
+  font-size: 15px;
+  line-height: 22px;
+  font-variant-numeric: tabular-nums;
+}
+.fp-ends span {
+  position: absolute;
+  white-space: nowrap;
+}
+.fp-ends span:last-child {
+  transform: translateX(-100%);
+}
+.fp-bar {
+  display: grid;
+  grid-template-columns: 88px minmax(0, 1fr) 64px;
+  align-items: center;
+  gap: var(--space-3);
+  height: 28px;
+  font-size: 15px;
+}
+.fp-bar > div {
+  height: 10px;
+  border-radius: var(--radius-pill);
+  background: var(--pill);
+}
+.fp-bar i {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--forecast);
+}
+.fp-bar.is-ref i {
+  background: var(--ink-3);
+}
+.fp-bar.is-ref span {
+  color: var(--ink-2);
+}
+.fp-bar b {
+  text-align: right;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+.fp-block .bx-ib-keys {
+  margin-top: 0;
+}
+/* El nombre de la marca de hoy no se sale por la izquierda cuando la marca está en el borde */
+.fp-block .bx-ib-keys .k-l[style*="left:0.00%"] {
+  transform: none;
+  padding: 0 6px 0 4px;
+}
