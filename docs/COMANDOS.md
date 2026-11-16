@@ -375,7 +375,7 @@ make web-dev
 - **Qué pasarle a Claude**: la salida de `ls` y lo que muestre la consola del navegador si sigue fallando.
 - **Resultado (13/11)**: los cuatro ONNX están en el Mac y su SHA-256 coincide con `manifest.json`; `make web-test` 25/25, con la paridad con Python en los 4 horizontes.
 
-## 17. Windows GPU · 16/11/2026 · ⏳: prueba de red pequeña con tasa de aprendizaje baja (GRU, 5 días)
+## 17. Windows GPU · 16/11/2026 · ✅: prueba de red pequeña con tasa de aprendizaje baja (GRU, 5 días)
 
 - **Pregunta**: ¿se alarga la curva de entrenamiento con una red de 16 unidades, tasa de aprendizaje 0,00003 y hasta 150 épocas? En el run final a 5 días (GRU de 256 unidades, 211.203 parámetros, tasa 0,001) la mejor época fue la 3 de 13.
 - **Qué hace**: validación walk-forward de 4 pliegues con valores sobrescritos; no cambia código ni `configs/config.yaml`. Es una prueba: sus resultados no son definitivos.
@@ -385,4 +385,12 @@ make web-dev
 make cv NAME=mini-gru-h5 ARGS="--set data.horizon=5 --set data.window=20 --set model.cell=gru --set model.hidden_size=16 --set model.num_layers=1 --set model.dropout=0.0 --set train.learning_rate=0.00003 --set train.batch_size=128 --set train.epochs=150 --set train.patience=15"
 ```
 
-- **Qué pasarle a Claude**: el id del run y la salida del comando (época mejor y épocas ejecutadas de cada pliegue).
+- **Resultado (16/11)**: run `20261116-222735_mini-gru-h5_omen-pc`, 4 pliegues. `cv_skill_vs_baseline` −0,7 % y `cv_pinball_skill` −0,6 %; cobertura 70 % (86 % con la corrección conformal). La GRU de 256 unidades de la rejilla tenía −0,1 %, +2,6 % y 78 %.
+- **Sin concluir**: la salida no trae la época mejor ni las épocas ejecutadas de cada pliegue; están en `metrics.json`. Para subir solo este run:
+
+```powershell
+git add runs/20261116-222735_mini-gru-h5_omen-pc artifacts/20261116-222735_mini-gru-h5_omen-pc
+git commit -m "chore(runs): prueba mini-gru-h5 con red pequeña y tasa de aprendizaje baja"
+git pull --rebase
+git push
+```
