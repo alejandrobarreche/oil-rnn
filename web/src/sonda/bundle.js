@@ -178,12 +178,12 @@
       rows.push(['Error medio', num(q.metrics.mae) + ' $<span>sin cambios ' + num(q.baseline.mae) + ' $</span>']);
       rows.push(['Cobertura del intervalo', pct(q.metrics.coverage80) + '<span>objetivo 80 %</span>']);
     }
-    return '<div class="bx-card-t">Previsión · ' + H.label + '</div>' +
+    return '<div class="bx-card-t">Previsión a ' + H.label + '</div>' +
       '<div class="bx-fc-big"><span class="bx-fc-v">' + num(f.mid) + ' $</span>' + chg(f.mid - m.last, f.mid / m.last - 1) + '</div>' +
-      '<div class="bx-fc-when">' + longDate(target) + (f.model ? ' · ' + esc(f.model) : '') + '</div>' +
+      '<div class="bx-fc-when">' + longDate(target) + (f.model ? ', ' + esc(f.model) : '') + '</div>' +
       directionMeter(probUp(m.last, f)) +
       '<dl class="bx-kv" style="margin-top:6px">' + rows.map(function (r) { return '<div><dt>' + r[0] + '</dt><dd>' + r[1] + '</dd></div>'; }).join('') + '</dl>' +
-      (q ? '<div style="margin-top:auto;padding-top:16px">' + badge(better ? 'Mejora a precio constante' : 'Orientativo · no mejora a precio constante', better ? 'up' : 'warn', true) + '</div>' : '');
+      (q ? '<div style="margin-top:auto;padding-top:16px">' + badge(better ? 'Mejora a precio constante' : 'Orientativo: no mejora a precio constante', better ? 'up' : 'warn', true) + '</div>' : '');
   }
   /** Barra de intervalo: pista común a todas las tarjetas (min–max), banda 80 %, central y último precio. */
   function intervalBar(last, f, min, max) {
@@ -202,7 +202,7 @@
       var H = hz(f.h);
       return '<button type="button" class="bx-fcard' + (f.h === sel ? ' is-active' : '') + '" data-h="' + f.h + '" aria-pressed="' + (f.h === sel) + '">' +
         '<span class="bx-fcard-big" aria-hidden="true">' + H.short + '</span>' +
-        '<span class="bx-fcard-h">' + H.label + ' · ' + day(tradingDays(m.ts, f.h)[f.h - 1]) + '</span>' +
+        '<span class="bx-fcard-h">' + H.label + ', ' + day(tradingDays(m.ts, f.h)[f.h - 1]) + '</span>' +
         '<span class="bx-fcard-v">' + num(f.mid) + ' $</span>' + chg(f.mid - m.last, f.mid / m.last - 1) +
         intervalBar(m.last, f, min, max) +
         '<span class="bx-fcard-range"><span>' + num(f.lo) + '</span><span>' + num(f.hi) + '</span></span></button>';

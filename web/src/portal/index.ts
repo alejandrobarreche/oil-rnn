@@ -57,7 +57,7 @@ const signedPct = (v: number) => S.fmt.signed(v * 100, 2, " %");
 const nowIso = () => new Date().toISOString();
 const stamp = (iso: string) => {
   const d = new Date(iso);
-  return `${S.fmt.longDate(iso.slice(0, 10))} · ${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
+  return `${S.fmt.longDate(iso.slice(0, 10))}, ${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
 };
 const kv = (rows: [string, string][]) =>
   `<dl class="bx-kv">${rows.map(([k, v]) => `<div><dt>${esc(k)}</dt><dd>${esc(v)}</dd></div>`).join("")}</dl>`;
@@ -124,7 +124,7 @@ export function mountPortal(ctx: PortalContext): void {
     const sm = summary(state, price);
     const rows: [string, string][] = [
       ["Efectivo", money(sm.cash)],
-      ["Posición en Brent", sm.barrels ? `${S.fmt.num(sm.barrels, 2)} barriles · ${money(sm.value)}` : "Ninguna"],
+      ["Posición en Brent", sm.barrels ? `${S.fmt.num(sm.barrels, 2)} barriles, ${money(sm.value)}` : "Ninguna"],
     ];
     return `${cardHead("Tu cartera", `Empezaste con ${money(state.initial)}`, '<a class="link" href="#/cartera">Ver detalle</a>')}
       <div class="mini-total"><span class="mini-v">${money(sm.total)}</span>${S.ui.chg(sm.total - state.initial, sm.ret)}</div>
@@ -188,7 +188,7 @@ export function mountPortal(ctx: PortalContext): void {
           <div class="pf-total"><span class="pf-v">${money(sm.total)}</span>${S.ui.chg(sm.total - state.initial, sm.ret)}</div></div>
         <div class="pf-split">
           <div class="pf-bar" role="img" aria-label="Efectivo ${money(sm.cash)}, Brent ${money(sm.value)}"><i style="width:${((sm.value / sm.total) * 100).toFixed(2)}%"></i></div>
-          <div class="pf-keys"><span><b>${money(sm.cash)}</b> en efectivo</span><span><i></i><b>${money(sm.value)}</b> en Brent${sm.barrels ? ` · ${S.fmt.num(sm.barrels, 2)} barriles` : ""}</span></div>
+          <div class="pf-keys"><span><b>${money(sm.cash)}</b> en efectivo</span><span><i></i><b>${money(sm.value)}</b> en Brent${sm.barrels ? `, ${S.fmt.num(sm.barrels, 2)} barriles` : ""}</span></div>
         </div>
       </section>
       <div class="bx-ws-pair">
@@ -321,7 +321,7 @@ export function mountPortal(ctx: PortalContext): void {
         ? "Introduce un importe"
         : amount > state.cash
           ? `Supera el efectivo disponible (${money(state.cash)})`
-          : `${S.fmt.num(amount / price, 2)} barriles a ${money(price)} · quedan ${money(state.cash - amount)}`;
+          : `Compras ${S.fmt.num(amount / price, 2)} barriles y te quedan ${money(state.cash - amount)} en efectivo.`;
     openModal({
       title: "Abrir posición",
       body: `<p class="lead">Compras barriles de Brent al último precio publicado: ${money(price)} el ${S.fmt.longDate(dataDate)}.</p>
@@ -480,7 +480,7 @@ export function mountPortal(ctx: PortalContext): void {
     openModal({
       title: KIND_LABEL[r.kind],
       wide: true,
-      body: `<div class="res-l">${esc(r.title)} · ${stamp(r.at)}</div>${twoCols(r.params, r.result)}`,
+      body: `<div class="res-l">${esc(r.title)}, ${stamp(r.at)}</div>${twoCols(r.params, r.result)}`,
     });
   }
 

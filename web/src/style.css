@@ -1011,10 +1011,10 @@
   --ink: #eef0f2;
   --ink-2: #b4c2c8;
   --ink-3: #8fa3ab;
-  --forecast: #f2b84b;
-  --forecast-band: #f2b84b33;
-  --forecast-zone: #f2b84b0a;
-  --on-forecast: #15110a;
+  --forecast: #8db8ff;
+  --forecast-band: #8db8ff2e;
+  --forecast-zone: #8db8ff0a;
+  --on-forecast: #06131b;
   --series-wti: #76d3c6;
   --draw: #76d3c6;
   --tip-bg: #152d36;
@@ -1094,15 +1094,8 @@
 .bx-pill:active {
   transform: scale(0.97);
 }
-.btn.btn-primary {
-  box-shadow: 0 1px 2px #00000029;
-}
-.btn.btn-primary:hover {
-  box-shadow: 0 8px 20px -8px var(--forecast);
-}
 .btn.btn-primary:active {
-  box-shadow: 0 1px 2px #00000029;
-  filter: brightness(0.96);
+  filter: brightness(0.94);
 }
 .btn:focus-visible,
 .wallet:focus-visible,
@@ -1110,20 +1103,98 @@
 .subtabs a:focus-visible,
 .home:focus-visible,
 .fold summary:focus-visible {
-  outline: 2px solid var(--forecast);
+  outline: 2px solid var(--ink-2);
   outline-offset: 2px;
   border-radius: var(--radius-pill);
 }
+/* Foco sobrio en toda la página: contorno neutro, sin halo de color */
+.bx-page :focus-visible {
+  outline-color: var(--ink-2);
+}
+.field input:focus-visible {
+  outline: none;
+  border-color: var(--ink-2);
+}
 .wallet.is-bumped {
-  animation: wallet-bump 700ms var(--ease-out);
+  animation: wallet-bump 320ms var(--ease-out);
 }
 @keyframes wallet-bump {
   0% {
-    box-shadow: 0 0 0 0 var(--forecast);
-    transform: scale(1.06);
+    transform: scale(1.05);
   }
   100% {
-    box-shadow: 0 0 0 10px transparent;
     transform: scale(1);
   }
+}
+
+/* Escala: texto y controles más grandes en toda la página */
+.bx-page {
+  font-size: 16px;
+  line-height: 24px;
+}
+.mark {
+  font-size: 18px;
+}
+.ch-t,
+.bx-card-t,
+.fold summary {
+  font-size: 18px;
+  line-height: 26px;
+}
+.ch-s,
+.legend,
+.pf-keys,
+.bx-readout {
+  font-size: 14px;
+  line-height: 20px;
+}
+.tbl .sub,
+.rg .sub,
+.rg-axis .rg-track {
+  font-size: 13px;
+  line-height: 18px;
+}
+.subtabs a {
+  font-size: 17px;
+}
+.btn {
+  height: 44px;
+  padding: 0 20px;
+  font-size: 15px;
+}
+.btn-sm {
+  height: 36px;
+  padding: 0 14px;
+  font-size: 14px;
+}
+.btn-icon {
+  width: 44px;
+  padding: 0;
+}
+.wallet,
+.asof {
+  height: 44px;
+  font-size: 15px;
+}
+.bx-pill {
+  font-size: 15px;
+}
+.bx-pill-sm {
+  height: 36px;
+  font-size: 14px;
+}
+.bx-axis text,
+.bx-now-l,
+.bx-tag text {
+  font-size: 13px;
+}
+.hint,
+.lead,
+.foot,
+.field span,
+.res-l,
+.rel .r,
+.rel .model {
+  font-size: 14px;
+  line-height: 20px;
 }

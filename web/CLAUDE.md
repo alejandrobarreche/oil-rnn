@@ -18,6 +18,9 @@ Web del proyecto: Sonda (panel de previsión, Vite + TypeScript + ONNX Runtime W
 - No pongas explicaciones en `title`: en móvil no se ven. Escríbelas a la vista o quítalas.
 - No repitas en un subtítulo lo que ya dice el título o la cabecera de la tabla; quítalo.
 - No añadas escenas ni objetos 3D sin dato del proyecto detrás; usa un gráfico o elimina la escena.
+- No uses «·» como separador en ningún texto; usa una coma, «a», «de» o dos frases.
+- No uses dorado ni ámbar en Sonda, ni halos o brillos de color en botones, campos o foco; el foco es un contorno neutro.
+- No bajes de 13 px en ningún texto ni de 44 px de alto en los botones de acción.
 
 ## Comandos
 
@@ -43,7 +46,7 @@ make web-build     # Compilación a web/dist (lo ejecuta el usuario)
 - **Skills**: antes de tocar la interfaz, carga las que apliquen si están instaladas: `scroll-craft`, `threejs-*` y `gsap-scrolltrigger` (página del Brent), `dataviz` (gráficos), `laws-of-ux` y `emil-skills:emil-design-eng` (Sonda).
 - **Tipografía (Sonda y página del Brent)**: Archivo para marca, títulos y cifras; Geist para texto. Nada de serif editoriales (Newsreader, Source Serif, Instrument Serif).
 - **Página del Brent, color**: un solo acento (`--sc-accent`); `--sheen` para sucesos y datos de entrada; `--persist` para la persistencia. Nada de beige.
-- **Sonda, tema oscuro**: usa la paleta de la página del Brent (fondo `#0b1a21`, acento ámbar `#f2b84b`) y es el tema por defecto; se define al final de `src/style.css`, sobre los tokens de `src/sonda/`.
+- **Sonda, tema oscuro**: fondo petróleo de la página del Brent (`#0b1a21`) con acento azul frío (`#8db8ff`); es el tema por defecto y se define al final de `src/style.css`, sobre los tokens de `src/sonda/`.
 - **Controles**: todo botón responde al pasar, al pulsar (`scale(0.97)`) y al foco de teclado; nunca `transition: all`.
 - **Página del Brent, composición**: sin columnas de texto, recuadros decorativos ni notas pequeñas en gris.
 - **Títulos**: sustantivos («La red», «El resultado»); nunca preguntas ni frases de acción.

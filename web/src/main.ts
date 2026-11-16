@@ -44,11 +44,11 @@ const LABELS: Record<string, string> = {
   usd_per_eur: "Dólares por euro",
   cny_per_usd: "Yuanes por dólar",
   vix: "Volatilidad bursátil (VIX)",
-  wti_fut_open: "Futuro WTI · apertura",
-  wti_fut_high: "Futuro WTI · máximo",
-  wti_fut_low: "Futuro WTI · mínimo",
-  wti_fut_close: "Futuro WTI · cierre",
-  wti_fut_volume: "Futuro WTI · volumen",
+  wti_fut_open: "Apertura del futuro WTI",
+  wti_fut_high: "Máximo del futuro WTI",
+  wti_fut_low: "Mínimo del futuro WTI",
+  wti_fut_close: "Cierre del futuro WTI",
+  wti_fut_volume: "Volumen del futuro WTI",
   copper: "Cobre",
   gold: "Oro",
   dollar_index: "Índice del dólar",
@@ -92,7 +92,7 @@ function forecastPanel(m: SondaMarket, f: Forecast): Html {
   const q = f.quality;
   const rows: [string, string][] = [["Rango probable (80 %)", `${num(f.lo)} – ${num(f.hi)} $`]];
   if (q) rows.push(["Error medio", `${num(q.metrics.mae)} $<span>si no cambiara ${num(q.baseline.mae)} $</span>`]);
-  return `<div class="ch"><div><div class="ch-t">Previsión a ${label(f.h)}</div><div class="ch-s">Para el ${longDate(target)} · modelo ${f.model ?? ""}</div></div></div>
+  return `<div class="ch"><div><div class="ch-t">Previsión a ${label(f.h)}</div><div class="ch-s">Para el ${longDate(target)}, con una red ${f.model ?? ""}</div></div></div>
     <div class="bx-fc-big"><span class="bx-fc-v">${num(f.mid)} $</span>${S.ui.chg(f.mid - m.last, f.mid / m.last - 1)}</div>
     <div style="height:14px"></div>
     ${S.ui.directionMeter(S.probUp(m.last, f))}
@@ -171,7 +171,7 @@ async function init() {
     if (f.quality) {
       const [a, b] = f.quality.period;
       $("perf-s").textContent = `Comprobada con datos que los modelos no vieron al entrenar (${S.fmt.monthYear(a)} – ${S.fmt.monthYear(b)}). En verde, lo que mejora a la referencia`;
-      $("bt-t").textContent = `Real frente a previsto · ${label(sel)}`;
+      $("bt-t").textContent = `Real frente a previsto a ${label(sel)}`;
       S.charts.backtest($("bt"), { points: f.quality.backtest, height: 190 });
     }
     mountChart(false);
