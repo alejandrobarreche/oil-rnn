@@ -41,8 +41,10 @@ make web-build     # Compilación a web/dist (lo ejecuta el usuario)
 ## Convenciones
 
 - **Skills**: antes de tocar la interfaz, carga las que apliquen si están instaladas: `scroll-craft`, `threejs-*` y `gsap-scrolltrigger` (página del Brent), `dataviz` (gráficos), `laws-of-ux` y `emil-skills:emil-design-eng` (Sonda).
-- **Página del Brent, tipografía**: Archivo para títulos y cifras, Geist para texto. Nada de serif editoriales (Newsreader, Source Serif, Instrument Serif).
+- **Tipografía (Sonda y página del Brent)**: Archivo para marca, títulos y cifras; Geist para texto. Nada de serif editoriales (Newsreader, Source Serif, Instrument Serif).
 - **Página del Brent, color**: un solo acento (`--sc-accent`); `--sheen` para sucesos y datos de entrada; `--persist` para la persistencia. Nada de beige.
+- **Sonda, tema oscuro**: usa la paleta de la página del Brent (fondo `#0b1a21`, acento ámbar `#f2b84b`) y es el tema por defecto; se define al final de `src/style.css`, sobre los tokens de `src/sonda/`.
+- **Controles**: todo botón responde al pasar, al pulsar (`scale(0.97)`) y al foco de teclado; nunca `transition: all`.
 - **Página del Brent, composición**: sin columnas de texto, recuadros decorativos ni notas pequeñas en gris.
 - **Títulos**: sustantivos («La red», «El resultado»); nunca preguntas ni frases de acción.
 - **Fórmulas**: con KaTeX; nunca como texto de código.

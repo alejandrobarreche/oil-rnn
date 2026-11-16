@@ -57,7 +57,7 @@ export interface ChartState {
 }
 
 export interface SondaApi {
-  theme: { init(): void; bind(root?: ParentNode): void };
+  theme: { init(): void; set(t: "light" | "dark", persist?: boolean): void; bind(root?: ParentNode): void };
   fmt: {
     num(v: number, dp?: number): string;
     signed(v: number, dp?: number, suffix?: string): string;

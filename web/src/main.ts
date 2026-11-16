@@ -90,21 +90,13 @@ function forecastPanel(m: SondaMarket, f: Forecast): Html {
   const { num, longDate } = S.fmt;
   const target = S.tradingDays(m.ts, f.h)[f.h - 1];
   const q = f.quality;
-  const rows: [string, string, string][] = [
-    ["Precio hoy", `${num(m.last)} $`, `Último cierre publicado, ${longDate(m.ts)}`],
-    ["Rango probable (80 %)", `${num(f.lo)} – ${num(f.hi)} $`, "8 de cada 10 veces el precio debería quedar dentro"],
-  ];
-  if (q)
-    rows.push([
-      "Error medio",
-      `${num(q.metrics.mae)} $<span>si no cambiara ${num(q.baseline.mae)} $</span>`,
-      "Cuánto se equivocó de media en datos que no vio, frente a suponer que el precio no cambia",
-    ]);
+  const rows: [string, string][] = [["Rango probable (80 %)", `${num(f.lo)} – ${num(f.hi)} $`]];
+  if (q) rows.push(["Error medio", `${num(q.metrics.mae)} $<span>si no cambiara ${num(q.baseline.mae)} $</span>`]);
   return `<div class="ch"><div><div class="ch-t">Previsión a ${label(f.h)}</div><div class="ch-s">Para el ${longDate(target)} · modelo ${f.model ?? ""}</div></div></div>
     <div class="bx-fc-big"><span class="bx-fc-v">${num(f.mid)} $</span>${S.ui.chg(f.mid - m.last, f.mid / m.last - 1)}</div>
     <div style="height:14px"></div>
     ${S.ui.directionMeter(S.probUp(m.last, f))}
-    <dl class="bx-kv" style="margin-top:6px">${rows.map(([k, v, t]) => `<div><dt title="${t}">${k}</dt><dd>${v}</dd></div>`).join("")}</dl>`;
+    <dl class="bx-kv" style="margin-top:6px">${rows.map(([k, v]) => `<div><dt>${k}</dt><dd>${v}</dd></div>`).join("")}</dl>`;
 }
 
 /** Fiabilidad de los cuatro modelos en el test, cada cifra junto a su referencia trivial. */
@@ -136,6 +128,8 @@ function reliability(fs: Forecast[], sel: number): Html {
 // ── página ───────────────────────────────────────────────────
 async function init() {
   S.theme.init();
+  // Sin preferencia guardada se abre en oscuro: el mismo mundo que la página del Brent
+  if (!localStorage.getItem("sonda-theme")) S.theme.set("dark");
   S.theme.bind(document);
   $("logo").innerHTML = S.ui.logo({ size: 26 });
   $("theme").innerHTML = S.ui.themeToggle();

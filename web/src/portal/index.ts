@@ -42,14 +42,11 @@ const HASH: Record<string, Route> = {
 };
 export const WALLET_ICON =
   '<svg class="bx-icon" width="18" height="18" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12.5 5V3.5a1 1 0 0 0-1-1h-8a1.5 1.5 0 0 0 0 3h10a1 1 0 0 1 1 1v6a1 1 0 0 1-1 1h-10A1.5 1.5 0 0 1 2 12V4"/><circle cx="11" cy="9.25" r=".75" fill="currentColor"/></svg>';
-const BACK_ICON =
-  '<svg class="bx-icon" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 3.5 5.5 8l4.5 4.5"/></svg>';
-/** Cabecera de la cartera: volver a Mercado, pestañas internas y acciones de la pestaña. */
+/** Cabecera de la cartera: pestañas internas y acciones de la pestaña. A Mercado se vuelve por la marca. */
 const walletHead = (active: Route, actions = "") => {
   const tab = (r: Route, href: string, label: string) =>
     `<a href="${href}" class="${r === active ? "is-active" : ""}"${r === active ? ' aria-current="page"' : ""}>${label}</a>`;
-  return `<a class="back" href="#/mercado">${BACK_ICON}Mercado</a>
-    <div class="wh"><nav class="subtabs" aria-label="Mi cartera">${tab("cartera", "#/cartera", "Posiciones")}${tab("calculadora", "#/cartera/calculadora", "Calculadora")}${tab("historial", "#/cartera/historial", "Historial")}</nav>
+  return `<div class="wh"><nav class="subtabs" aria-label="Mi cartera">${tab("cartera", "#/cartera", "Posiciones")}${tab("calculadora", "#/cartera/calculadora", "Calculadora")}${tab("historial", "#/cartera/historial", "Historial")}</nav>
     <span class="bx-spacer"></span>${actions}</div>`;
 };
 
@@ -110,7 +107,16 @@ export function mountPortal(ctx: PortalContext): void {
   function balanceChip() {
     const sm = summary(state, price);
     const w = $("wallet");
-    w.innerHTML = `${WALLET_ICON}<span>${money(sm.total)}</span>`;
+    const shown = money(sm.total);
+    const changed = w.dataset.total !== undefined && w.dataset.total !== shown;
+    w.dataset.total = shown;
+    w.innerHTML = `${WALLET_ICON}<span>${shown}</span>`;
+    if (changed) {
+      // Realce breve: confirma que la operación ha cambiado el saldo
+      w.classList.remove("is-bumped");
+      void w.offsetWidth;
+      w.classList.add("is-bumped");
+    }
     w.classList.toggle("is-active", route !== "mercado");
   }
 

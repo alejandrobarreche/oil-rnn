@@ -12,11 +12,6 @@
   padding: 24px clamp(16px, 2.5vw, 48px) 40px;
 }
 
-.bx-top .title {
-  display: flex;
-  align-items: baseline;
-  gap: 10px;
-}
 .asof {
   cursor: default;
 }
@@ -716,10 +711,6 @@
   margin-bottom: 4px;
   border-bottom: 1px solid var(--line);
 }
-.bx-top .title h1 {
-  font-size: 24px;
-  line-height: 30px;
-}
 .asof {
   height: 36px;
   padding: 0 14px;
@@ -960,18 +951,6 @@
 .wallet.is-active {
   box-shadow: inset 0 0 0 1.5px var(--forecast);
 }
-.back {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  align-self: flex-start;
-  color: var(--ink-3);
-  text-decoration: none;
-  font-size: 13px;
-}
-.back:hover {
-  color: var(--ink);
-}
 .wh {
   display: flex;
   align-items: center;
@@ -1008,5 +987,143 @@
 @media (max-width: 640px) {
   .wallet span {
     display: none;
+  }
+}
+
+/* ── Mismo mundo que la página del Brent ─────────────────────
+   Tipografía (Archivo para marca, títulos y cifras; Geist para texto), tema oscuro con su
+   paleta y respuesta de los controles al pulsarlos. */
+:root,
+:root[data-theme] {
+  --font-sans: "Geist", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-display: "Archivo", system-ui, sans-serif;
+}
+:root[data-theme="dark"] {
+  --bg: #0b1a21;
+  --bg-halo: #123039;
+  --surface: #10232b;
+  --surface-2: #152d36;
+  --surface-hover: #14292f;
+  --pill: #1a343d;
+  --pill-active: #24434d;
+  --line: #1c3640;
+  --line-strong: #2c4a55;
+  --ink: #eef0f2;
+  --ink-2: #b4c2c8;
+  --ink-3: #8fa3ab;
+  --forecast: #f2b84b;
+  --forecast-band: #f2b84b33;
+  --forecast-zone: #f2b84b0a;
+  --on-forecast: #15110a;
+  --series-wti: #76d3c6;
+  --draw: #76d3c6;
+  --tip-bg: #152d36;
+}
+::selection {
+  background: var(--forecast);
+  color: var(--on-forecast);
+}
+
+/* Marca: la misma que abre la página del Brent */
+.home {
+  gap: 16px;
+}
+.mark {
+  margin: 0;
+  padding-left: 16px;
+  border-left: 1px solid var(--line-strong);
+  font-family: var(--font-display);
+  font-stretch: 125%;
+  font-size: 15px;
+  line-height: 24px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+.mark i {
+  font-style: normal;
+  color: var(--forecast);
+}
+
+/* Títulos y cifras con la letra de la marca */
+.ch-t,
+.bx-card-t,
+.sec,
+.fold summary,
+.modal-h h2 {
+  font-family: var(--font-display);
+  font-stretch: 112%;
+  font-weight: 640;
+  letter-spacing: 0;
+}
+.bx-ph-v,
+.bx-fc-big .bx-fc-v,
+.pf-v,
+.mini-v,
+.res-v {
+  font-family: var(--font-display);
+  font-stretch: 100%;
+  font-weight: 640;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+}
+.tbl td,
+.bx-kv dd,
+.rg-v {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Cabecera del gráfico: solo el precio; la previsión y su rango están en el panel de al lado */
+.chart-h .bx-ph-b {
+  display: none;
+}
+
+/* Controles: respuesta al pasar, al pulsar y al llegar con el teclado */
+.btn,
+.wallet,
+.bx-pill,
+.linkbtn {
+  transition:
+    background-color var(--dur-fast) var(--ease-out),
+    color var(--dur-fast) var(--ease-out),
+    box-shadow var(--dur-base) var(--ease-out),
+    transform var(--dur-fast) var(--ease-out),
+    filter var(--dur-fast) var(--ease-out);
+}
+.btn:active,
+.wallet:active,
+.bx-pill:active {
+  transform: scale(0.97);
+}
+.btn.btn-primary {
+  box-shadow: 0 1px 2px #00000029;
+}
+.btn.btn-primary:hover {
+  box-shadow: 0 8px 20px -8px var(--forecast);
+}
+.btn.btn-primary:active {
+  box-shadow: 0 1px 2px #00000029;
+  filter: brightness(0.96);
+}
+.btn:focus-visible,
+.wallet:focus-visible,
+.bx-pill:focus-visible,
+.subtabs a:focus-visible,
+.home:focus-visible,
+.fold summary:focus-visible {
+  outline: 2px solid var(--forecast);
+  outline-offset: 2px;
+  border-radius: var(--radius-pill);
+}
+.wallet.is-bumped {
+  animation: wallet-bump 700ms var(--ease-out);
+}
+@keyframes wallet-bump {
+  0% {
+    box-shadow: 0 0 0 0 var(--forecast);
+    transform: scale(1.06);
+  }
+  100% {
+    box-shadow: 0 0 0 10px transparent;
+    transform: scale(1);
   }
 }
