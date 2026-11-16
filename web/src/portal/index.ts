@@ -110,7 +110,7 @@ export function mountPortal(ctx: PortalContext): void {
     const shown = money(sm.total);
     const changed = w.dataset.total !== undefined && w.dataset.total !== shown;
     w.dataset.total = shown;
-    w.innerHTML = `${WALLET_ICON}<span>${shown}</span>`;
+    w.innerHTML = `${WALLET_ICON}<span>Simulador</span>`;
     if (changed) {
       // Realce breve: confirma que la operación ha cambiado el saldo
       w.classList.remove("is-bumped");
@@ -118,18 +118,6 @@ export function mountPortal(ctx: PortalContext): void {
       w.classList.add("is-bumped");
     }
     w.classList.toggle("is-active", route !== "mercado");
-  }
-
-  function miniCard(): Html {
-    const sm = summary(state, price);
-    const rows: [string, string][] = [
-      ["Efectivo", money(sm.cash)],
-      ["Posición en Brent", sm.barrels ? `${S.fmt.num(sm.barrels, 2)} barriles, ${money(sm.value)}` : "Ninguna"],
-    ];
-    return `${cardHead("Tu cartera", `Empezaste con ${money(state.initial)}`, '<a class="link" href="#/cartera">Ver detalle</a>')}
-      <div class="mini-total"><span class="mini-v">${money(sm.total)}</span>${S.ui.chg(sm.total - state.initial, sm.ret)}</div>
-      ${kv(rows)}
-      <div class="mini-actions">${btn("Solicitar evaluación", "evaluate")}${btn("Abrir posición", "open-position", "primary")}</div>`;
   }
 
   // ── Mi cartera ─────────────────────────────────────────────
@@ -516,7 +504,6 @@ export function mountPortal(ctx: PortalContext): void {
   // ── rutas y eventos ───────────────────────────────────────
   function renderAll() {
     balanceChip();
-    $("mini").innerHTML = miniCard();
     if (route === "cartera") renderCartera();
     if (route === "calculadora") renderCalc();
     if (route === "historial") renderHistorial();

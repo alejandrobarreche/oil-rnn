@@ -999,25 +999,27 @@
   --font-display: "Archivo", system-ui, sans-serif;
 }
 :root[data-theme="dark"] {
-  --bg: #0b1a21;
-  --bg-halo: #123039;
-  --surface: #10232b;
-  --surface-2: #152d36;
-  --surface-hover: #14292f;
-  --pill: #1a343d;
-  --pill-active: #24434d;
-  --line: #1c3640;
-  --line-strong: #2c4a55;
-  --ink: #eef0f2;
-  --ink-2: #b4c2c8;
-  --ink-3: #8fa3ab;
-  --forecast: #8db8ff;
-  --forecast-band: #8db8ff2e;
-  --forecast-zone: #8db8ff0a;
-  --on-forecast: #06131b;
-  --series-wti: #76d3c6;
-  --draw: #76d3c6;
-  --tip-bg: #152d36;
+  /* Paleta del crudo: negro neutro sin tinte azul, tinta cálida y la previsión en el violeta
+     del brillo tornasolado de la gota. Verde y rojo quedan solo para sube y baja. */
+  --bg: #0c0c0e;
+  --bg-halo: #17161b;
+  --surface: #141417;
+  --surface-2: #1a1a1e;
+  --surface-hover: #1d1d22;
+  --pill: #232328;
+  --pill-active: #303036;
+  --line: #24242a;
+  --line-strong: #36363d;
+  --ink: #f4f1ec;
+  --ink-2: #c9c4bc;
+  --ink-3: #9a958d;
+  --forecast: #b9a2ff;
+  --forecast-band: #b9a2ff2e;
+  --forecast-zone: #b9a2ff0a;
+  --on-forecast: #140f22;
+  --series-wti: #8fd3e8;
+  --draw: #8fd3e8;
+  --tip-bg: #1d1d22;
 }
 ::selection {
   background: var(--forecast);
@@ -1403,4 +1405,77 @@
   margin: var(--space-2) 0 0;
   font-size: 15px;
   line-height: 22px;
+}
+
+/* ── Menos terminal de trading ───────────────────────────── */
+/* El gráfico principal enseña histórico, sucesos y previsión: sin herramientas de dibujo ni indicadores */
+.chart-card .bx-menu-wrap {
+  display: none;
+}
+
+/* La previsión en palabras: tres respuestas cortas, cada una con su etiqueta */
+.words {
+  margin-top: var(--space-3);
+}
+.wd {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-4) 40px;
+  margin: 0;
+}
+@media (max-width: 860px) {
+  .wd {
+    grid-template-columns: 1fr;
+  }
+}
+.wd dt {
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: var(--ink-3);
+  margin-bottom: 4px;
+}
+.wd dd {
+  margin: 0;
+  color: var(--ink);
+  line-height: 1.5;
+  text-wrap: pretty;
+}
+.wd b {
+  font-family: var(--font-display);
+  font-weight: 650;
+  font-variant-numeric: tabular-nums;
+}
+.wd-fc {
+  color: var(--forecast);
+}
+.wd-tag {
+  display: inline-block;
+  padding: 2px 10px;
+  margin-right: 4px;
+  border-radius: 999px;
+  font-size: 14px;
+  font-weight: 600;
+}
+.wd-tag.is-up {
+  color: var(--up-text);
+  background: var(--up-tint);
+}
+.wd-tag.is-flat {
+  color: var(--ink);
+  background: var(--pill);
+}
+.wd-tag.is-down {
+  color: var(--down-text);
+  background: var(--down-tint);
+}
+
+/* Tarjetas de horizonte sin la sigla gigante de fondo: la fecha ya dice el plazo */
+.bx-fcard-big {
+  display: none;
+}
+
+/* El panel de previsión ocupa toda la columna: sin hueco bajo él junto al gráfico */
+.side .bx-ws-panel {
+  flex: 1;
 }

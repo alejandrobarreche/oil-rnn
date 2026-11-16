@@ -56,8 +56,15 @@ const LABELS: Record<string, string> = {
   brent_vol21: "Volatilidad del Brent (21 días)",
 };
 const CELL: Record<string, string> = { rnn: "RNN simple", lstm: "LSTM", gru: "GRU" };
-// Rango del gráfico según el horizonte elegido (Workspace: 1S → 3M, 1M → 6M, 3M → 1A, 1A → 5A)
-const RANGE: Record<number, string> = { 5: "3M", 21: "6M", 63: "1A", 252: "5A" };
+// Rango del gráfico según el horizonte: desde 1 año, para que se vean los sucesos del ciclo económico
+const RANGE: Record<number, string> = { 5: "1A", 21: "1A", 63: "5A", 252: "Todo" };
+// Qué puede invalidar la previsión en cada plazo (contexto del enunciado: geopolítica y OPEP+)
+const RISKS: Record<number, string> = {
+  5: "Una noticia brusca: un recorte de la OPEP+, un ataque a una ruta de petroleros o un dato económico inesperado.",
+  21: "Una decisión de la OPEP+ o un cambio rápido en la tensión geopolítica.",
+  63: "Un cambio de producción de la OPEP+, un conflicto o un giro en la economía mundial.",
+  252: "Una recesión, una guerra o un cambio duradero en la oferta: a un año casi todo puede cambiar.",
+};
 // Alto fijo alrededor del lienzo: fila de lectura y controles (40), hueco y relleno de la tarjeta
 const CHART_CHROME = 40 + 6 + 20 + 24;
 
@@ -127,6 +134,29 @@ function forecastPanel(m: SondaMarket, f: Forecast): Html {
     ${prob}${range}${error}`;
 }
 
+/** Fiabilidad de un plazo frente a decir «seguirá igual», por el error medio en test (±2 % = empate). */
+function verdictOf(q: Quality): { tone: "up" | "flat" | "down"; label: string; use: string } {
+  const gap = q.metrics.mae / q.baseline.mae - 1;
+  if (gap <= -0.02)
+    return { tone: "up", label: "Mejor que no usar modelo", use: "Aporta información; aun así, fíate más del rango que de la cifra." };
+  if (gap < 0.02)
+    return { tone: "flat", label: "Igual que no usar modelo", use: "No añade nada a suponer que el precio seguirá igual." };
+  return { tone: "down", label: "Peor que no usar modelo", use: "Tómala como orientación, no como un precio seguro." };
+}
+
+/** La previsión en palabras: qué significa, qué fiabilidad tiene y qué puede invalidarla. */
+function inWords(m: SondaMarket, f: Forecast): Html {
+  const { num, longDate } = S.fmt;
+  const target = S.tradingDays(m.ts, f.h)[f.h - 1];
+  const v = f.quality ? verdictOf(f.quality) : null;
+  return `<div class="ch"><div><div class="ch-t">La previsión a ${label(f.h)}, en palabras</div></div></div>
+    <dl class="wd">
+      <div><dt>Qué significa</dt><dd>Lo más probable es que el Brent valga unos <b class="wd-fc">${num(f.mid, 0)} $</b> el ${longDate(target)}. En 8 de cada 10 casos acabaría entre <b>${num(f.lo, 0)}</b> y <b>${num(f.hi, 0)} $</b>.</dd></div>
+      ${v ? `<div><dt>Fiabilidad</dt><dd><span class="wd-tag is-${v.tone}">${v.label}</span> ${v.use}</dd></div>` : ""}
+      <div><dt>Qué puede invalidarla</dt><dd>${RISKS[f.h] ?? ""} La red solo ve datos de mercado hasta el ${longDate(m.ts)}; no lee noticias.</dd></div>
+    </dl>`;
+}
+
 /** Fiabilidad de los cuatro modelos en el test, cada cifra junto a su referencia trivial. */
 function reliability(fs: Forecast[], sel: number): Html {
   const { num, pct } = S.fmt;
@@ -193,6 +223,7 @@ async function init() {
     $("ph").innerHTML = S.ui.priceHeader(market, f);
     $("panel").innerHTML = forecastPanel(market, f);
     mountDrop($("drop"), S.probUp(market.last, f));
+    $("words").innerHTML = inWords(market, f);
     $("cards").innerHTML = S.ui.forecastCards(market, forecasts, sel);
     $("metrics").innerHTML = reliability(forecasts, sel);
     $("drv-t").textContent = `Qué mira el modelo a ${label(sel)}`;
