@@ -267,6 +267,7 @@
   /* ── gráfico interactivo del precio ────────────── */
   var RANGES = [['1M', 21], ['3M', 63], ['6M', 126], ['1A', 252], ['5A', 1260], ['Todo', Infinity]];
   var INDICATORS = [['ma20', 'Media 20 días'], ['ma50', 'Media 50 días'], ['vol', 'Banda de volatilidad'], ['wti', 'WTI']];
+  var drawOn = false; // las herramientas de dibujo se muestran solo si se piden en «Opciones»
   var TOOLS = [['cursor', 'Cursor: arrastra para moverte, rueda para zoom'], ['trend', 'Línea de tendencia: dos clics'], ['level', 'Nivel horizontal: un clic'], ['measure', 'Medir: arrastra entre dos puntos para ver la variación']];
 
   /**
@@ -297,7 +298,7 @@
     var allComputed = path.length > 0 && path.every(function (p) { return p.computed; });
 
     host.innerHTML =
-      '<div class="bx-chart bx-root">' +
+      '<div class="bx-chart bx-root' + (drawOn ? ' is-drawing' : '') + '">' +
         '<div class="bx-chart-tools" role="toolbar" aria-label="Herramientas del gráfico">' +
           TOOLS.map(function (t) { return '<button type="button" class="bx-tool" data-tool="' + t[0] + '" title="' + t[1] + '" aria-label="' + t[1] + '">' + icon(t[0], 18) + '</button>'; }).join('') +
           '<i class="bx-tool-sep"></i>' +
@@ -306,15 +307,18 @@
         '</div>' +
         '<div class="bx-chart-main">' +
           '<div class="bx-chart-top"><div class="bx-readout" aria-live="polite"></div><div class="bx-spacer"></div>' +
-            '<div class="bx-menu-wrap"><button type="button" class="bx-pill bx-pill-sm bx-pill-solid" data-act="menu" aria-expanded="false">' + icon('indicators') + 'Indicadores' + icon('chevron', 14) + '</button>' +
+            '<div class="bx-menu-wrap"><button type="button" class="bx-pill bx-pill-sm bx-pill-solid" data-act="menu" aria-expanded="false">' + icon('indicators') + 'Opciones' + icon('chevron', 14) + '</button>' +
             '<div class="bx-menu" role="menu">' + INDICATORS.filter(function (x) { return x[0] !== 'wti' || hasWti; }).map(function (x) {
               return '<label><input type="checkbox" data-ind="' + x[0] + '"' + (st.ind[x[0]] ? ' checked' : '') + '><i class="bx-key bx-key-' + x[0] + '"></i>' + x[1] + '</label>';
-            }).join('') + '</div></div>' +
+            }).join('') +
+              '<div class="bx-menu-g"><span>Tipo</span><div class="bx-pills" data-g="kind">' + [['line', 'Línea'], ['candle', 'Velas']].map(function (k) { return pill(k[1], { small: true, data: 'data-kind="' + k[0] + '"' }); }).join('') + '</div></div>' +
+              '<div class="bx-menu-g"><span>Escala</span><div class="bx-pills" data-g="scale">' + [['lin', 'Lineal'], ['log', 'Log'], ['pct', '%']].map(function (s) { return pill(s[1], { small: true, data: 'data-scale="' + s[0] + '"' }); }).join('') + '</div></div>' +
+              '<label><input type="checkbox" data-opt="draw"' + (drawOn ? ' checked' : '') + '>Herramientas de dibujo</label>' +
+            '</div></div>' +
           '</div>' +
           '<div class="bx-chart-plot" tabindex="0" aria-label="Gráfico del precio. Flechas para moverte, más y menos para zoom."></div>' +
           '<div class="bx-chart-bottom"><div class="bx-pills" data-g="range">' + RANGES.map(function (r) { return pill(r[0], { small: true, data: 'data-range="' + r[0] + '"' }); }).join('') + '</div>' +
-            '<div class="bx-spacer"></div><div class="bx-pills" data-g="kind">' + [['line', 'Línea'], ['candle', 'Velas']].map(function (k) { return pill(k[1], { small: true, data: 'data-kind="' + k[0] + '"' }); }).join('') + '</div>' +
-            '<i class="bx-pills-sep"></i><div class="bx-pills" data-g="scale">' + [['lin', 'Lineal'], ['log', 'Log'], ['pct', '%']].map(function (s) { return pill(s[1], { small: true, data: 'data-scale="' + s[0] + '"' }); }).join('') + '</div></div>' +
+            '</div>' +
         '</div>' +
       '</div>';
     var $ = function (s) { return host.querySelector(s); };
@@ -360,9 +364,24 @@
       X = function (i) { return (i - st.a) / (st.b - st.a) * (W - R); };
       Y = function (v) { return T + (1 - (tf(v) - y0) / (y1 - y0)) * ph; };
     }
+    /** Tramo suavizado con una cúbica monótona (Fritsch-Butland): pasa por todos los puntos y no los rebasa. */
+    function smoothD(P) {
+      var n = P.length, i, d = 'M' + P[0][0].toFixed(1) + ' ' + P[0][1].toFixed(1);
+      if (n < 3) { for (i = 1; i < n; i++) d += 'L' + P[i][0].toFixed(1) + ' ' + P[i][1].toFixed(1); return d; }
+      var dx = [], m = [], t = [];
+      for (i = 0; i < n - 1; i++) { dx[i] = P[i + 1][0] - P[i][0]; m[i] = (P[i + 1][1] - P[i][1]) / (dx[i] || 1); }
+      t[0] = m[0]; t[n - 1] = m[n - 2];
+      for (i = 1; i < n - 1; i++) t[i] = m[i - 1] * m[i] <= 0 ? 0 : 3 * (dx[i - 1] + dx[i]) / ((2 * dx[i] + dx[i - 1]) / m[i - 1] + (dx[i] + 2 * dx[i - 1]) / m[i]);
+      for (i = 0; i < n - 1; i++) {
+        var h = dx[i] / 3;
+        d += 'C' + (P[i][0] + h).toFixed(1) + ' ' + (P[i][1] + t[i] * h).toFixed(1) + ' ' + (P[i + 1][0] - h).toFixed(1) + ' ' + (P[i + 1][1] - t[i + 1] * h).toFixed(1) + ' ' + P[i + 1][0].toFixed(1) + ' ' + P[i + 1][1].toFixed(1);
+      }
+      return d;
+    }
     function line(ids, arr, cls) {
-      var d = '', pen = false;
-      ids.forEach(function (i) { var v = arr[i]; if (v == null) { pen = false; return; } d += (pen ? 'L' : 'M') + X(i).toFixed(1) + ' ' + Y(v).toFixed(1); pen = true; });
+      var segs = [], cur = null;
+      ids.forEach(function (i) { var v = arr[i]; if (v == null) { cur = null; return; } if (!cur) { cur = []; segs.push(cur); } cur.push([X(i), Y(v)]); });
+      var d = segs.map(smoothD).join('');
       return d ? el('path', { d: d, class: cls }) : null;
     }
     function area(ids, lo, hi, cls) {
@@ -429,9 +448,17 @@
         var fi = [iNow].concat(path.map(function (_, k) { return nh + k; }));
         var lo = [], hi = [], mid = [];
         fi.forEach(function (i) { if (i === iNow) { lo[i] = hi[i] = mid[i] = close[iNow]; } else { var p = path[i - nh]; lo[i] = p.lo80; hi[i] = p.hi80; mid[i] = p.mid; } });
-        var bnd = area(fi, lo, hi, 'bx-band'); if (bnd) g.appendChild(bnd);
+        // Mancha: capas anidadas entre la mediana y los extremos del 80 %. Solo los cuantiles 0,1, 0,5 y 0,9
+        // salen de la red; la gradación interior es una ayuda visual, no una densidad calculada.
+        var stain = el('g', { class: 'bx-stain' }), LAYERS = 6;
+        for (var s = 1; s <= LAYERS; s++) {
+          var lo2 = [], hi2 = [];
+          fi.forEach(function (i) { lo2[i] = mid[i] - (mid[i] - lo[i]) * s / LAYERS; hi2[i] = mid[i] + (hi[i] - mid[i]) * s / LAYERS; });
+          var bnd = area(fi, lo2, hi2, 'bx-band'); if (bnd) stain.appendChild(bnd);
+        }
+        g.appendChild(stain);
         var ml = line(fi, mid, allComputed ? 'bx-l-fc' : 'bx-l-fc-est'); if (ml) g.appendChild(ml);
-        path.forEach(function (p, k) { if (p.computed) g.appendChild(el('circle', { class: 'bx-dot-fc', cx: X(nh + k), cy: Y(p.mid), r: 4.5 })); });
+        path.forEach(function (p, k) { if (p.computed) g.appendChild(el('circle', { class: 'bx-dot-fc', cx: X(nh + k), cy: Y(p.mid), r: 3.5 })); });
       }
       // precio real
       if (st.kind === 'candle') candles(g, plotW);
@@ -440,6 +467,7 @@
         if (la) {
           var real = ids.filter(function (i) { return i <= iNow && close[i] != null; });
           if (real.length > 1) g.appendChild(el('path', { class: 'bx-area', fill: 'url(#' + clipId + 'g)', d: la.getAttribute('d') + 'L' + X(real[real.length - 1]).toFixed(1) + ' ' + (T + ph) + 'L' + X(real[0]).toFixed(1) + ' ' + (T + ph) + 'Z' }));
+          g.appendChild(el('path', { class: 'bx-l-sheen', d: la.getAttribute('d'), transform: 'translate(0 5)' }));
           g.appendChild(la);
         }
       }
@@ -615,7 +643,13 @@
       else if (t.getAttribute('data-act') === 'reset') setRange(st.range || '3M');
       else if (t.getAttribute('data-act') === 'menu') { var open = !menu.classList.contains('is-open'); menu.classList.toggle('is-open', open); menuBtn.setAttribute('aria-expanded', open); }
     });
-    menu.addEventListener('change', function (e) { var k = e.target.getAttribute('data-ind'); if (k) { st.ind[k] = e.target.checked; sync(); } });
+    menu.addEventListener('change', function (e) {
+      var k = e.target.getAttribute('data-ind'); if (k) { st.ind[k] = e.target.checked; sync(); }
+      if (e.target.getAttribute('data-opt') === 'draw') {
+        drawOn = e.target.checked; host.querySelector('.bx-chart').classList.toggle('is-drawing', drawOn);
+        if (!drawOn) { st.tool = 'cursor'; st.pending = null; sync(); }
+      }
+    });
     document.addEventListener('click', function (e) { if (!host.contains(e.target) || !e.target.closest('.bx-menu-wrap')) { menu.classList.remove('is-open'); menuBtn.setAttribute('aria-expanded', 'false'); } });
     if (window.ResizeObserver) new ResizeObserver(schedule).observe(plot);
 

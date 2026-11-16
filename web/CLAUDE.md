@@ -55,6 +55,6 @@ make web-build     # Compilación a web/dist (lo ejecuta el usuario)
 
 ## Cuidado con
 
-- **`src/sonda/`**: es una copia del sistema de diseño; los estilos propios van en `src/style.css`.
+- **`src/sonda/`**: nació como copia del sistema de diseño, pero `bundle.js` lleva cambios propios (curva suavizada, previsión como mancha, menú «Opciones», textos); no lo sustituyas por el original. Los estilos propios van en `src/style.css`.
 - **`public/brent/data.json` y `data2.json`**: ningún comando los regenera; si cambian los runs, quedan desfasados.
 - **Librerías de la página del Brent**: se cargan desde jsDelivr con versión fija (three 0.170.0, d3 7.9.0, katex 0.16.11); no cambies una versión sin probar la página entera.

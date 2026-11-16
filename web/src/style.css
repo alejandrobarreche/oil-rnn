@@ -1298,3 +1298,66 @@
   transform: none;
   padding: 0 6px 0 4px;
 }
+
+/* ── Gráfico principal: el precio como superficie de crudo ─── */
+.bx-chart:not(.is-drawing) {
+  grid-template-columns: minmax(0, 1fr);
+}
+.bx-chart:not(.is-drawing) .bx-chart-tools {
+  display: none;
+}
+.bx-l-actual {
+  stroke-width: 2;
+}
+.bx-l-sheen {
+  fill: none;
+  stroke: var(--ink);
+  stroke-opacity: 0.09;
+  stroke-width: 7;
+  stroke-linejoin: round;
+}
+.bx-area-top {
+  stop-color: var(--forecast);
+  stop-opacity: 0.22;
+}
+.bx-area-bottom {
+  stop-color: var(--bg);
+  stop-opacity: 0.55;
+}
+.bx-zone {
+  fill: transparent;
+}
+.bx-grid line {
+  stroke-opacity: 0.55;
+}
+/* Previsión como mancha: más densa en el centro, se pierde hacia los bordes del rango */
+.bx-stain {
+  filter: blur(1.5px);
+}
+.bx-stain .bx-band {
+  fill: var(--forecast);
+  fill-opacity: 0.075;
+}
+.bx-l-fc,
+.bx-l-fc-est {
+  stroke-width: 1.75;
+  stroke-dasharray: none;
+  opacity: 1;
+}
+/* Menú de opciones del gráfico */
+.bx-menu-g {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: 6px 10px;
+}
+.bx-menu-g > span {
+  color: var(--ink-2);
+}
+.bx-menu label {
+  font-size: 15px;
+}
+.bx-menu {
+  min-width: 300px;
+}
