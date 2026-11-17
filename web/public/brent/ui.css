@@ -1,0 +1,100 @@
+/* Controles y navegación de «Cómo se hizo». Misma forma que los del producto (src/product.css):
+   pestañas de 8 px de radio, control segmentado, interruptores con muestra de color y botones que
+   responden al pasar, al pulsar (scale 0,97) y al foco; aquí con la paleta oscura del estudio. */
+
+@property --glow { syntax: "<color>"; inherits: true; initial-value: rgba(118, 211, 198, 0); }
+
+:root { --ease-out: cubic-bezier(0.23, 1, 0.32, 1); --fill: color-mix(in srgb, var(--sc-ink) 8%, transparent); }
+html { background: var(--sc-canvas); }
+body { margin: 0; background: transparent; color: var(--sc-ink); font-family: var(--sc-font-text); -webkit-font-smoothing: antialiased; }
+
+/* Fondo con ambiente: un brillo suave del color de la pestaña que se funde al cambiar, más grano */
+.ambient { position: fixed; inset: 0; z-index: 0; pointer-events: none;
+  background:
+    radial-gradient(60vw 50vh at 78% 18%, var(--glow), transparent 70%),
+    radial-gradient(50vw 40vh at 8% 92%, color-mix(in srgb, var(--glow) 55%, transparent), transparent 70%);
+  transition: --glow 700ms var(--ease-out); }
+html[data-tab="mercado"], html[data-tab="datos"] { --glow: rgba(118, 211, 198, 0.075); }
+html[data-tab="redes"], html[data-tab="resultado"] { --glow: rgba(185, 162, 255, 0.08); }
+html[data-tab="validacion"] { --glow: rgba(242, 139, 130, 0.055); }
+html[data-tab="inicio"] { --glow: rgba(185, 162, 255, 0); }
+
+/* Cabecera */
+.bar { position: fixed; inset: 0 0 auto 0; z-index: 10; height: 64px; display: flex; align-items: center; gap: 16px;
+  padding: 0 var(--sc-gutter); view-transition-name: bar;
+  background: linear-gradient(to bottom, color-mix(in srgb, var(--sc-canvas) 92%, transparent) 60%, transparent); }
+.logo { font-family: var(--sc-font-display); font-stretch: 125%; font-weight: 900; letter-spacing: 0.03em; line-height: 1;
+  text-decoration: none; color: var(--sc-ink); font-size: 22px; }
+.logo span { color: var(--sc-accent); }
+.tabs { display: flex; align-items: center; gap: 4px; margin: 0 auto; padding: 4px; border-radius: 12px;
+  background: color-mix(in srgb, var(--sc-surface) 70%, transparent); border: 1px solid var(--hair);
+  -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); }
+.tab { position: relative; display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 14px; border-radius: 8px;
+  font-size: 15px; font-weight: 550; color: var(--sc-ink-soft); text-decoration: none; -webkit-tap-highlight-color: transparent;
+  transition: color 160ms ease, transform 120ms var(--ease-out); }
+.tab svg { width: 18px; height: 18px; flex: none; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round;
+  position: relative; z-index: 1; transition: transform 260ms var(--ease-out); }
+.tab span { position: relative; z-index: 1; }
+.tab .ind { position: absolute; inset: 0; border-radius: 8px; background: color-mix(in srgb, var(--sc-ink) 11%, transparent); opacity: 0; }
+.tab[aria-current="page"] { color: var(--sc-ink); }
+.tab[aria-current="page"] .ind { opacity: 1; view-transition-name: tabind; }
+.tab[aria-current="page"] svg { transform: translateY(-1px) scale(1.06); }
+@media (hover: hover) and (pointer: fine) { .tab:hover { color: var(--sc-ink); } }
+.tab:active { transform: scale(0.97); }
+.tab:focus-visible, .btn:focus-visible, .seg button:focus-visible, .tog:focus-visible, .chip:focus-visible, .fig:focus-visible, .logo:focus-visible {
+  outline: 2px solid var(--sc-ink); outline-offset: 2px; }
+
+/* Botones */
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 44px; padding: 0 18px; border-radius: 8px;
+  border: 1px solid var(--hair); background: transparent; color: var(--sc-ink); font: 600 15px var(--sc-font-text); text-decoration: none;
+  cursor: pointer; white-space: nowrap; transition: background-color 160ms ease, border-color 160ms ease, transform 120ms var(--ease-out); }
+.btn svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round;
+  transition: transform 200ms var(--ease-out); }
+.btn.primary { background: var(--sc-ink); color: var(--sc-canvas); border-color: var(--sc-ink); }
+@media (hover: hover) and (pointer: fine) {
+  .btn:hover { border-color: color-mix(in srgb, var(--sc-ink) 34%, transparent); }
+  .btn.primary:hover { background: color-mix(in srgb, var(--sc-ink) 86%, var(--sc-canvas)); }
+  .btn:hover svg.go { transform: translateX(3px); }
+}
+.btn:active { transform: scale(0.97); }
+
+/* Control segmentado e interruptores, como la barra de herramientas del producto */
+.tools { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.seg { display: inline-flex; padding: 3px; border-radius: 10px; background: var(--fill); }
+.seg button { min-height: 38px; padding: 0 12px; border: 0; border-radius: 7px; background: transparent; color: var(--sc-ink-soft);
+  font: 600 14px var(--sc-font-text); cursor: pointer; transition: background-color 150ms ease, color 150ms ease, transform 120ms var(--ease-out); }
+.seg button[aria-pressed="true"] { background: color-mix(in srgb, var(--sc-ink) 14%, var(--sc-surface)); color: var(--sc-ink); box-shadow: 0 1px 2px rgba(0, 0, 0, .4); }
+.tog { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 12px; border-radius: 8px; border: 1px solid var(--hair);
+  background: transparent; color: var(--sc-ink-soft); font: 600 14px var(--sc-font-text); cursor: pointer;
+  transition: background-color 150ms ease, color 150ms ease, border-color 150ms ease, transform 120ms var(--ease-out); }
+.tog[aria-pressed="true"] { color: var(--sc-ink); background: var(--fill); border-color: transparent; }
+.tog .sw { width: 10px; height: 10px; border-radius: 50%; background: currentColor; opacity: .35; transition: opacity 150ms ease; }
+.tog[aria-pressed="true"] .sw { opacity: 1; }
+@media (hover: hover) and (pointer: fine) { .seg button:hover, .tog:hover { color: var(--sc-ink); } }
+.seg button:active, .tog:active { transform: scale(0.97); }
+
+/* Transición entre pestañas: la vista sale hacia un lado y la nueva entra desde el otro */
+::view-transition-old(page), ::view-transition-new(page) { animation-duration: 260ms; animation-timing-function: var(--ease-out); }
+::view-transition-old(page) { animation-name: vt-out; }
+::view-transition-new(page) { animation-name: vt-in; }
+::view-transition-group(tabind) { animation-duration: 300ms; animation-timing-function: var(--ease-out); }
+::view-transition-old(root), ::view-transition-new(root) { animation-duration: 260ms; }
+@keyframes vt-out { to { opacity: 0; transform: translateX(calc(var(--dir, 1) * -24px)); } }
+@keyframes vt-in { from { opacity: 0; transform: translateX(calc(var(--dir, 1) * 24px)); } }
+html[data-dir="-1"] { --dir: -1; }
+
+/* Móvil: las pestañas bajan a una barra inferior con icono y texto */
+@media (max-width: 860px) {
+  .bar { height: 56px; background: var(--sc-canvas); }
+  .tabs { position: fixed; z-index: 10; left: 0; right: 0; bottom: 0; margin: 0; gap: 0; justify-content: space-around; border-radius: 0;
+    border: 0; border-top: 1px solid var(--hair); padding: 4px 4px calc(4px + env(safe-area-inset-bottom));
+    background: color-mix(in srgb, var(--sc-canvas) 92%, transparent); view-transition-name: tabs; }
+  .tab { flex: 1 1 0; flex-direction: column; justify-content: center; gap: 2px; min-height: 54px; padding: 4px 2px; font-size: 13px; }
+  .tab svg { width: 20px; height: 20px; }
+  .bar .btn { min-height: 40px; padding: 0 14px; margin-left: auto; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-group(*), ::view-transition-old(*), ::view-transition-new(*) { animation: none !important; }
+  .ambient { transition: none; }
+}

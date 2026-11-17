@@ -1,6 +1,6 @@
 # web
 
-Web del proyecto en dos partes: el producto (previsión del Brent a 4 plazos en una pantalla y un clic, Vite + TypeScript + ONNX Runtime Web) y el estudio, «El precio del Brent» (desarrollo del trabajo con scroll, Three.js, D3 y KaTeX). Las reglas generales están en el `CLAUDE.md` de la raíz.
+Web del proyecto en dos partes: el producto (previsión del Brent a 4 plazos en una pantalla y un clic, Vite + TypeScript + ONNX Runtime Web) y el estudio, «El precio del Brent» (desarrollo del trabajo en seis pestañas con scroll corto, Three.js, D3 y KaTeX). Las reglas generales están en el `CLAUDE.md` de la raíz.
 
 ## Reglas clave
 
@@ -43,7 +43,7 @@ make web-build     # Compilación a web/dist (lo ejecuta el usuario)
 | `src/model.ts` | Réplica del preprocesado de `features.py` e inferencia ONNX |
 | `src/icons.ts` | Iconos SVG (flecha) |
 | `src/product.css` | Estilos del producto, solo tema claro |
-| `public/brent/` | «El precio del Brent»: `index.html`, `scrollcraft.css`, `scrollcraft.js` y sus datos; los capítulos se marcan con `data-chapter` y de ahí salen el botón de índice, su panel y el raíl lateral |
+| `public/brent/` | «El precio del Brent»: seis pestañas (`section[data-tab]`: Inicio, Mercado, Datos, Redes, Validación, Resultado), cada una con 4 a 6 pasos y el gráfico fijo; `nav.js` (rutas `#/pestaña` y transición entre vistas), `ui.css` (pestañas, botones, control segmentado y fondo de ambiente), `map.js` (mapa de los mercados de entrada), `arch.js` (celda RNN, LSTM y GRU interactiva), `scrollcraft.css` (tokens) y sus datos |
 
 ## Convenciones
 
@@ -53,7 +53,7 @@ make web-build     # Compilación a web/dist (lo ejecuta el usuario)
 - **Producto, color**: el violeta `#6a4cf0` marca la previsión (franja y lo probable); la tinta, el precio real. «Cómo se hizo» va con el fondo oscuro del estudio para que se vea que es otro sitio.
 - **Producto, movimiento**: muelles críticamente amortiguados que parten del valor en pantalla; iconos que se animan al pulsar; un solo momento de entrada; todo respeta `prefers-reduced-motion`.
 - **Controles**: todo botón responde al pasar, al pulsar (`scale(0.97)`) y al foco de teclado; nunca `transition: all`.
-- **Página del Brent, composición**: sin columnas de texto, recuadros decorativos ni notas pequeñas en gris.
+- **Página del Brent, composición**: sin titulares por escena (la pestaña es el título); cada paso, una cifra o frase clave y como mucho 25 palabras; sin columnas de texto, recuadros decorativos ni notas pequeñas en gris.
 - **Títulos**: sustantivos («La red», «El resultado»); nunca preguntas ni frases de acción.
 - **Fórmulas**: con KaTeX; nunca como texto de código.
 - **Enlaces**: siempre relativos; la web se sirve desde una subcarpeta.
@@ -63,4 +63,4 @@ make web-build     # Compilación a web/dist (lo ejecuta el usuario)
 - **Eje futuro**: los cuatro plazos van en huecos iguales (no es tiempo lineal); cada hueco lleva su etiqueta y el panel su fecha.
 - **Ajustar a la ventana**: `.app` mide `100dvh` y el gráfico se redibuja con su tamaño real (`ResizeObserver`); no le pongas alturas mínimas en escritorio.
 - **`public/brent/data.json` y `data2.json`**: ningún comando los regenera; si cambian los runs, quedan desfasados.
-- **Librerías**: se cargan desde jsDelivr con versión fija (three 0.170.0 en el estudio y en la gota del producto, por import dinámico; d3 7.9.0 y katex 0.16.11, solo en el estudio); no cambies una versión sin probar la página.
+- **Librerías**: se cargan desde jsDelivr con versión fija (three 0.170.0 en el estudio y en la gota del producto, por import dinámico; d3 7.9.0, katex 0.16.11, topojson-client 3.1.0 y world-atlas 2.0.2, solo en el estudio); no cambies una versión sin probar la página.
