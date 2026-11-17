@@ -515,3 +515,30 @@ git push
 - **Qué pasarle a Claude**: un aviso cuando esté subido. Después Claude cambia `web.models` en `configs/config.yaml` y `docs/DECISIONES.md`, y te da `make export-web` y `make web-release`.
 
 - **Resultado (17/11)**: ejecutado en el Mac (sin el Windows disponible), con los mismos comandos en zsh. Run `20261117-094043_final-gru16-h5_mac`, subido en `047fe16`. Test (955 pronósticos, 2023–2026): `skill_vs_baseline` −1,8 % (GRU-256 publicada: −3,6 %), `pinball_skill` +0,0 % (GRU-256: −1,4 %), cobertura 78 % frente a 79 % de la persistencia, acierto de dirección 48,6 % frente a 50,2 %. Diebold-Mariano con error cuadrático: p = 0,32, no significativo. No mejora a la persistencia; la elección se hizo en validación y no se revisa por esta cifra.
+
+## 22. Mac · 17/11/2026 · ⏳: publicar la GRU-16 a 5 días en la web (Release `model-v2`)
+
+- **Pregunta**: ninguna; publica el cambio de modelo decidido en la entrada 20 y evaluado en la 21.
+- **Qué hace**: exporta a ONNX solo el modelo de 5 días (en el Mac solo están sus pesos) y reutiliza los ONNX de 21, 63 y 252 días que ya tienes de `model-v1`; regenera los datos de la web y de la página explicativa, comprueba la paridad Python ↔ TypeScript y publica los cuatro ONNX como Release `model-v2`.
+- **Duración estimada**: 1–2 min, más la subida de la Release.
+- **Comprobado por Claude**: `make test` y `make lint` pasan; los tres ONNX reutilizados coinciden en run y hash con `manifest.json`; los modelos finales que leen el explorador, los cuadernos y la página explicativa son los de `web.models`. La exportación no se ha ejecutado.
+
+```bash
+conda activate oil-rnn
+make export-web RELEASE=model-v2 HORIZONS=5
+make export-explain
+make web-test
+gh auth status || gh auth login
+make web-release RELEASE=model-v2
+```
+
+- **Para subirlo**:
+
+```bash
+git add web/public/model/manifest.json web/public/model/examples.json web/public/data
+git commit -m "feat(web): GRU-16 como modelo a 5 días (Release model-v2)"
+git pull --rebase
+git push
+```
+
+- **Qué pasarle a Claude**: la salida de `make export-web` y `make web-test`, y un aviso cuando esté subido.
