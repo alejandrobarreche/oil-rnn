@@ -546,7 +546,7 @@ git push
 
 - **Resultado (17/11)**: todo sin errores, según el usuario. Subido en `bf1037b`: `manifest.json` y `quality.json` usan la Release `model-v2`, con la GRU-16 (ventana 20) a 5 días y los tres modelos anteriores; la Release `model-v2` tiene los cuatro ONNX.
 
-## 23. Mac · 17/11/2026 · ⏳: volver a ejecutar los cuadernos 02 a 05 con la GRU-16 a 5 días
+## 23. Mac · 17/11/2026 · ✅: volver a ejecutar los cuadernos 02 a 05 con la GRU-16 a 5 días
 
 - **Por qué**: las salidas guardadas son de cuando el modelo a 5 días era la GRU-256. Ahora los cuadernos toman los modelos finales de `web.models` y buscan su run de cv en cualquier rejilla (commit `5699c5b`).
 - **Comprobado por Claude**: `make test` pasa con el cambio, y las funciones que usan los cuadernos devuelven los cuatro modelos publicados y su run de cv. Los cuadernos no se han ejecutado.
@@ -559,3 +559,4 @@ python -m jupyter nbconvert --to notebook --execute --inplace notebooks/02_proce
 
 - **Qué revisar**: en 04, la tabla de modelos finales con la GRU de 16 unidades a 5 días; en 05, la fila de 5 días de la tabla de test (RMSE 5,46 frente a 5,36 de la persistencia).
 - **Qué pasarle a Claude**: un aviso cuando termine (o el error, si alguna celda falla). Claude hace el commit.
+- **Resultado (17/11)**: cuadernos 01–05 ejecutados por el usuario, sin errores y con salida en todas las celdas; el código no cambia. 04 muestra la GRU-16 (1.683 parámetros) a 5 días y 05 su fila de test (RMSE 5,46 frente a 5,36, −1,8 %).
