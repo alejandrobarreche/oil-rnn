@@ -237,7 +237,7 @@ def chosen_cv_run(horizon: int) -> pd.Series:
     """El run de make cv (semilla 42) con la configuración del modelo final de ese horizonte."""
     table = runs()
     final = table[(table["prefix"] == "final") & (table["horizon"] == horizon)].iloc[0]
-    return ex.same_config(table[table["prefix"] == "g1"], final).iloc[0]
+    return ex.cv_run_of(final, table)
 
 
 def describe(run: pd.Series) -> str:

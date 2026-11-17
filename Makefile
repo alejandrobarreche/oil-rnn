@@ -59,7 +59,7 @@ help:
 	@echo "  make pack RUN=id      empaqueta un run con sus pesos, y make unpack ZIP=archivo lo restaura"
 	@echo "  make mlflow-ui        interfaz de MLflow"
 	@echo "== Web =="
-	@echo "  make export-web       exporta los modelos de web.models (configs) a ONNX para web/"
+	@echo "  make export-web       exporta los modelos de web.models (configs) a ONNX para web/; HORIZONS=5 solo esos"
 	@echo "  make export-explain   datos de la pagina explicativa (web/public/data/explain.json)"
 	@echo "  make readme-figures   figuras del README en docs/img/ (claro y oscuro)"
 	@echo "  make web-dev          servidor de desarrollo en http://localhost:5173"
@@ -165,7 +165,7 @@ explore: check-env
 
 # ── Web ────────────────────────────────────────────────────
 export-web: check-env
-	$(PYTHON) -m $(PKG).export_web --release $(RELEASE)
+	$(PYTHON) -m $(PKG).export_web --release $(RELEASE) $(if $(HORIZONS),--horizons $(HORIZONS),)
 
 export-explain: check-env
 	$(PYTHON) -m $(PKG).export_web --explain

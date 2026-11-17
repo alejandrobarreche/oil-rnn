@@ -146,15 +146,39 @@ def test_misma_configuracion():
     row = {
         "cell": "gru",
         "horizon": 5,
+        "window": 60,
         "hidden_size": 64,
         "num_layers": 2,
         "dropout": 0.3,
         "learning_rate": 1e-4,
     }
     runs = pd.DataFrame(
-        [row | {"seed": 42}, row | {"seed": 7}, row | {"cell": "rnn"}, row | {"dropout": 0.0}]
+        [
+            row | {"seed": 42},
+            row | {"seed": 7},
+            row | {"cell": "rnn"},
+            row | {"dropout": 0.0},
+            row | {"window": 20},
+        ]
     )
     assert explore.same_config(runs, row)["seed"].dropna().tolist() == [42, 7]
+
+
+def test_run_de_cv_de_un_modelo_final():
+    row = {"cell": "gru", "horizon": 5, "window": 20, "hidden_size": 16, "num_layers": 1}
+    row |= {"dropout": 0.0, "learning_rate": 1e-4}
+    runs = pd.DataFrame(
+        [
+            row | {"run_id": "final", "prefix": "final", "seed": 42},
+            row | {"run_id": "s7", "prefix": "m1s7", "seed": 7},
+            row | {"run_id": "w60", "prefix": "m2", "seed": 42, "window": 60},
+            row | {"run_id": "mini", "prefix": None, "seed": 42},
+            row | {"run_id": "m1", "prefix": "m1", "seed": 42},
+        ]
+    )
+    assert explore.cv_run_of(runs.iloc[0], runs)["run_id"] == "m1"
+    with pytest.raises(ValueError):
+        explore.cv_run_of(runs.iloc[0], runs[runs["run_id"] != "m1"])
 
 
 def test_error_y_cobertura_por_año():
@@ -190,9 +214,9 @@ def test_ingenuo_con_futuros(monkeypatch):
         }
     )
     run = {"cell": "gru", "horizon": h, "hidden_size": 8, "num_layers": 1, "dropout": 0.0}
-    run |= {"learning_rate": 1e-3, "seed": 42}
-    finals = pd.DataFrame([run | {"run_id": "final-run"}])
-    grid = pd.DataFrame([run | {"run_id": "cv-run"}])
+    run |= {"learning_rate": 1e-3, "seed": 42, "window": 5}
+    finals = pd.DataFrame([run | {"run_id": "final-run", "prefix": "final"}])
+    grid = pd.DataFrame([run | {"run_id": "cv-run", "prefix": "g1"}])
     monkeypatch.setattr(
         explore, "runs_table", lambda prefix=None: finals if prefix == "final" else grid
     )

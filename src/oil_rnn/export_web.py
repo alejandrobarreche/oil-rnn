@@ -2,6 +2,7 @@
 
     make export-web                     # con la Release por defecto
     make export-web RELEASE=model-v2
+    make export-web RELEASE=model-v2 HORIZONS=5   # solo h=5; el resto se reutiliza ya exportado
     make export-explain                 # solo web/public/data/explain.json (página explicativa)
 
 Genera en web/public/model/:
@@ -209,14 +210,32 @@ def quality(run_id: str, horizon: int) -> dict:
     }
 
 
-def export(cfg: dict, release: str) -> dict:
+def reuse_model(h: int, run_id: str, release: str) -> tuple[dict, list[dict]]:
+    """Entrada del manifiesto y ejemplos ya exportados de un horizonte que no se vuelve a
+    exportar (sus pesos no están en esta máquina). Comprueba que son del mismo run y que el
+    ONNX es el mismo archivo; solo cambia la Release en la que se publica."""
+    manifest = json.loads((WEB_MODEL_DIR / "manifest.json").read_text(encoding="utf-8"))
+    entry = next((m for m in manifest["models"] if m["horizon"] == h), None)
+    if entry is None or entry["run_id"] != run_id:
+        raise ValueError(f"h={h}: {relative(WEB_MODEL_DIR)} no tiene {run_id}; expórtalo")
+    if file_sha256(WEB_MODEL_DIR / entry["model_file"]) != entry["sha256"]:
+        raise ValueError(f"h={h}: {entry['model_file']} no coincide con el hash del manifiesto")
+    examples = json.loads((WEB_MODEL_DIR / "examples.json").read_text(encoding="utf-8"))
+    return entry | {"release": release}, examples[str(h)]
+
+
+def export(cfg: dict, release: str, horizons: set[int] | None = None) -> dict:
+    """Exporta web.models. Con `horizons`, solo esos; los demás se reutilizan (reuse_model)."""
     require(cfg, "web.models")
     runs = {int(h): str(r) for h, r in cfg["web"]["models"].items()}
     WEB_MODEL_DIR.mkdir(parents=True, exist_ok=True)
     WEB_DATA_DIR.mkdir(parents=True, exist_ok=True)
     models, examples = [], {}
     for h, run_id in sorted(runs.items()):
-        entry, ex = export_model(run_id, release)
+        if horizons is None or h in horizons:
+            entry, ex = export_model(run_id, release)
+        else:
+            entry, ex = reuse_model(h, run_id, release)
         if entry["horizon"] != h:
             raise ValueError(f"web.models[{h}] apunta a un run de horizonte {entry['horizon']}")
         models.append(entry)
@@ -238,6 +257,12 @@ def main(argv: list[str] | None = None) -> None:
     parser = argparse.ArgumentParser(description="Exporta los modelos de web.models para la web")
     parser.add_argument("--release", default="model-v1", help="Release de GitHub de los modelos")
     parser.add_argument(
+        "--horizons",
+        type=lambda s: {int(h) for h in s.split(",")},
+        default=None,
+        help="Solo estos horizontes (5,21…); el resto se reutiliza de web/public/model",
+    )
+    parser.add_argument(
         "--explain", action="store_true", help="Solo los datos de la página explicativa"
     )
     args = parser.parse_args(argv)
@@ -250,7 +275,7 @@ def main(argv: list[str] | None = None) -> None:
         print(f"{relative(WEB_EXPLAIN_FILE)}: {len(text) / 1024:.0f} KB")
         return
     sys.stdout.reconfigure(encoding="utf-8")  # torch.onnx escribe emojis; cp1252 fallaría
-    manifest = export(load_config(), args.release)
+    manifest = export(load_config(), args.release, args.horizons)
     for m in manifest["models"]:
         print(f"h={m['horizon']:<4} {m['cell']:<5} {m['run_id']} → {m['model_file']}")
     print(f"Exportado a {relative(WEB_MODEL_DIR)} y {relative(WEB_DATA_DIR)}")

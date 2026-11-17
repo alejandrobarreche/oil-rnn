@@ -8,6 +8,7 @@ que el entrenamiento (data.py, features.py) y lee los resultados que ya están g
     window_at         la ventana que ve la red un día concreto y lo que tiene que predecir
     fold_table        fechas de ajuste, parada y evaluación de cada pliegue y del modelo final
     runs_table        una fila por run con su configuración y sus métricas
+    cv_run_of         el run de make cv que corresponde a un modelo final
     cell_trace        una RNN, LSTM o GRU paso a paso en NumPy (estados y puertas)
     significance      Diebold-Mariano de cada modelo final frente a la persistencia en test
     futures_naive     persistencia actualizada con el futuro del Brent, en los bloques de make cv
@@ -198,13 +199,21 @@ def parse_run_name(name: str) -> dict:
 def runs_table(prefix: str | None = None) -> pd.DataFrame:
     """Una fila por run terminado: configuración (del config.yaml guardado en el run) y las
     métricas que no son de un pliegue (cv_*, test_*, stop_*, n_params…). `prefix` filtra por
-    el comienzo del nombre: g1 (rejilla), g1s7, g1s123 (semillas) o final."""
+    el comienzo del nombre: g1 (rejilla), g1s7, g1s123 (semillas)… salvo «final», que son los
+    modelos publicados (web.models de la config). Un final sustituido queda como «replaced»."""
+    from .config import load_config
+
+    published = {str(r) for r in load_config()["web"]["models"].values()}
     rows = []
     for meta_path in sorted(RUNS_DIR.glob("*/meta.json")):
         meta = _read_json(meta_path)
         name = meta.get("name", "")
-        parsed = parse_run_name(name)
-        if meta.get("status") != "finished" or (prefix and parsed.get("prefix") != prefix):
+        run_prefix = parse_run_name(name).get("prefix")
+        if meta["run_id"] in published:
+            run_prefix = "final"
+        elif run_prefix == "final":
+            run_prefix = "replaced"
+        if meta.get("status") != "finished" or (prefix and run_prefix != prefix):
             continue
         cfg = yaml.safe_load((meta_path.parent / "config.yaml").read_text(encoding="utf-8"))
         metrics = _read_json(meta_path.parent / "metrics.json")
@@ -212,9 +221,10 @@ def runs_table(prefix: str | None = None) -> pd.DataFrame:
             {
                 "run_id": meta["run_id"],
                 "name": name,
-                "prefix": parsed.get("prefix"),
+                "prefix": run_prefix,
                 "cell": cfg["model"]["cell"],
                 "horizon": int(cfg["data"]["horizon"]),
+                "window": int(cfg["data"]["window"]),
                 "hidden_size": int(cfg["model"]["hidden_size"]),
                 "num_layers": int(cfg["model"]["num_layers"]),
                 "dropout": float(cfg["model"].get("dropout", 0.0)),
@@ -226,7 +236,7 @@ def runs_table(prefix: str | None = None) -> pd.DataFrame:
     return pd.DataFrame(rows)
 
 
-CONFIG_KEYS = ["cell", "horizon", "hidden_size", "num_layers", "dropout", "learning_rate"]
+CONFIG_KEYS = ["cell", "horizon", "window", "hidden_size", "num_layers", "dropout", "learning_rate"]
 
 
 def same_config(runs: pd.DataFrame, row) -> pd.DataFrame:
@@ -236,6 +246,17 @@ def same_config(runs: pd.DataFrame, row) -> pd.DataFrame:
         [np.isclose(runs[k], row[k]) if k != "cell" else runs[k] == row[k] for k in CONFIG_KEYS]
     )
     return runs[mask]
+
+
+def cv_run_of(run, runs: pd.DataFrame | None = None) -> pd.Series:
+    """El run de make cv con semilla 42 y la misma configuración (ventana incluida) que `run`,
+    un modelo final: el que calibró su intervalo. Lo busca en cualquier rejilla (g1, m1…)."""
+    runs = runs_table() if runs is None else runs
+    cv = runs[(runs["seed"] == 42) & runs["prefix"].notna()]
+    match = same_config(cv[~cv["prefix"].isin(["final", "replaced"])], run)
+    if match.empty:
+        raise ValueError(f"Sin run de make cv con la configuración de {run['run_id']}")
+    return match.iloc[0]
 
 
 def fold_metrics(run_id: str) -> pd.DataFrame:
@@ -344,7 +365,7 @@ def futures_naive(
     Si el spot se publica con L días hábiles de retraso, al hacer de verdad el pronóstico ya se
     conoce el futuro F hasta t + L. La regla actualiza el último spot publicado con ese
     movimiento: P[t]·F[t+L]/F[t], con L limitado a h. L = 0 es la persistencia.
-    Usa las mismas filas que el run de make cv (rejilla g1, semilla 42) de cada modelo `prefix`.
+    Usa las mismas filas que el run de make cv (semilla 42, cv_run_of) de cada modelo `prefix`.
     Una fila por horizonte: skill_lag<L> = 1 − RMSE de la regla / RMSE de la persistencia, y
     skill_net, lo mismo para la red de ese run (mediana, sin calibrar), sobre las mismas filas."""
     dcfg, ncfg = cfg["data"], cfg["cv"]["naive_futures"]
@@ -352,8 +373,7 @@ def futures_naive(
     position = pd.Series(range(len(dev)), index=pd.to_datetime(dev[dcfg["time_column"]]))
     spot = dev[dcfg["target"]].to_numpy(np.float64)
     fut = dev[ncfg["column"]].to_numpy(np.float64)
-    grid = runs_table("g1")
-    grid = grid[grid["seed"] == 42]
+    runs = runs_table()
 
     def rmse(err) -> float:
         return float(np.sqrt(np.mean(np.square(err))))
@@ -361,7 +381,7 @@ def futures_naive(
     rows = []
     for _, run in runs_table(prefix).sort_values("horizon").iterrows():
         h = int(run["horizon"])
-        cv_run = same_config(grid, run).iloc[0]["run_id"]
+        cv_run = cv_run_of(run, runs)["run_id"]
         pred = cv_predictions(cv_run)
         origin = position.loc[pred["time"]].to_numpy() - h
         if not np.allclose(spot[origin], pred["y_baseline"]):

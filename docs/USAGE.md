@@ -137,6 +137,7 @@ git push
 ```
 
 - **`make web-release`**: necesita el CLI `gh` autenticado (`gh auth login`).
+- **`HORIZONS=5`**: si en esta máquina solo están los pesos de algunos modelos, exporta esos y reutiliza los demás ONNX de `web/public/model/` (comprueba run e hash).
 
 ## 8. Calidad: tests, lint, formato y bloqueo
 
