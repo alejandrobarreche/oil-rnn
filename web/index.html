@@ -30,24 +30,40 @@
       <header class="top">
         <a class="logo" href="./" aria-label="Brent, inicio">BRENT<span>.</span></a>
         <span class="spacer"></span>
-        <span class="ticker num" id="ticker"></span>
-        <div class="segbox" role="group" aria-label="Modo">
-          <div class="seg-ind" id="segInd" aria-hidden="true"></div>
-          <button type="button" class="seg on" id="segHoy" aria-pressed="true">Hoy</button>
-          <button type="button" class="seg" id="segPas" aria-pressed="false">En el pasado</button>
-        </div>
         <a class="howlink" href="./brent/index.html">Cómo se hizo</a>
         <button type="button" class="themebtn" id="theme" aria-label="Cambiar entre tema claro y oscuro"></button>
       </header>
 
-      <h1 class="a-rise" id="headline">Mesa de compras del Brent</h1>
+      <!-- Portada: el barco y lo que va a pasar, en tres palabras -->
+      <section class="intro" id="intro" aria-labelledby="introTitle">
+        <div class="intro-ship" id="introShip"></div>
+        <div class="intro-copy">
+          <h1 id="introTitle">Mesa de compras del Brent</h1>
+          <ol class="keys">
+            <li><span class="k-n num">1</span><b>Carga</b><span>los barriles que llenas</span></li>
+            <li><span class="k-n num">2</span><b>Entrega</b><span>cuándo los necesitas</span></li>
+            <li><span class="k-n num">3</span><b>Decisión</b><span>fijar el precio o esperar</span></li>
+          </ol>
+          <p class="intro-line">Una red neuronal te da la franja en la que caerá el precio.</p>
+          <div class="actions">
+            <button type="button" class="btn primary" id="startHoy">Empezar</button>
+            <button type="button" class="btn" id="startPas">Probar en el pasado</button>
+          </div>
+        </div>
+      </section>
 
-      <div class="desk">
+      <div class="desk" id="desk" hidden>
         <section class="main" aria-label="Pasos de la compra">
-          <nav class="steps" aria-label="Pasos">
-            <div class="stepbtns" id="stepBtns"></div>
-            <div class="bar"><div class="prog" id="prog"></div></div>
-          </nav>
+          <div class="deskbar">
+            <nav class="steps" aria-label="Pasos">
+              <div class="stepbtns" id="stepBtns"></div>
+            </nav>
+            <div class="modes" role="group" aria-label="Modo">
+              <button type="button" class="mode on" id="segHoy" aria-pressed="true">Hoy</button>
+              <button type="button" class="mode" id="segPas" aria-pressed="false">En el pasado</button>
+            </div>
+          </div>
+          <div class="bar"><div class="prog" id="prog"></div></div>
           <div class="stage" id="stage"></div>
         </section>
 
@@ -68,11 +84,6 @@
           </div>
         </aside>
       </div>
-
-      <footer class="foot">
-        <p id="verdict"></p>
-        <a href="./brent/index.html">Ver cómo se hizo</a>
-      </footer>
     </div>
     <script type="module" src="./src/main.ts"></script>
   </body>

@@ -8,6 +8,8 @@ import {
   type PricePoint,
   rulerScale,
   saving,
+  shipLength,
+  shipName,
   type TestQuality,
   tenFutures,
   testByOrigin,
@@ -50,6 +52,22 @@ describe("fechas y cifras", () => {
     expect(musd(74.92)).toBe("75 millones de $");
     expect(musd(2.34)).toBe("2,3 millones de $");
     expect(orderNo("2026-11-03")).toBe("Nº 26-1103");
+  });
+});
+
+describe("barco", () => {
+  it("la eslora crece con la carga y se queda en los extremos", () => {
+    expect(shipLength(700_000)).toBe(245);
+    expect(shipLength(2_000_000)).toBe(330);
+    expect(shipLength(5_000_000)).toBe(330);
+    expect(shipLength(850_000)).toBeGreaterThan(245);
+    expect(shipLength(850_000)).toBeLessThan(275);
+  });
+  it("nombra el barco en lenguaje llano", () => {
+    expect(shipName(300_000)).toBe("Pequeño");
+    expect(shipName(700_000)).toBe("Mediano");
+    expect(shipName(1_000_000)).toBe("Grande");
+    expect(shipName(2_000_000)).toBe("Gigante");
   });
 });
 

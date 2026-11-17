@@ -42,11 +42,33 @@ export interface KeyDay {
   h: Record<number, PastFc | null>;
 }
 
-export const SHIPS = [
-  { id: "mediano", name: "Mediano", bbl: 700_000, length: 245 },
-  { id: "grande", name: "Grande", bbl: 1_000_000, length: 275 },
-  { id: "gigante", name: "Gigante", bbl: 2_000_000, length: 330 },
-] as const;
+/** Barriles que se pueden comprar: de un petrolero pequeño (300.000) a un VLCC (2.000.000). */
+export const BARRELS = { min: 300_000, max: 2_000_000, step: 50_000, start: 1_000_000 } as const;
+
+// Eslora típica (m) por capacidad: Handysize, Aframax, Suezmax y VLCC
+const LENGTHS: [number, number][] = [
+  [300_000, 180],
+  [700_000, 245],
+  [1_000_000, 275],
+  [2_000_000, 330],
+];
+/** Eslora en metros para una carga, interpolada entre tipos de petrolero. */
+export function shipLength(bbl: number): number {
+  const v = Math.min(BARRELS.max, Math.max(BARRELS.min, bbl));
+  for (let i = 1; i < LENGTHS.length; i++) {
+    const [b0, l0] = LENGTHS[i - 1];
+    const [b1, l1] = LENGTHS[i];
+    if (v <= b1) return l0 + ((v - b0) / (b1 - b0)) * (l1 - l0);
+  }
+  return LENGTHS[LENGTHS.length - 1][1];
+}
+/** Nombre llano del barco que hace falta para esa carga. */
+export function shipName(bbl: number): string {
+  if (bbl < 600_000) return "Pequeño";
+  if (bbl < 900_000) return "Mediano";
+  if (bbl < 1_500_000) return "Grande";
+  return "Gigante";
+}
 
 /** Plazos del enunciado en días hábiles. */
 export const HORIZONS = [

@@ -1,9 +1,11 @@
-// Mesa de compras del Brent: una empresa elige carga, entrega y decisión, y la orden de compra de la
-// derecha se rellena con cada clic. «Hoy» calcula p10, p50 y p90 en el navegador con los modelos ONNX
-// de make export-web sobre las últimas filas de market.json; «En el pasado» usa las previsiones de test
-// (quality.json, fuera de muestra) de días clave de 2023–2026 y revela el precio que llegó después.
+// Mesa de compras del Brent. Una portada con el petrolero y las tres palabras del proceso; al empezar,
+// la mesa: carga (barriles), entrega (plazo) y decisión (fijar o esperar), con la orden de compra a la
+// derecha. «Hoy» calcula p10, p50 y p90 en el navegador con los modelos ONNX de make export-web sobre
+// las últimas filas de market.json; «En el pasado» usa las previsiones de test (quality.json, fuera de
+// muestra) de días clave de 2023–2026 y revela el precio que llegó después.
 import * as ort from "onnxruntime-web/wasm";
 import {
+  BARRELS,
   type Fc,
   HORIZONS,
   type KeyDay,
@@ -15,7 +17,8 @@ import {
   orderNo,
   type PricePoint,
   rulerScale,
-  SHIPS,
+  shipLength,
+  shipName,
   shortDate,
   type TestQuality,
   tenFutures,
@@ -25,7 +28,7 @@ import {
 } from "./desk";
 import * as I from "./icons";
 import { type Bundle, predict, type Row } from "./model";
-import { createShip, type Ship } from "./ship";
+import { createShip } from "./ship";
 import "./product.css";
 
 ort.env.wasm.numThreads = 1; // GitHub Pages no permite memoria compartida entre hilos
@@ -47,6 +50,7 @@ interface Day {
 }
 type Step = "dia" | "carga" | "entrega" | "decision";
 type Decision = "fijar" | "esperar";
+type Ctx = ReturnType<typeof makeCtx>;
 
 const $ = <T extends HTMLElement = HTMLElement>(id: string) => document.getElementById(id) as T;
 const base = import.meta.env.BASE_URL;
@@ -56,22 +60,47 @@ const restart = (el: HTMLElement, cls: string) => {
   void el.offsetWidth;
   el.classList.add(cls);
 };
-const STEP_NAMES: Record<Step, string> = { dia: "El día", carga: "La carga", entrega: "La entrega", decision: "La decisión" };
-const STEP_SHORT: Record<Step, string> = { dia: "Día", carga: "Carga", entrega: "Entrega", decision: "Decisión" };
+const STEP_NAMES: Record<Step, string> = { dia: "Día", carga: "Carga", entrega: "Entrega", decision: "Decisión" };
 
 async function loadJson<T>(path: string): Promise<T> {
   const res = await fetch(`${base}${path}`);
   if (!res.ok) throw new Error(`No se encuentra ${path}. Ejecuta \`make export-web\`.`);
   return res.json() as Promise<T>;
 }
-
 const isDark = () => {
   const t = document.documentElement.dataset.theme;
   return t ? t === "dark" : window.matchMedia("(prefers-color-scheme: dark)").matches;
 };
 
+// Estado de la mesa
+const S = {
+  mode: "hoy" as "hoy" | "pasado",
+  step: 0,
+  picks: {} as Partial<Record<Step, string>>,
+  bbl: BARRELS.start as number,
+  closed: false,
+  busy: false,
+};
+let today: Day;
+let past: Day[] = [];
+let targets: Record<number, string> = {};
+
+function makeCtx() {
+  const isPast = S.mode === "pasado";
+  const day = isPast ? (past.find((d) => d.id === S.picks.dia) ?? null) : today;
+  const bbl = S.picks.carga ? Number(S.picks.carga) : 0;
+  const hz = HORIZONS.find((x) => String(x.h) === S.picks.entrega) ?? null;
+  const f = day && hz ? day.h[hz.h] : null;
+  const target = hz ? (isPast ? (f?.target ?? null) : targets[hz.h]) : null;
+  return { isPast, day, bbl, hz, f, target, dec: (S.picks.decision ?? null) as Decision | null, m: bbl / 1e6 };
+}
+
 async function init() {
   $("theme").innerHTML = I.theme;
+  const ship = createShip();
+  ship.size(shipLength(S.bbl));
+  $("introShip").appendChild(ship.el);
+
   const [mk, quality] = await Promise.all([
     loadJson<Market>("data/market.json"),
     loadJson<TestQuality[]>("data/quality.json"),
@@ -81,16 +110,13 @@ async function init() {
     const q = qOf(5) ?? quality[0];
     return `${q.period[0].slice(0, 4)}–${q.period[1].slice(2, 4)}`;
   })();
+  const steps = (): Step[] =>
+    S.mode === "pasado" ? ["dia", "carga", "entrega", "decision"] : ["carga", "entrega", "decision"];
+  const ctx = makeCtx;
 
   // «Hoy»: precio de partida y fechas de entrega; p10–p90 llegan cuando la red termina en el navegador
-  const today: Day = {
-    id: "hoy",
-    t: mk.ts,
-    price: mk.last,
-    title: "Hoy",
-    h: Object.fromEntries(HORIZONS.map((x) => [x.h, null])),
-  };
-  const targets = Object.fromEntries(HORIZONS.map((x) => [x.h, tradingDayAfter(mk.ts, x.h)]));
+  today = { id: "hoy", t: mk.ts, price: mk.last, title: "Hoy", h: Object.fromEntries(HORIZONS.map((x) => [x.h, null])) };
+  targets = Object.fromEntries(HORIZONS.map((x) => [x.h, tradingDayAfter(mk.ts, x.h)]));
   const ready = (async () => {
     const bundle = await loadJson<Bundle>("model/manifest.json");
     for (const x of HORIZONS) {
@@ -100,11 +126,13 @@ async function init() {
       const [p10, p50, p90] = await predict(ort, session, m, mk.rows.values);
       today.h[x.h] = { p10, p50, p90, target: targets[x.h] };
     }
+    // Si se está en la entrega, el gráfico de plazos se completa al llegar la red
+    if (S.mode === "hoy" && steps()[S.step] === "entrega") refreshHz();
   })();
   ready.catch(() => undefined);
 
   // «En el pasado»: días clave del periodo de test
-  const past: Day[] = keyDays(mk.history, quality, mk.events).map((d: KeyDay) => ({
+  past = keyDays(mk.history, quality, mk.events).map((d: KeyDay) => ({
     id: d.t,
     t: d.t,
     price: d.price,
@@ -112,58 +140,15 @@ async function init() {
     h: d.h,
   }));
 
-  // Pie: una línea con la comparación frente a la persistencia en test y enlace al estudio
-  const beaten = HORIZONS.filter((x) => {
-    const q = qOf(x.h);
-    return q && q.metrics.mae < q.baseline.mae;
-  }).length;
-  $("verdict").textContent =
-    beaten === 0
-      ? `En test (${testYears}), la cifra central falló más que «el precio de hoy» en los tres plazos; la orden se apoya en la franja.`
-      : `En test (${testYears}), la cifra central de la red falló menos que «el precio de hoy» en ${beaten} de los tres plazos.`;
-
-  // ── estado ──
-  const S = {
-    mode: "hoy" as "hoy" | "pasado",
-    step: 0,
-    picks: {} as Partial<Record<Step, string>>,
-    closed: false,
-    busy: false,
-  };
-  let ship: Ship | null = null;
-
-  const steps = (): Step[] => (S.mode === "pasado" ? ["dia", "carga", "entrega", "decision"] : ["carga", "entrega", "decision"]);
-  function ctx() {
+  // ── modo ──
+  function renderModes() {
     const isPast = S.mode === "pasado";
-    const day = isPast ? (past.find((d) => d.id === S.picks.dia) ?? null) : today;
-    const sh = SHIPS.find((x) => x.id === S.picks.carga) ?? null;
-    const hz = HORIZONS.find((x) => String(x.h) === S.picks.entrega) ?? null;
-    const f = day && hz ? day.h[hz.h] : null;
-    const target = hz ? (isPast ? (f?.target ?? null) : targets[hz.h]) : null;
-    return { isPast, day, ship: sh, hz, f, target, dec: (S.picks.decision ?? null) as Decision | null, m: sh ? sh.bbl / 1e6 : 0 };
-  }
-
-  // ── cabecera ──
-  const segInd = $("segInd");
-  function renderHeader(swap: boolean) {
-    const c = ctx();
-    segInd.classList.toggle("right", c.isPast);
     for (const [id, on] of [
-      ["segHoy", !c.isPast],
-      ["segPas", c.isPast],
+      ["segHoy", !isPast],
+      ["segPas", isPast],
     ] as const) {
       $(id).classList.toggle("on", on);
       $(id).setAttribute("aria-pressed", String(on));
-    }
-    $("ticker").textContent = c.isPast
-      ? c.day
-        ? `Brent ${usd(c.day.price)} el ${longDate(c.day.t)}`
-        : ""
-      : `Brent ${usd(mk.last)} el ${shortDate(mk.ts)}`;
-    if (swap) {
-      const h = $("headline");
-      h.textContent = c.isPast ? "Mesa de compras, días pasados" : "Mesa de compras del Brent";
-      restart(h, "a-rise");
     }
   }
 
@@ -172,7 +157,7 @@ async function init() {
     $("stepBtns").innerHTML = steps()
       .map(
         (k, i) =>
-          `<button type="button" class="stepbtn" data-step="${i}"><span class="mark" aria-hidden="true"></span><span class="num">${i + 1}</span><span>${STEP_SHORT[k]}</span></button>`,
+          `<button type="button" class="stepbtn" data-step="${i}"><span class="mark" aria-hidden="true"></span><span class="num">${i + 1}</span><span>${STEP_NAMES[k]}</span></button>`,
       )
       .join("");
     updateNav();
@@ -192,7 +177,7 @@ async function init() {
     $("prog").style.transform = `scaleX(${(S.closed ? n : S.step) / n})`;
   }
 
-  // ── escenario ──
+  // ── día (modo pasado) ──
   const tile = (field: Step, v: string, i: number, body: string, extra = "") =>
     `<button type="button" class="tile a-rise${S.picks[field] === v ? " on" : ""}" data-pick="${field}" data-v="${v}" style="animation-delay:${i * 50}ms" ${extra}>${body}</button>`;
   const tilesDia = () =>
@@ -206,11 +191,47 @@ async function init() {
         ),
       )
       .join("");
-  const tilesCarga = () =>
-    SHIPS.map((x, i) =>
-      tile("carga", x.id, i, `<span class="t-name">${x.name}</span><span class="t-sub num">${nf(x.bbl)} barriles</span>`),
-    ).join("");
-  const tilesEntrega = (c: ReturnType<typeof ctx>) =>
+
+  // ── carga: deslizador de barriles; el barco cambia de eslora y se hunde al cargar ──
+  function cargaHTML() {
+    const pct = (v: number) => ((v - BARRELS.min) / (BARRELS.max - BARRELS.min)) * 100;
+    const marks = [300_000, 700_000, 1_000_000, 2_000_000]
+      .map((v) => `<span class="sl-mark num" style="left:${pct(v)}%">${nf(v)}</span>`)
+      .join("");
+    return `<div class="shipslot" id="shipSlot"></div>
+      <div class="cargo a-rise">
+        <div class="cargo-read"><span class="cargo-n num" id="bblN"></span><span class="cargo-u">barriles</span><span class="cargo-k" id="bblK"></span></div>
+        <div class="sl">
+          <input type="range" id="bbl" min="${BARRELS.min}" max="${BARRELS.max}" step="${BARRELS.step}" value="${S.bbl}" aria-label="Barriles" />
+          <div class="sl-marks">${marks}</div>
+        </div>
+        <div class="actions"><button type="button" class="btn primary" id="loadBtn">Cargar el barco</button></div>
+      </div>`;
+  }
+  function bindCarga() {
+    const input = $<HTMLInputElement>("bbl");
+    const show = () => {
+      S.bbl = Number(input.value);
+      $("bblN").textContent = nf(S.bbl);
+      $("bblK").textContent = `Barco ${shipName(S.bbl).toLowerCase()}`;
+      input.style.setProperty("--f", String((S.bbl - BARRELS.min) / (BARRELS.max - BARRELS.min)));
+      ship.size(shipLength(S.bbl));
+    };
+    input.addEventListener("input", show);
+    show();
+    $("loadBtn").addEventListener("click", () => {
+      if (S.busy) return;
+      S.busy = true;
+      S.picks.carga = String(S.bbl);
+      input.disabled = true;
+      ship.load(true);
+      updateTicket();
+      setTimeout(() => void go(S.step + 1), reduced() ? 300 : 1300);
+    });
+  }
+
+  // ── entrega: plazos y, debajo, la franja de cada plazo sobre el tiempo real ──
+  const tilesEntrega = (c: Ctx) =>
     HORIZONS.map((x, i) => {
       const date = c.isPast ? c.day?.h[x.h]?.target : targets[x.h];
       const off = !date;
@@ -222,8 +243,47 @@ async function init() {
         off ? "disabled" : "",
       );
     }).join("");
+  function hzHTML(c: Ctx) {
+    const day = c.day as Day;
+    const fs = HORIZONS.map((x) => ({ x, f: day.h[x.h] })).filter((o) => o.f) as {
+      x: (typeof HORIZONS)[number];
+      f: DayFc;
+    }[];
+    if (!fs.length) return '<p class="rcap">Calculando la franja con la red…</p>';
+    const lo = Math.min(day.price, ...fs.map((o) => o.f.p10));
+    const hi = Math.max(day.price, ...fs.map((o) => o.f.p90));
+    const pad = (hi - lo) * 0.08;
+    const y = (v: number) => (1 - (v - lo + pad) / (hi - lo + 2 * pad)) * 100;
+    const x = (h: number) => 3 + (h / 252) * 92;
+    const start = c.isPast ? shortDate(day.t) : "Hoy";
+    const bars = fs
+      .map(
+        ({ x: hz, f }) => `
+        <div class="hz-bar" data-h="${hz.h}" style="left:${x(hz.h)}%;top:${y(f.p90)}%;height:${y(f.p10) - y(f.p90)}%"><i style="top:${((f.p90 - f.p50) / (f.p90 - f.p10)) * 100}%"></i></div>
+        <div class="hz-rng num" data-h="${hz.h}" style="left:${x(hz.h)}%;top:${y(f.p90)}%">${nf(f.p10)}–${nf(f.p90)} $</div>`,
+      )
+      .join("");
+    const labs = HORIZONS.map(
+      (hz) => `<span class="hz-lab" data-h="${hz.h}" style="left:${x(hz.h)}%">${hz.n} ${hz.unit}</span>`,
+    ).join("");
+    const aria = fs.map((o) => `${o.x.long}, entre ${usd(o.f.p10)} y ${usd(o.f.p90)}`).join("; ");
+    return `<p class="rcap">Cuanto más lejos, más ancha la franja</p>
+      <div class="hz" id="hz" data-sel="${S.picks.entrega ?? ""}" role="img" aria-label="${start} ${usd(day.price)}. ${aria}.">
+        <div class="hz-plot">
+          <div class="hz-today" style="top:${y(day.price)}%"></div>
+          <span class="hz-today-l num" style="top:${y(day.price)}%">${start} ${usd(day.price)}</span>
+          ${bars}
+        </div>
+        <div class="hz-axis">${labs}</div>
+      </div>`;
+  }
+  function refreshHz() {
+    const box = document.getElementById("hzBox");
+    if (box) box.innerHTML = hzHTML(ctx());
+  }
 
-  function rulerData(c: ReturnType<typeof ctx>) {
+  // ── decisión: regla de precios y dos opciones compactas ──
+  function rulerData(c: Ctx) {
     const f = c.f as DayFc;
     const p0 = (c.day as Day).price;
     const qs = tenFutures(f);
@@ -233,19 +293,19 @@ async function init() {
     const pos = (v: number) => ((v - sc.lo) / (sc.hi - sc.lo)) * 100;
     const at = (v: number) => {
       const x = pos(v);
-      const t = x < 18 ? "translateX(-10px)" : x > 82 ? "translateX(calc(-100% + 10px))" : "translateX(-50%)";
+      const t = x < 15 ? "translateX(-8px)" : x > 85 ? "translateX(calc(-100% + 8px))" : "translateX(-50%)";
       return `left:${x}%;transform:${t}`;
     };
     return { f, p0, qs, ...sc, pos, at };
   }
-  function rulerHTML(c: ReturnType<typeof ctx>) {
+  function rulerHTML(c: Ctx) {
     const R = rulerData(c);
     const f = R.f;
     let ticks = "";
     let labs = "";
     for (let v = R.lo, i = 0; v <= R.hi + 1e-9; v += R.step / 2, i++) {
       const major = i % 2 === 0;
-      ticks += `<div class="r-tick" style="left:${R.pos(v)}%;height:${major ? 14 : 7}px"></div>`;
+      ticks += `<div class="r-tick" style="left:${R.pos(v)}%;height:${major ? 12 : 6}px"></div>`;
       if (major) labs += `<div class="r-lab num${(i / 2) % 2 ? " alt" : ""}" style="left:${R.pos(v)}%">${nf(v)}</div>`;
     }
     const dots = R.qs
@@ -257,10 +317,10 @@ async function init() {
     const start = `${c.isPast ? shortDate((c.day as Day).t) : "Hoy"} ${usd(R.p0)}`;
     const aria = `${start}. Lo probable, ${usd(f.p50)}. Ocho de cada diez futuros entre ${usd(f.p10)} y ${usd(f.p90)}.`;
     return `<div class="rulerbox">
-      <p class="rcap">10 futuros posibles. 8 caen en la franja.</p>
+      <p class="rcap">10 futuros posibles; 8 caen en la franja</p>
       <div class="ruler" id="ruler" role="img" aria-label="${aria}">
-        <div class="r-today-l num" style="${R.at(R.p0)}">${start}</div>
         <div class="r-today" style="left:${R.pos(R.p0)}%"></div>
+        <div class="r-today-l num" style="${R.at(R.p0)}">${start}</div>
         ${dots}
         <div class="r-band a-band" style="left:${R.pos(f.p10)}%;width:${R.pos(f.p90) - R.pos(f.p10)}%"></div>
         <div class="r-med a-band" style="left:${R.pos(f.p50)}%"></div>
@@ -269,18 +329,18 @@ async function init() {
         <div class="r-med-l num a-band" style="${R.at(f.p50)}">Lo probable ${usd(f.p50)}</div>
       </div></div>`;
   }
-  function decisionHTML(c: ReturnType<typeof ctx>) {
+  function decisionHTML(c: Ctx) {
     const f = c.f as DayFc;
     const p0 = (c.day as Day).price;
     return `<div class="grid cols-240" id="decTiles">
-      <button type="button" class="tile a-rise" data-pick="decision" data-v="fijar" style="animation-delay:420ms">
+      <button type="button" class="tile dec a-rise" data-pick="decision" data-v="fijar" style="animation-delay:420ms">
         <span class="t-dlabel">${c.isPast ? "Fijar el precio ese día" : "Fijar el precio hoy"}</span>
         <span class="t-dcost num">${musd(p0 * c.m)}</span>
-        <span class="t-sub">Pagas esto pase lo que pase.</span></button>
-      <button type="button" class="tile a-rise" data-pick="decision" data-v="esperar" style="animation-delay:470ms">
+        <span class="t-sub">Pase lo que pase</span></button>
+      <button type="button" class="tile dec a-rise" data-pick="decision" data-v="esperar" style="animation-delay:470ms">
         <span class="t-dlabel">Esperar a la entrega</span>
         <span class="t-dcost num">${musd(f.p50 * c.m)}</span>
-        <span class="t-sub num">Lo probable; hasta ${musd(f.p90 * c.m)}.</span></button>
+        <span class="t-sub num">Lo probable; hasta ${musd(f.p90 * c.m)}</span></button>
     </div>`;
   }
 
@@ -288,31 +348,30 @@ async function init() {
     const c = ctx();
     const cur = steps()[S.step];
     const st = $("stage");
-    const h2 = `<h2 class="h2">${STEP_NAMES[cur]}</h2>`;
-    if (cur === "dia") st.innerHTML = `<div class="block a-enter">${h2}<div class="grid cols-200">${tilesDia()}</div></div>`;
+    if (cur === "dia") st.innerHTML = `<div class="block a-enter"><div class="grid cols-200">${tilesDia()}</div></div>`;
     else if (cur === "carga") {
-      st.innerHTML = `<div class="block a-enter">${h2}<div class="shipslot" id="shipSlot"></div><div class="grid cols-180" id="cargaTiles">${tilesCarga()}</div></div>`;
-      if (!ship) ship = createShip();
+      st.innerHTML = `<div class="block a-enter">${cargaHTML()}</div>`;
       $("shipSlot").appendChild(ship.el);
-      const picked = SHIPS.find((x) => x.id === S.picks.carga);
-      ship.size(picked?.length ?? SHIPS[1].length);
-      ship.load(!!picked);
-    } else if (cur === "entrega") st.innerHTML = `<div class="block a-enter">${h2}<div class="grid cols-180">${tilesEntrega(c)}</div></div>`;
-    else
-      st.innerHTML = `<div class="block a-enter" id="decBlock"><div id="decHead">${h2}</div>${rulerHTML(c)}${decisionHTML(c)}</div>`;
+      // Al volver a la carga, el barco vuelve vacío para elegir de nuevo
+      delete S.picks.carga;
+      ship.load(false);
+      bindCarga();
+      updateTicket();
+    } else if (cur === "entrega")
+      st.innerHTML = `<div class="block a-enter"><div class="grid cols-180">${tilesEntrega(c)}</div><div id="hzBox">${hzHTML(c)}</div></div>`;
+    else st.innerHTML = `<div class="block a-enter" id="decBlock"><div id="decHead"></div>${rulerHTML(c)}${decisionHTML(c)}</div>`;
   }
 
-  // Vista previa del tamaño al pasar por una tarjeta de carga (o al enfocarla con el teclado)
-  const preview = (e: Event) => {
-    const t = (e.target as HTMLElement).closest<HTMLElement>('[data-pick="carga"]');
-    if (!ship || S.busy) return;
-    const picked = SHIPS.find((x) => x.id === S.picks.carga);
-    const over = t ? SHIPS.find((x) => x.id === t.dataset.v) : null;
-    ship.size((over ?? picked ?? SHIPS[1]).length);
+  // Resalta en el gráfico de plazos el que se señala o se enfoca
+  const highlight = (e: Event) => {
+    const hz = document.getElementById("hz");
+    if (!hz) return;
+    const t = (e.target as HTMLElement).closest<HTMLElement>('[data-pick="entrega"]');
+    hz.dataset.sel = t?.dataset.v ?? S.picks.entrega ?? "";
   };
-  $("stage").addEventListener("pointerover", preview);
-  $("stage").addEventListener("focusin", preview);
-  $("stage").addEventListener("pointerleave", preview);
+  $("stage").addEventListener("pointerover", highlight);
+  $("stage").addEventListener("focusin", highlight);
+  $("stage").addEventListener("pointerleave", highlight);
 
   function closeOrder() {
     const c = ctx();
@@ -329,7 +388,7 @@ async function init() {
           : `Lo probable son ${musd(f.p50 * c.m)}. Ten reservados ${musd(f.p90 * c.m)} por si sube.`;
     } else {
       const real = f.real as number;
-      title = verdict(c.dec as Decision, day.price, real, (c.ship as (typeof SHIPS)[number]).bbl);
+      title = verdict(c.dec as Decision, day.price, real, c.bbl);
       const inside = real >= f.p10 && real <= f.p90;
       text = `El ${longDate(f.target)} el Brent valía ${usd(real)}, ${inside ? "dentro" : "fuera"} de la franja de la red.`;
       const R = rulerData(c);
@@ -359,7 +418,7 @@ async function init() {
     const c = ctx();
     const L: [string, string, string][] = [];
     if (c.isPast) L.push(["dia", "Día", c.day ? `${longDate(c.day.t)}, a ${usd(c.day.price)}` : ""]);
-    L.push(["carga", "Carga", c.ship ? `${c.ship.name}, ${nf(c.ship.bbl)} barriles` : ""]);
+    L.push(["carga", "Carga", c.bbl ? `${nf(c.bbl)} barriles` : ""]);
     L.push(["entrega", "Entrega", c.target && c.hz ? `${longDate(c.target)}, ${c.hz.long}` : ""]);
     L.push([
       "decision",
@@ -418,7 +477,7 @@ async function init() {
     $("orderNo").textContent = c.day ? orderNo(c.day.t) : "Nº —";
     let label = "Total";
     let t = 0;
-    if (c.ship && c.day) {
+    if (c.bbl && c.day) {
       if (c.dec === "fijar") {
         label = "Coste fijado";
         t = c.day.price * c.m;
@@ -469,23 +528,19 @@ async function init() {
   async function go(n: number) {
     const st = $("stage");
     st.classList.add("leave");
-    const wait = new Promise((r) => setTimeout(r, 170));
-    if (steps()[n] === "decision" && S.mode === "hoy") {
+    await new Promise((r) => setTimeout(r, 170));
+    if (steps()[n] === "decision" && S.mode === "hoy" && !today.h[HORIZONS[0].h]) {
       // La red de «Hoy» se ejecuta en segundo plano desde que se abre la página
-      await wait;
-      if (!today.h[HORIZONS[0].h]) {
-        st.innerHTML = '<p class="lead">Calculando la franja con la red…</p>';
-        st.classList.remove("leave");
-      }
+      st.innerHTML = '<p class="lead">Calculando la franja con la red…</p>';
+      st.classList.remove("leave");
       try {
         await ready;
       } catch (err) {
         st.innerHTML = `<p class="lead">${(err as Error).message}</p>`;
-        st.classList.remove("leave");
         S.busy = false;
         return;
       }
-    } else await wait;
+    }
     S.step = n;
     renderStage();
     st.classList.remove("leave");
@@ -498,14 +553,12 @@ async function init() {
     el.parentElement?.querySelectorAll(".tile").forEach((t) => t.classList.toggle("on", t === el));
     S.picks[field] = v;
     updateTicket();
-    if (field === "dia") renderHeader(false);
-    if (field === "carga" && ship) {
-      const sh = SHIPS.find((x) => x.id === v) ?? SHIPS[1];
-      ship.size(sh.length);
-      ship.load(true);
+    if (field === "entrega") {
+      const hz = document.getElementById("hz");
+      if (hz) hz.dataset.sel = v;
     }
     if (field === "decision") setTimeout(closeOrder, 380);
-    else setTimeout(() => void go(S.step + 1), field === "carga" && !reduced() ? 1300 : 440);
+    else setTimeout(() => void go(S.step + 1), field === "entrega" ? 650 : 440);
   }
   function back(i: number) {
     if (S.busy) return;
@@ -516,24 +569,37 @@ async function init() {
     updateTicket();
     void go(i);
   }
+  function reset(m: "hoy" | "pasado") {
+    const changed = m !== S.mode;
+    Object.assign(S, { mode: m, step: 0, picks: {}, closed: false });
+    $("stamp")?.remove();
+    if (changed) $("lines").innerHTML = "";
+    renderModes();
+    buildNav();
+    renderStage();
+    updateTicket();
+  }
   function setMode(m: "hoy" | "pasado") {
     if (S.busy) return;
     S.busy = true;
-    const changed = m !== S.mode;
     const st = $("stage");
     st.classList.add("leave");
     setTimeout(() => {
-      Object.assign(S, { mode: m, step: 0, picks: {}, closed: false });
-      $("stamp")?.remove();
-      if (changed) $("lines").innerHTML = "";
-      renderHeader(changed);
-      buildNav();
-      renderStage();
-      updateTicket();
+      reset(m);
       st.classList.remove("leave");
       S.busy = false;
     }, 170);
   }
+
+  // ── portada → mesa ──
+  function start(m: "hoy" | "pasado") {
+    $("intro").hidden = true;
+    $("desk").hidden = false;
+    restart($("desk"), "a-rise");
+    reset(m);
+  }
+  $("startHoy").addEventListener("click", () => start("hoy"));
+  $("startPas").addEventListener("click", () => start("pasado"));
 
   $("stage").addEventListener("click", (e) => {
     const p = (e.target as HTMLElement).closest<HTMLButtonElement>("[data-pick]");
@@ -563,7 +629,7 @@ async function init() {
       } catch {
         /* sin almacenamiento: el tema vale para esta visita */
       }
-      ship?.theme();
+      ship.theme();
     };
     const doc = document as Document & { startViewTransition?: (cb: () => void) => unknown };
     if (doc.startViewTransition && !reduced()) {
@@ -573,14 +639,9 @@ async function init() {
       doc.startViewTransition(apply);
     } else apply();
   });
-  window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => ship?.theme());
-
-  renderHeader(false);
-  buildNav();
-  renderStage();
-  updateTicket();
+  window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => ship.theme());
 }
 
 init().catch((err: Error) => {
-  $("stage").innerHTML = `<p class="lead">${err.message}</p>`;
+  $("intro").insertAdjacentHTML("beforeend", `<p class="lead">${err.message}</p>`);
 });

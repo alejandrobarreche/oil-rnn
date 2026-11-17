@@ -37,8 +37,8 @@ make web-build     # Compilación a web/dist (lo ejecuta el usuario)
 
 | Ruta | Qué contiene |
 |---|---|
-| `index.html`, `src/main.ts` | Producto, mesa de compras: carga, entrega y decisión con orden de compra; «Hoy» (ONNX) y «En el pasado» (días clave de test de `quality.json`) |
-| `src/desk.ts` | Cálculos de la mesa sin DOM: días clave, diez futuros, regla de precios y resultado de la decisión |
+| `index.html`, `src/main.ts` | Producto: portada con el petrolero y, al empezar, la mesa de compras (barriles, plazo y decisión, con orden de compra); «Hoy» (ONNX) y «En el pasado» (días clave de test de `quality.json`) |
+| `src/desk.ts` | Cálculos de la mesa sin DOM: días clave, eslora por barriles, diez futuros, regla de precios y resultado de la decisión |
 | `src/ship.ts` | Petrolero 3D con geometría propia: cambia de eslora con la carga y se hunde al llenarse |
 | `src/icons.ts` | Iconos SVG con sus partes animables |
 | `src/product.css` | Estilos y temas claro y oscuro del producto |
