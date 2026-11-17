@@ -1,12 +1,12 @@
 # web
 
-Web del proyecto en dos partes: el producto (previsión del Brent en una pantalla, Vite + TypeScript + ONNX Runtime Web + Three.js) y el estudio, «El precio del Brent» (desarrollo del trabajo con scroll, Three.js, D3 y KaTeX). Las reglas generales están en el `CLAUDE.md` de la raíz.
+Web del proyecto en dos partes: el producto (mesa de compras del Brent en una pantalla, Vite + TypeScript + ONNX Runtime Web) y el estudio, «El precio del Brent» (desarrollo del trabajo con scroll, Three.js, D3 y KaTeX). Las reglas generales están en el `CLAUDE.md` de la raíz.
 
 ## Reglas clave
 
 **Siempre**
 - Usa los tokens que ya existen: los de `src/product.css` en el producto y las variables `--sc-*` de `public/brent/index.html` en el estudio.
-- Mantén el producto en una pantalla sin scroll en escritorio: enseña por qué es útil y deja probarlo; las métricas van en una línea con enlace al estudio.
+- Mantén el producto en una pantalla sin scroll en escritorio: enseña por qué es útil y deja probarlo. Las métricas van en la orden de compra; el pie solo lleva la fuente de los datos, sin enlaces repetidos.
 - Trabaja los dos temas, claro y oscuro, en cada cambio, y compruébalos en el navegador.
 - Haz que cada pantalla responda una pregunta con una cifra o un gráfico de datos reales; el texto solo nombra lo que se ve.
 - Usa un objeto 3D solo si su forma o su movimiento enseñan el concepto (una ventana que avanza, un estado que pasa de un día al siguiente, un rango que se abre); si no, un gráfico 2D.
@@ -37,12 +37,12 @@ make web-build     # Compilación a web/dist (lo ejecuta el usuario)
 
 | Ruta | Qué contiene |
 |---|---|
-| `index.html`, `src/main.ts` | Producto: controles, «Hoy» (ONNX) y «Un día pasado» (previsiones de test de `quality.json`) |
-| `src/stage.ts` | Escena 3D: lámina del precio, volumen de la previsión, gota y precio real revelado |
-| `src/icons.ts` | Iconos SVG con sus partes animables |
+| `index.html`, `src/main.ts` | Producto: portada con el petrolero y, al empezar, la mesa de compras (barriles, plazo y decisión, con orden de compra); «Hoy» (ONNX) y «En el pasado» (días clave de test de `quality.json`) |
+| `src/desk.ts` | Cálculos de la mesa sin DOM: días clave, eslora por barriles, diez futuros, regla de precios y resultado de la decisión |
+| `src/ship.ts`, `public/img/` | Petrolero en foto animado con un shader WebGL: agua que ondula, cabeceo y flotación que sube al cargar; escala por barriles y foto por tema |
+| `src/model.ts` | Réplica del preprocesado de `features.py` e inferencia ONNX |
+| `src/icons.ts` | Iconos SVG (tema y flecha) |
 | `src/product.css` | Estilos y temas claro y oscuro del producto |
-| `src/sonda/bundle.js`, `src/sonda.ts` | Solo formato de cifras y fechas (`S.fmt`) y días hábiles (`S.tradingDays`) |
-| `src/portal/`, `src/explain.ts` | Simulador y cálculos de la versión anterior; el producto no los usa |
 | `public/brent/` | «El precio del Brent»: `index.html`, `scrollcraft.css`, `scrollcraft.js` y sus datos |
 
 ## Convenciones
@@ -60,7 +60,8 @@ make web-build     # Compilación a web/dist (lo ejecuta el usuario)
 
 ## Cuidado con
 
-- **`src/sonda/bundle.js`**: lleva cambios propios; no lo sustituyas por el original del sistema de diseño.
-- **«Un día pasado»**: en `quality.json`, `t` es la fecha objetivo; el día de partida está `h` días hábiles antes.
+- **«En el pasado»**: en `quality.json`, `t` es la fecha objetivo; el día de partida está `h` días hábiles antes. Solo hay días de test (2023–2026): antes, el modelo final ya vio los datos.
+- **«Fijar el precio»**: en la realidad sería un futuro o una cobertura; la mesa lo simplifica con el precio spot.
+- **Fotos del barco**: las cuatro comparten encuadre píxel a píxel; si se cambia una, se cambian todas o la carga salta. La silueta (`HULL`) y la franja roja del shader están medidas sobre esas fotos. Falta `barco-vacio-oscuro.jpg` (de momento, la clara oscurecida por CSS).
 - **`public/brent/data.json` y `data2.json`**: ningún comando los regenera; si cambian los runs, quedan desfasados.
-- **Librerías**: se cargan desde jsDelivr con versión fija (three 0.170.0 en producto y estudio, d3 7.9.0, katex 0.16.11); no cambies una versión sin probar las dos páginas.
+- **Librerías**: se cargan desde jsDelivr con versión fija (three 0.170.0, d3 7.9.0 y katex 0.16.11, solo en el estudio); no cambies una versión sin probar la página.

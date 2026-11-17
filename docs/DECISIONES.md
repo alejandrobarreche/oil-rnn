@@ -51,6 +51,7 @@ A 63 y 252 días solo hay unos 15 y 3 pronósticos independientes. «No signific
 | Selección | Repetir con 3 semillas solo las finalistas | La configuración ganadora se eligió con una sola semilla. |
 | Selección | A 5 días, GRU de 16 unidades en vez de 256 | Empatan en validación (3 semillas; diferencia menor que la variación entre semillas). Se elige por coste. El modelo final se entrenó en el Mac, no en la GPU. |
 | Intervalo | Ajustar el ancho del intervalo con los datos de validación | En 2026 cubre solo el 48–58 % de los casos, en vez del 80 %. |
+| Web | Mostrar en el modo «En el pasado» solo días de test (2023–2026), con sus previsiones fuera de muestra | No enseña 2008, 2014, 2020 ni 2022: el modelo final se entrenó con esos años. El plazo de 1 año solo existe para días hasta noviembre de 2025. |
 
 ## Mejoras pendientes
 

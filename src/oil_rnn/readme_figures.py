@@ -3,7 +3,7 @@
 Solo leen lo que ya está en git (web/public/data/market.json y explain.json); no entrenan ni
 evalúan, así que se pueden generar en cualquier máquina.
 
-Estilo, tomado del sistema de diseño de Sonda (web/src/sonda/tokens.css):
+Estilo, tomado del sistema de diseño de Sonda:
 - Papeles de color fijos en todas las figuras: precio real = tinta, red = azul,
   persistencia = gris, validación = tinta, test = naranja. Validados para daltonismo.
 - Fondo transparente: GitHub elige la versión clara u oscura con <picture>.

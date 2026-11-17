@@ -13,7 +13,7 @@ Sistema de diseño: [Sonda](https://claude.ai/artifact/GJGpkQEKJT4ZGuDxg49E3H).
 | 0–2. Decisiones, datos y pipeline | Hecha | Configuración fijada y código de entrenamiento |
 | 3. Comparar RNN, LSTM y GRU | Hecha | 432 entrenamientos y finalistas con 3 semillas |
 | 4. Evaluar en test | Hecha | Ninguna red mejora a la persistencia |
-| 5. Sonda | Hecha | Publicada en [GitHub Pages](https://alejandrobarreche.github.io/oil-rnn/), con portal de dinero ficticio |
+| 5. Sonda | Hecha | Publicada en [GitHub Pages](https://alejandrobarreche.github.io/oil-rnn/); la portada pasa a ser la mesa de compras (rama `feat/mesa-de-compras`) |
 | 5b. Documento de decisiones | Hecha | Falta revisar a mano el explorador |
 | 6. Página explicativa | Sin empezar | Definida, sin plan visual aprobado |
 | 7. Actualización diaria | Sin empezar | — |

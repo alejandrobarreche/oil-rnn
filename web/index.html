@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-    <title>Brent: previsión del precio</title>
+    <title>Mesa de compras del Brent</title>
     <meta name="color-scheme" content="light dark" />
     <link rel="icon" href="data:," />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -16,39 +16,72 @@
         if (t) document.documentElement.dataset.theme = t;
       } catch (e) {}
     </script>
-    <script type="importmap">
-      {
-        "imports": {
-          "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js",
-          "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"
-        }
-      }
-    </script>
   </head>
   <body>
-    <header class="bar">
-      <a class="brand" href="./" aria-label="Brent, inicio"><span class="mark">BRENT<i>.</i></span></a>
-      <span class="grow"></span>
-      <a class="btn btn-ghost" id="study" href="./brent/index.html"></a>
-      <button class="btn btn-icon" id="theme" type="button" aria-label="Cambiar entre tema claro y oscuro"></button>
-    </header>
+    <div class="wrap">
+      <header class="top">
+        <a class="logo" href="./" aria-label="Brent, inicio">BRENT<span>.</span></a>
+        <span class="spacer"></span>
+        <a class="howlink" href="./brent/index.html">Cómo se hizo</a>
+        <button type="button" class="themebtn" id="theme" aria-label="Cambiar entre tema claro y oscuro"></button>
+      </header>
 
-    <main class="app">
-      <section class="stage" id="stage" aria-label="Precio del Brent y previsión"></section>
-
-      <section class="panel" id="panel">
-        <h1 class="title">Previsión del Brent</h1>
-
-        <div class="seg seg-h" id="horizon" role="radiogroup" aria-label="Plazo"></div>
-        <div class="seg seg-m" id="mode" role="radiogroup" aria-label="Desde cuándo"></div>
-        <div class="scrub" id="scrub" hidden></div>
-
-        <div class="result" id="result" aria-live="polite"></div>
-
-        <div class="actions" id="actions"></div>
-        <a class="verdict" id="verdict" href="./brent/index.html"></a>
+      <!-- Portada: el barco y lo que va a pasar, en tres palabras -->
+      <section class="intro" id="intro" aria-labelledby="introTitle">
+        <div class="intro-ship" id="introShip"></div>
+        <div class="intro-copy">
+          <h1 id="introTitle">Mesa de compras del Brent</h1>
+          <ol class="keys">
+            <li><span class="k-n num">1</span><b>Carga</b><span>los barriles que llenas</span></li>
+            <li><span class="k-n num">2</span><b>Entrega</b><span>cuándo los necesitas</span></li>
+            <li><span class="k-n num">3</span><b>Decisión</b><span>fijar el precio o esperar</span></li>
+          </ol>
+          <p class="intro-line">Una red neuronal te da la franja en la que caerá el precio.</p>
+          <div class="actions">
+            <button type="button" class="btn primary" id="startHoy">Empezar</button>
+            <button type="button" class="btn" id="startPas">Probar en el pasado</button>
+          </div>
+        </div>
       </section>
-    </main>
+
+      <div class="desk" id="desk" hidden>
+        <section class="main" aria-label="Pasos de la compra">
+          <div class="deskbar">
+            <nav class="steps" aria-label="Pasos">
+              <div class="stepbtns" id="stepBtns"></div>
+            </nav>
+            <div class="modes" role="group" aria-label="Modo">
+              <button type="button" class="mode on" id="segHoy" aria-pressed="true">Hoy</button>
+              <button type="button" class="mode" id="segPas" aria-pressed="false">En el pasado</button>
+            </div>
+          </div>
+          <div class="bar"><div class="prog" id="prog"></div></div>
+          <div class="stage" id="stage"></div>
+        </section>
+
+        <aside class="side" aria-label="Orden de compra">
+          <div class="ticket-wrap a-print">
+            <div class="ticket" id="ticket">
+              <div class="tk-head">
+                <span class="tk-title">Orden de compra</span>
+                <span class="tk-no num" id="orderNo">Nº —</span>
+              </div>
+              <div class="tk-rule"></div>
+              <dl id="lines"></dl>
+              <div class="tk-total" aria-live="polite">
+                <span class="tk-tlabel" id="totalLabel">Total</span>
+                <span class="tk-tval num empty hatch" id="totalVal"></span>
+              </div>
+            </div>
+          </div>
+        </aside>
+      </div>
+
+      <footer class="foot">
+        <span id="source"></span>
+        <span>Aprendizaje Automático, caso 2</span>
+      </footer>
+    </div>
     <script type="module" src="./src/main.ts"></script>
   </body>
 </html>
