@@ -40,10 +40,9 @@ make web-build     # Compilación a web/dist (lo ejecuta el usuario)
 | `index.html`, `src/main.ts` | Producto: portada con el petrolero y, al empezar, la mesa de compras (barriles, plazo y decisión, con orden de compra); «Hoy» (ONNX) y «En el pasado» (días clave de test de `quality.json`) |
 | `src/desk.ts` | Cálculos de la mesa sin DOM: días clave, eslora por barriles, diez futuros, regla de precios y resultado de la decisión |
 | `src/ship.ts` | Petrolero 3D con geometría propia: cambia de eslora con la carga y se hunde al llenarse |
-| `src/icons.ts` | Iconos SVG con sus partes animables |
+| `src/model.ts` | Réplica del preprocesado de `features.py` e inferencia ONNX |
+| `src/icons.ts` | Iconos SVG (tema y flecha) |
 | `src/product.css` | Estilos y temas claro y oscuro del producto |
-| `src/sonda/bundle.js`, `src/sonda.ts` | Formato y días hábiles de la versión anterior; los usa el portal, no la mesa |
-| `src/portal/`, `src/explain.ts` | Simulador y cálculos de la versión anterior; el producto no los usa |
 | `public/brent/` | «El precio del Brent»: `index.html`, `scrollcraft.css`, `scrollcraft.js` y sus datos |
 
 ## Convenciones
@@ -61,7 +60,6 @@ make web-build     # Compilación a web/dist (lo ejecuta el usuario)
 
 ## Cuidado con
 
-- **`src/sonda/bundle.js`**: lleva cambios propios; no lo sustituyas por el original del sistema de diseño.
 - **«En el pasado»**: en `quality.json`, `t` es la fecha objetivo; el día de partida está `h` días hábiles antes. Solo hay días de test (2023–2026): antes, el modelo final ya vio los datos.
 - **«Fijar el precio»**: en la realidad sería un futuro o una cobertura; la mesa lo simplifica con el precio spot.
 - **`public/brent/data.json` y `data2.json`**: ningún comando los regenera; si cambian los runs, quedan desfasados.
