@@ -525,7 +525,7 @@ def state_path(states: np.ndarray, dims: int = 3) -> dict:
 
 def cell_paths(cfg: dict, manifest: dict, market: dict) -> tuple[list[dict], dict]:
     """Cada modelo final sobre la última ventana de market.json (la que usa Sonda): recorrido
-    de su estado oculto y tamaño. Devuelve también la ventana del primer horizonte tal como la
+    de su estado oculto y tamaño. Devuelve también la ventana más larga tal como la
     ve la red (window × entradas, estandarizada y recortada). Antes comprueba, con los
     ejemplos de paridad de make export-web, que el preprocesado rehecho da la misma salida."""
     from .conformal import calibrate_quantiles
@@ -562,7 +562,7 @@ def cell_paths(cfg: dict, manifest: dict, market: dict) -> tuple[list[dict], dic
                 **state_path(states),
             }
         )
-        if window is None:
+        if window is None or len(x) > len(window["x"]):
             window = {
                 "horizon": entry["horizon"],
                 "t": market["rows"]["t"][-len(x) :],
@@ -576,21 +576,26 @@ def cell_paths(cfg: dict, manifest: dict, market: dict) -> tuple[list[dict], dic
 def cell_comparison(cfg: dict) -> pd.DataFrame:
     """Validación (make cv) de las tres celdas por horizonte: la mejor configuración de la
     rejilla (menor cv_<sweep.select_by> con semilla 42) y su mejora de RMSE frente a la
-    persistencia (cv_skill_vs_baseline) en todas las semillas con esa configuración."""
+    persistencia (cv_skill_vs_baseline) en todas las semillas con esa configuración. En la celda
+    elegida, la configuración es la del modelo publicado, aunque venga de otra rejilla (m1…)."""
     prefix, key = cfg["sweep"]["prefix"], f"cv_{cfg['sweep']['select_by']}"
-    runs = runs_table()
-    runs = runs[runs["prefix"].fillna("").str.startswith(prefix)]
+    table = runs_table()
+    cv_runs = table[table["prefix"].notna() & ~table["prefix"].isin(["final", "replaced"])]
+    runs = table[table["prefix"].fillna("").str.startswith(prefix)]
     grid = runs[runs["prefix"] == prefix]
-    chosen = set(zip(runs_table("final")["horizon"], runs_table("final")["cell"], strict=True))
+    finals = table[table["prefix"] == "final"].set_index(["horizon", "cell"], drop=False)
     rows = []
     for (h, cell), group in grid.groupby(["horizon", "cell"]):
-        same = same_config(runs, group.loc[group[key].idxmin()])
+        if (h, cell) in finals.index:
+            same = same_config(cv_runs, finals.loc[(h, cell)])
+        else:
+            same = same_config(runs, group.loc[group[key].idxmin()])
         skill = same["cv_skill_vs_baseline"]
         rows.append(
             {
                 "horizon": int(h),
                 "cell": cell,
-                "chosen": (h, cell) in chosen,
+                "chosen": (h, cell) in finals.index,
                 "seeds": len(same),
                 "skill": skill.mean(),
                 "skill_min": skill.min(),
