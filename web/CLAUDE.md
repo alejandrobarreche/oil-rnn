@@ -6,7 +6,7 @@ Web del proyecto en dos partes: el producto (mesa de compras del Brent en una pa
 
 **Siempre**
 - Usa los tokens que ya existen: los de `src/product.css` en el producto y las variables `--sc-*` de `public/brent/index.html` en el estudio.
-- Mantén el producto en una pantalla sin scroll en escritorio: enseña por qué es útil y deja probarlo; las métricas van en una línea con enlace al estudio.
+- Mantén el producto en una pantalla sin scroll en escritorio: enseña por qué es útil y deja probarlo. Las métricas van en la orden de compra; el pie solo lleva la fuente de los datos, sin enlaces repetidos.
 - Trabaja los dos temas, claro y oscuro, en cada cambio, y compruébalos en el navegador.
 - Haz que cada pantalla responda una pregunta con una cifra o un gráfico de datos reales; el texto solo nombra lo que se ve.
 - Usa un objeto 3D solo si su forma o su movimiento enseñan el concepto (una ventana que avanza, un estado que pasa de un día al siguiente, un rango que se abre); si no, un gráfico 2D.

@@ -109,6 +109,7 @@ async function init() {
   ]);
   const qOf = (h: number) => quality.find((q) => q.horizon === h);
   const histIdx = new Map(mk.history.map((p, i) => [p.t, i]));
+  $("source").textContent = `Datos de la EIA y FRED hasta el ${longDate(mk.ts)}`;
   const testYears = (() => {
     const q = qOf(5) ?? quality[0];
     return `${q.period[0].slice(0, 4)}–${q.period[1].slice(2, 4)}`;
