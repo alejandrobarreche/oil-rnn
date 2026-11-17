@@ -27,7 +27,7 @@ Una RNN simple, una LSTM y una GRU predicen el Brent a **1 semana, 1 mes, 3 mese
   <img src="docs/img/forecast-light.svg" alt="Esquema: ventana de 60 días y, para cada horizonte, mediana e intervalo del 80 %" width="100%">
 </picture>
 
-La red lee los últimos 60 días (20 a 1 semana) de 15 variables de mercado y da, para cada horizonte, la mediana y un intervalo del 80 %. Hay un modelo por horizonte.
+La red lee los últimos 60 días junto a 15 variables de mercado y da, para cada horizonte, la mediana y un intervalo del 80 %. Hay un modelo por horizonte.
 
 <sub>Esquema: el tamaño de los intervalos es ilustrativo.</sub>
 
