@@ -75,7 +75,9 @@ def feature_columns(df: pd.DataFrame, features: str | list[str], time_column: st
     return list(features)
 
 
-def _split(df: pd.DataFrame, cfg: dict) -> tuple[dict[str, pd.DataFrame], dict]:
+def clean(df: pd.DataFrame, cfg: dict) -> tuple[pd.DataFrame, dict]:
+    """Ordena, corta en la última observación real del target, rellena y recorta el comienzo.
+    La usan `make prepare` (antes de dividir) y `make update` (datos nuevos para la web)."""
     dcfg = cfg["data"]
     target, time_col = dcfg["target"], dcfg["time_column"]
     df = df.copy()
@@ -104,7 +106,13 @@ def _split(df: pd.DataFrame, cfg: dict) -> tuple[dict[str, pd.DataFrame], dict]:
     df = df.iloc[first:].reset_index(drop=True)
     info["rows_dropped_incomplete_start"] = first
     info["first_complete_date"] = str(df[time_col].iloc[0])
+    return df, info
 
+
+def _split(df: pd.DataFrame, cfg: dict) -> tuple[dict[str, pd.DataFrame], dict]:
+    dcfg = cfg["data"]
+    time_col = dcfg["time_column"]
+    df, info = clean(df, cfg)
     n = len(df)
     n_test = int(round(n * float(dcfg["test_size"])))
     n_val = int(round(n * float(dcfg["val_size"])))

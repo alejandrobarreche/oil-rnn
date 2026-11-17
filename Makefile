@@ -33,7 +33,7 @@ CALIB ?=
 
 .PHONY: help setup pending check-env install install-mac install-cpu install-cuda install-rocm \
         backend-mac backend-cpu backend-cuda backend-rocm lock test lint format device \
-        data prepare cv sweep compare dm naive-futures train evaluate runs pack unpack mlflow-ui explore-install explore export-web export-explain readme-figures web-install web-dev web-test web-build web-release
+        data prepare cv sweep compare dm naive-futures train evaluate runs pack unpack mlflow-ui explore-install explore update export-web export-explain readme-figures web-install web-dev web-test web-build web-release
 
 
 help:
@@ -59,6 +59,7 @@ help:
 	@echo "  make pack RUN=id      empaqueta un run con sus pesos, y make unpack ZIP=archivo lo restaura"
 	@echo "  make mlflow-ui        interfaz de MLflow"
 	@echo "== Web =="
+	@echo "  make update          datos nuevos en web/public/data/market.json, sin reentrenar"
 	@echo "  make export-web       exporta los modelos de web.models (configs) a ONNX para web/; HORIZONS=5 solo esos"
 	@echo "  make export-explain   datos de la pagina explicativa (web/public/data/explain.json)"
 	@echo "  make readme-figures   figuras del README en docs/img/ (claro y oscuro)"
@@ -164,6 +165,9 @@ explore: check-env
 
 
 # ── Web ────────────────────────────────────────────────────
+update: check-env
+	$(PYTHON) -m $(PKG).update
+
 export-web: check-env
 	$(PYTHON) -m $(PKG).export_web --release $(RELEASE) $(if $(HORIZONS),--horizons $(HORIZONS),)
 

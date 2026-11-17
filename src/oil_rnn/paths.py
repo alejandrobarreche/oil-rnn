@@ -8,6 +8,7 @@ Estructura:
     data/val        split de validación      ├ generados por `make prepare`
     data/test       split de test            ┘
     data/splits.json  manifiesto con origen, semilla y hashes de los splits
+    data/live       última descarga de `make update` (datos nuevos para la web, sin reentrenar)
 
     runs/<run_id>       registro del run: config, meta, métricas, log
     models/<run_id>     todo lo necesario para inferencia
@@ -47,6 +48,7 @@ VAL_DIR = DATA_DIR / "val"
 TEST_DIR = DATA_DIR / "test"
 SPLITS_MANIFEST = DATA_DIR / "splits.json"
 SPLIT_DIRS = {"train": TRAIN_DIR, "val": VAL_DIR, "test": TEST_DIR}
+LIVE_DIR = DATA_DIR / "live"  # última descarga de `make update`; no toca data/raw ni los splits
 
 RUNS_DIR = ROOT / "runs"
 MODELS_DIR = ROOT / "models"

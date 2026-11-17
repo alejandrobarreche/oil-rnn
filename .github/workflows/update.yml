@@ -1,0 +1,52 @@
+# Actualización diaria de los datos de la web, sin reentrenar (make update).
+# Descarga las series de FRED y Yahoo hasta hoy, reescribe web/public/data/market.json y, si hay
+# datos nuevos, hace commit en main y vuelve a publicar la web. La predicción la recalcula el
+# navegador con las redes ya entrenadas; reentrenar sigue siendo make train, a mano.
+# Un push hecho con GITHUB_TOKEN no lanza otros workflows: por eso se lanza pages.yml a mano.
+name: Actualizar datos
+
+on:
+  schedule:
+    - cron: "0 22 * * *"   # 22:00 UTC: después del cierre europeo y del de Nueva York
+  workflow_dispatch:
+
+permissions:
+  contents: write   # commit de market.json
+  actions: write    # lanzar pages.yml
+
+concurrency:
+  group: update
+  cancel-in-progress: false
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    env:
+      PYTHONPATH: src
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      # Solo lo que importa oil_rnn.update: ni PyTorch ni ONNX.
+      - run: pip install numpy pandas pyyaml python-dotenv requests "yfinance>=1.8,<2"
+      - run: python -m oil_rnn.update
+      - name: Commit si hay datos nuevos
+        id: commit
+        run: |
+          if git diff --quiet -- web/public/data/market.json; then
+            echo "Sin datos nuevos"; echo "changed=false" >> "$GITHUB_OUTPUT"; exit 0
+          fi
+          TS=$(python -c "import json; print(json.load(open('web/public/data/market.json'))['ts'])")
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add web/public/data/market.json
+          git commit -m "chore(data): datos de la web hasta el $TS"
+          git pull --rebase
+          git push
+          echo "changed=true" >> "$GITHUB_OUTPUT"
+      - name: Publicar la web
+        if: steps.commit.outputs.changed == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh workflow run pages.yml --ref main --repo "${{ github.repository }}"

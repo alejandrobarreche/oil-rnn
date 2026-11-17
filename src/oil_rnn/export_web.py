@@ -12,6 +12,7 @@ Genera en web/public/model/:
 
 y en web/public/data/ (forma del contrato de datos de Sonda):
     market.json     histórico del target, sucesos del ciclo (web.events) y las últimas filas
+                    (make update lo rehace a diario con datos nuevos, sin reentrenar)
     quality.json    por horizonte: métricas de test frente a las referencias y backtest de test
 
 La web replica el preprocesado de features.py en web/src/model.ts con los parámetros del
@@ -42,6 +43,7 @@ from .paths import (
     relative,
     run_paths,
 )
+from .update import market
 
 N_EXAMPLES = 3
 
@@ -134,38 +136,6 @@ def export_model(run_id: str, release: str) -> tuple[dict, list[dict]]:
     return entry, _examples(predictor)
 
 
-def market(cfg: dict, need: int) -> dict:
-    """Histórico del target (todos los splits) y las últimas `need` filas de variables."""
-    time_col, target = cfg["data"]["time_column"], cfg["data"]["target"]
-    df = pd.concat([load_split(s) for s in SPLITS], ignore_index=True)
-    features = list(cfg["data"]["features"])
-    last, prev = df[target].iloc[-1], df[target].iloc[-2]
-    tail = df.tail(need)
-    series = df.set_index(pd.to_datetime(df[time_col]))[target]
-    events = []
-    for e in cfg["web"].get("events", []):
-        part = series[e["start"] : e["end"]]
-        t = part.idxmax() if e["kind"] == "max" else part.idxmin()
-        events.append({**e, "t": str(t.date()), "price": float(part[t])})
-    return {
-        "asset": target.upper(),
-        "last": float(last),
-        "change": float(last - prev),
-        "ts": str(df[time_col].iloc[-1])[:10],
-        "status": "off",  # datos congelados en la última descarga (data.source.end)
-        "history": [
-            {"t": str(t)[:10], "close": round(float(v), 4)}
-            for t, v in zip(df[time_col], df[target], strict=True)
-        ],
-        "events": events,
-        "features": features,
-        "rows": {
-            "t": [str(t)[:10] for t in tail[time_col]],
-            "values": tail[features].to_numpy(np.float64).tolist(),
-        },
-    }
-
-
 def quality(run_id: str, horizon: int) -> dict:
     """Métricas de test (make evaluate) frente a las referencias, y backtest de test."""
     m = json.loads((run_paths(run_id)["run"] / "eval_test.json").read_text("utf-8"))["metrics"]
@@ -248,7 +218,8 @@ def export(cfg: dict, release: str, horizons: set[int] | None = None) -> dict:
 
     write(WEB_MODEL_DIR / "manifest.json", manifest)
     write(WEB_MODEL_DIR / "examples.json", examples)
-    write(WEB_DATA_DIR / "market.json", market(cfg, need))
+    df = pd.concat([load_split(s) for s in SPLITS], ignore_index=True)  # ya limpios
+    write(WEB_DATA_DIR / "market.json", market(cfg, df, need, status="off"))
     write(WEB_DATA_DIR / "quality.json", [quality(runs[h], h) for h in sorted(runs)])
     return manifest
 
