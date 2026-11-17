@@ -65,8 +65,11 @@ make data
 make prepare
 make cv NAME=<nombre>
 make train NAME=<nombre> CALIB=<run_id de make cv>
+make update
 make web-dev
 ```
+
+- **Datos al día**: `make update` descarga las series hasta hoy y rehace la entrada de la web sin reentrenar; el navegador pasa los datos nuevos por las redes ya entrenadas. Un workflow de GitHub Actions lo ejecuta cada día y vuelve a publicar la web.
 
 - **`make pending`**: lista los valores `PENDIENTE` de `configs/config.yaml`; los comandos que los usan se detienen.
 - **Todos los comandos**: en la [guía de uso](docs/USAGE.md). `make help` los resume.
@@ -115,6 +118,43 @@ Mejor configuración de cada red, media ± desviación en 3 semillas. En negrita
 | 21 | LSTM | 64 · 1 capa · lr 1e‑4 | 21 187 | 11 s | 11,56 / 10,69 | −8,1 % | 7,42 / 7,00 | −6,7 % | 86 % / 84 % |
 | 63 | GRU | 128 · 2 capas · dropout 0,3 · lr 1e‑4 | 155 523 | 29 s | 28,24 / 17,54 | −61 % | 16,94 / 11,44 | −39 % | 68 % / 86 % |
 | 252 | RNN | 256 · 2 capas · dropout 0,3 · lr 1e‑4 | 202 499 | 10 s | 33,03 / 22,71 | −45 % | 23,62 / 16,72 | −34 % | 92 % / 92 % |
+
+</details>
+
+<details>
+<summary><b>MSE y R²</b> frente a la persistencia (<code>python -m oil_rnn.explore fit</code>)</summary>
+
+- **R² del precio**: 1 − MSE / varianza del precio real en test. Mide cuánto de la variación del precio explica la predicción.
+- **R² del rendimiento**: lo mismo sobre log(precio real / último precio conocido), el cambio a h días que la red intenta predecir. La persistencia predice siempre 0, así que su R² es ≤ 0.
+
+| h | Red | MSE red / persistencia ($²) | R² del precio red / persistencia | R² del rendimiento red / persistencia |
+|---|---|---|---|---|
+| 5 | GRU | 29,8 / 28,7 | 0,86 / 0,86 | −0,05 / −0,00 |
+| 21 | LSTM | 133,6 / 114,2 | 0,36 / 0,45 | −0,11 / −0,01 |
+| 63 | GRU | 797 / 308 | −2,82 / −0,47 | −0,64 / −0,01 |
+| 252 | RNN | 1 091 / 516 | −4,22 / −1,47 | −0,60 / −0,02 |
+
+- **El R² del precio engaña solo**: el 0,86 a 5 días es el mismo que el de la persistencia. Lo explica el precio de hoy, no la red.
+- **R² del rendimiento negativo en los cuatro horizontes**: ninguna red explica el cambio de precio mejor que predecir la media de test.
+
+</details>
+
+<details>
+<summary><b>Cuándo acierta y cuándo falla</b>: mejora del RMSE por año</summary>
+
+Año de la fecha predicha; 2026 llega hasta el 03/11. Positiva = la red tiene menos error que la persistencia.
+
+| h | Red | 2023 | 2024 | 2025 | 2026 |
+|---|---|---|---|---|---|
+| 5 | GRU | −1,9 % | −8,7 % | −0,2 % | −1,2 % |
+| 21 | LSTM | −5,8 % | +4,0 % | −12,7 % | −9,0 % |
+| 63 | GRU | −58 % | −70 % | −93 % | −59 % |
+| 252 | RNN | −112 % | −47 % | −22 % | +9,2 % |
+
+- **5 días**: queda pegada a la persistencia todos los años; el peor es 2024.
+- **21 días**: solo mejora en 2024, el año de menor volatilidad de test (27 % anual, frente a 31–34 % en 2023 y 2025 y 70 % en 2026).
+- **63 días**: pierde todos los años, porque sobrestima la magnitud de los movimientos (ver la figura de arriba).
+- **252 días**: mejora en 2026 porque acierta la dirección: prevé de media una subida del 7 % y la real es del 30 %. Con unos 3 pronósticos independientes en todo test no se puede generalizar.
 
 </details>
 
