@@ -1,6 +1,6 @@
 # web
 
-Web del proyecto en dos partes: el producto (mesa de compras del Brent en una pantalla, Vite + TypeScript + ONNX Runtime Web + Three.js) y el estudio, «El precio del Brent» (desarrollo del trabajo con scroll, Three.js, D3 y KaTeX). Las reglas generales están en el `CLAUDE.md` de la raíz.
+Web del proyecto en dos partes: el producto (mesa de compras del Brent en una pantalla, Vite + TypeScript + ONNX Runtime Web) y el estudio, «El precio del Brent» (desarrollo del trabajo con scroll, Three.js, D3 y KaTeX). Las reglas generales están en el `CLAUDE.md` de la raíz.
 
 ## Reglas clave
 
@@ -39,7 +39,7 @@ make web-build     # Compilación a web/dist (lo ejecuta el usuario)
 |---|---|
 | `index.html`, `src/main.ts` | Producto: portada con el petrolero y, al empezar, la mesa de compras (barriles, plazo y decisión, con orden de compra); «Hoy» (ONNX) y «En el pasado» (días clave de test de `quality.json`) |
 | `src/desk.ts` | Cálculos de la mesa sin DOM: días clave, eslora por barriles, diez futuros, regla de precios y resultado de la decisión |
-| `src/ship.ts` | Petrolero 3D con geometría propia: cambia de eslora con la carga y se hunde al llenarse |
+| `src/ship.ts`, `public/img/` | Petrolero en foto: fundido de vacío a cargado, escala por barriles y foto por tema |
 | `src/model.ts` | Réplica del preprocesado de `features.py` e inferencia ONNX |
 | `src/icons.ts` | Iconos SVG (tema y flecha) |
 | `src/product.css` | Estilos y temas claro y oscuro del producto |
@@ -62,5 +62,6 @@ make web-build     # Compilación a web/dist (lo ejecuta el usuario)
 
 - **«En el pasado»**: en `quality.json`, `t` es la fecha objetivo; el día de partida está `h` días hábiles antes. Solo hay días de test (2023–2026): antes, el modelo final ya vio los datos.
 - **«Fijar el precio»**: en la realidad sería un futuro o una cobertura; la mesa lo simplifica con el precio spot.
+- **Fotos del barco**: las cuatro comparten encuadre píxel a píxel; si se cambia una, se cambian todas o el fundido salta. Falta `barco-vacio-oscuro.jpg` (de momento, la clara oscurecida por CSS).
 - **`public/brent/data.json` y `data2.json`**: ningún comando los regenera; si cambian los runs, quedan desfasados.
-- **Librerías**: se cargan desde jsDelivr con versión fija (three 0.170.0 en producto y estudio, d3 7.9.0, katex 0.16.11); no cambies una versión sin probar las dos páginas.
+- **Librerías**: se cargan desde jsDelivr con versión fija (three 0.170.0, d3 7.9.0 y katex 0.16.11, solo en el estudio); no cambies una versión sin probar la página.
