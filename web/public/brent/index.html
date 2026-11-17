@@ -361,7 +361,7 @@
           <table class="table">
             <thead><tr><th>Plazo</th><th>Red</th><th>Neuronas · capas</th><th>Parámetros</th><th>Entrenamiento</th></tr></thead>
             <tbody>
-              <tr><td>1 semana</td><td class="net">GRU</td><td>256 · 1</td><td>211 203</td><td>17 s</td></tr>
+              <tr><td>1 semana</td><td class="net">GRU</td><td>16 · 1</td><td>1 683</td><td>66 s</td></tr>
               <tr><td>1 mes</td><td class="net">LSTM</td><td>64 · 1</td><td>21 187</td><td>11 s</td></tr>
               <tr><td>3 meses</td><td class="net">GRU</td><td>128 · 2</td><td>155 523</td><td>29 s</td></tr>
               <tr><td>1 año</td><td class="net">RNN</td><td>256 · 2</td><td>202 499</td><td>10 s</td></tr>
@@ -374,12 +374,12 @@
       </div>
     </div>
     <div class="story__steps">
-      <div class="step" data-step="0"><h3>Una red para cada plazo</h3><p>Se eligió la que tenía menor error en validación con tres semillas. Ganó la GRU a 1 semana y a 3 meses, la LSTM a 1 mes y la RNN simple a 1 año.</p><p>Todas se entrenan en segundos en la GPU de un portátil (RTX 3050 Ti).</p></div>
+      <div class="step" data-step="0"><h3>Una red para cada plazo</h3><p>Se eligió la que tenía menor error en validación con tres semillas. Ganó la GRU a 1 semana y a 3 meses, la LSTM a 1 mes y la RNN simple a 1 año.</p><p>A 1 semana, una GRU de 16 neuronas empata con la de 256 y se queda por ser 125 veces más pequeña.</p></div>
       <div class="step" data-step="1"><h3>Lo que entra</h3><p>Tomamos como ejemplo la GRU de 3 meses. Cada predicción mira los últimos <b>60 días</b>. Cada día es un vector de <b>16 números</b>: las 15 series y la volatilidad.</p></div>
       <div class="step" data-step="2"><h3>Lo que recuerda</h3><p>Dos capas de 128 neuronas leen los 60 días en orden. En cada día, una <b>puerta de actualización</b> decide cuánto del recuerdo se sustituye, y una <b>puerta de reinicio</b>, cuánto del pasado se usa para el dato nuevo.</p></div>
       <div class="step" data-step="3"><h3>Lo que sale</h3><p>Del último día sale un resumen, y una capa final lo convierte en tres números: el cambio que deja un 10&nbsp;% de probabilidad por debajo, la mediana y el que deja un 10&nbsp;% por encima.</p><p>Entre el primero y el último queda el <b class="a">rango del 80&nbsp;%</b>. Después se convierten en precios a partir del último Brent publicado.</p></div>
       <div class="step" data-step="4"><h3>Cómo aprende</h3><p>Con la pérdida <b>pinball</b>, que castiga de forma asimétrica. Para el techo del rango (τ&nbsp;=&nbsp;0,9), quedarse corto cuesta nueve veces más que pasarse. Así cada salida aprende su propio cuantil.</p></div>
-      <div class="step" data-step="5"><h3>Cuándo parar</h3><p>Hasta 60 épocas (pasadas completas por los datos). El último año de entrenamiento se reserva: si el error en ese año no mejora en 10 épocas, se para y se quedan los mejores pesos.</p><p>A 1 semana y a 1 año, la mejor época es la 3 y la 1: casi no aprende. A 1 y 3 meses, el error baja un 21 y un 23&nbsp;%.</p></div>
+      <div class="step" data-step="5"><h3>Cuándo parar</h3><p>Hasta 60 épocas (400 a 1 semana), pasadas completas por los datos. Se reserva el último año: si su error deja de mejorar, se para y se quedan los mejores pesos.</p><p>A 1 año, la mejor época es la 1: casi no aprende. A 1 semana, 1 mes y 3 meses, el error baja un 26, un 21 y un 23&nbsp;%.</p></div>
       <div class="step" data-step="6"><h3>El modelo final</h3><p>Con la configuración elegida, cada red se reentrena una vez con todos los datos de 2000 a 2023 y se examina <b>una sola vez</b> en el periodo de prueba.</p></div>
     </div>
   </section>
