@@ -541,4 +541,5 @@ git pull --rebase
 git push
 ```
 
+- **Antes de subirlo, mira la web** con `make web-dev`: el producto a 1 semana y, en `/brent/`, la tabla de modelos, la curva de 1 semana (204 épocas, mejor la 184) y el gráfico de test, en tema claro y oscuro.
 - **Qué pasarle a Claude**: la salida de `make export-web` y `make web-test`, y un aviso cuando esté subido.
