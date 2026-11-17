@@ -97,6 +97,7 @@ function makeCtx() {
 
 async function init() {
   $("theme").innerHTML = I.theme;
+  document.querySelector(".howlink")?.insertAdjacentHTML("beforeend", I.arrow);
   const ship = createShip();
   ship.size(shipLength(S.bbl));
   $("introShip").appendChild(ship.el);
@@ -350,7 +351,7 @@ async function init() {
     const st = $("stage");
     if (cur === "dia") st.innerHTML = `<div class="block a-enter"><div class="grid cols-200">${tilesDia()}</div></div>`;
     else if (cur === "carga") {
-      st.innerHTML = `<div class="block a-enter">${cargaHTML()}</div>`;
+      st.innerHTML = `<div class="block fill a-enter">${cargaHTML()}</div>`;
       $("shipSlot").appendChild(ship.el);
       // Al volver a la carga, el barco vuelve vacío para elegir de nuevo
       delete S.picks.carga;

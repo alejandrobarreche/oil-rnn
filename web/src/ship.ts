@@ -341,7 +341,7 @@ export function createShip(): Ship {
     renderer.setSize(w, h, false);
     camera.aspect = w / h;
     // Más lejos cuanto más estrecho, para que el barco más grande quepa entero
-    const k = Math.max(1.05, 3.4 / camera.aspect);
+    const k = Math.max(1.05, 2.75 / camera.aspect);
     camera.position.set(17 * k, 5.4 * k, 26 * k);
     camera.lookAt(0, 1.4, 0);
     camera.updateProjectionMatrix();
