@@ -1,6 +1,6 @@
 # web
 
-Web del proyecto en dos partes: el producto (previsión del Brent a 4 plazos en una pantalla y un clic, Vite + TypeScript + ONNX Runtime Web) y el estudio, «El precio del Brent» (desarrollo del trabajo en seis pestañas sin scroll, Three.js, D3 y KaTeX). Las reglas generales están en el `CLAUDE.md` de la raíz.
+Web del proyecto en dos partes: el producto (previsión del Brent a 4 plazos en una pantalla y un clic, Vite + TypeScript + ONNX Runtime Web) y el estudio, «El precio del Brent» (desarrollo del trabajo en seis pestañas, cada una una página de figuras con su texto; Three.js, D3 y KaTeX). Las reglas generales están en el `CLAUDE.md` de la raíz.
 
 ## Reglas clave
 
@@ -16,7 +16,7 @@ Web del proyecto en dos partes: el producto (previsión del Brent a 4 plazos en 
 
 **Nunca**
 - No añadas texto para explicar un gráfico que no se entiende: rehaz el gráfico.
-- No pases de una idea y 25 palabras por paso de scroll, ni de una línea por subtítulo de tarjeta.
+- No pases de una idea por figura del estudio ni de una línea por subtítulo de tarjeta en el producto.
 - No pongas etiquetas que repitan lo que ya dice el contenido (p. ej. «en palabras» sobre un texto, «Cuánto falló» sobre un gráfico de error).
 - No pongas explicaciones en `title`: en móvil no se ven. Escríbelas a la vista o quítalas.
 - No repitas en un subtítulo lo que ya dice el título o la cabecera de la tabla; quítalo.
@@ -43,7 +43,7 @@ make web-build     # Compilación a web/dist (lo ejecuta el usuario)
 | `src/model.ts` | Réplica del preprocesado de `features.py` e inferencia ONNX |
 | `src/icons.ts` | Iconos SVG (flecha) |
 | `src/product.css` | Estilos del producto, solo tema claro |
-| `public/brent/` | «El precio del Brent»: seis pestañas (`section[data-tab]`: Inicio, Mercado, Datos, Redes, Validación, Resultado), cada una cabe en una pantalla con todos sus textos a la vista (4 a 6) y el gráfico al lado; el texto elegido (al pulsarlo o con las flechas) manda el estado del gráfico, que es lo único que se anima; cada pestaña empieza arriba y por su primer texto; `nav.js` (rutas `#/pestaña` y transición entre vistas), `ui.css` (pestañas, botones, control segmentado y fondo de ambiente), `map.js` (mapa de los mercados de entrada), `arch.js` (celda RNN, LSTM y GRU interactiva), `scrollcraft.css` (tokens) y sus datos |
+| `public/brent/` | «El precio del Brent»: seis pestañas (`section[data-tab]`: Inicio, Mercado, Datos, Redes, Validación, Resultado), cada una es una página con scroll de figuras (`article.panel[data-in]`: gráfico a la izquierda; etiqueta, frase clave y uno o dos párrafos a la derecha); cada gráfico se anima al entrar en pantalla (`IntersectionObserver`) y se vuelve a animar al volver a la pestaña, que siempre empieza arriba; `nav.js` (rutas `#/pestaña` y transición entre vistas), `ui.css` (pestañas, botones, control segmentado y fondo de ambiente), `map.js` (mapa de los mercados de entrada), `arch.js` (celda RNN, LSTM y GRU interactiva), `scrollcraft.css` (tokens) y sus datos |
 
 ## Convenciones
 
@@ -53,7 +53,7 @@ make web-build     # Compilación a web/dist (lo ejecuta el usuario)
 - **Producto, color**: el violeta `#6a4cf0` marca la previsión (franja y lo probable); la tinta, el precio real. «Cómo se hizo» va con el fondo oscuro del estudio para que se vea que es otro sitio.
 - **Producto, movimiento**: muelles críticamente amortiguados que parten del valor en pantalla; iconos que se animan al pulsar; un solo momento de entrada; todo respeta `prefers-reduced-motion`.
 - **Controles**: todo botón responde al pasar, al pulsar (`scale(0.97)`) y al foco de teclado; nunca `transition: all`.
-- **Página del Brent, composición**: sin titulares por escena (la pestaña es el título); cada paso, una cifra o frase clave y como mucho 25 palabras; sin columnas de texto, recuadros decorativos ni notas pequeñas en gris.
+- **Página del Brent, composición**: un encabezado numerado por pestaña («1 Mercado») y nada más grande; cada figura en una tarjeta con etiqueta (qué datos y si son de train, validación o test), una frase clave que dice lo que se ve y uno o dos párrafos con el método, las cifras y sus límites; nada de obviedades ni frases de relleno.
 - **Títulos**: sustantivos («La red», «El resultado»); nunca preguntas ni frases de acción.
 - **Fórmulas**: con KaTeX; nunca como texto de código.
 - **Enlaces**: siempre relativos; la web se sirve desde una subcarpeta.
