@@ -561,7 +561,7 @@ python -m jupyter nbconvert --to notebook --execute --inplace notebooks/02_proce
 - **Qué pasarle a Claude**: un aviso cuando termine (o el error, si alguna celda falla). Claude hace el commit.
 - **Resultado (17/11)**: cuadernos 01–05 ejecutados por el usuario, sin errores y con salida en todas las celdas; el código no cambia. 04 muestra la GRU-16 (1.683 parámetros) a 5 días y 05 su fila de test (RMSE 5,46 frente a 5,36, −1,8 %).
 
-## 24. Mac · 17/11/2026 · ⏳: ver la mesa de compras en el navegador
+## 24. Mac · 17/11/2026 · ✅: ver la mesa de compras en el navegador
 
 - **Por qué**: la portada pasa a ser la mesa de compras (rama `feat/mesa-de-compras`, commit `9396ee5`). Hay que ver el barco 3D, la regla de precios y la orden de compra en tema claro y oscuro antes de darla por buena.
 - **Comprobado por Claude**: `make web-test` (33 tests), `make test` y `make lint` pasan, y `tsc --noEmit` no da errores. La página no se ha visto todavía en un navegador.
@@ -572,3 +572,4 @@ make web-dev
 ```
 
 - **Qué pasarle a Claude**: la URL que imprime Vite (normalmente `http://localhost:5173`), con el servidor abierto, para revisarla en Chrome.
+- **Resultado (17/11)**: servidor abierto por el usuario. Claude revisó la página en Chrome (1512×697): todos los pasos de «Hoy» y «En el pasado», con la orden cerrada, caben sin scroll desde `8ee155e`.
