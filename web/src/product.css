@@ -509,6 +509,19 @@ h1 {
   opacity: 0;
   transition: opacity 1100ms var(--ease);
 }
+.ship canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+  opacity: 0;
+  transition: opacity 400ms var(--ease-out);
+}
+/* Con el shader listo, el canvas sustituye a las fotos fijas */
+.ship.gl canvas {
+  opacity: 1;
+}
 .ship img.stand-in {
   filter: brightness(0.42) saturate(0.7) contrast(1.1);
 }
