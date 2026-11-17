@@ -574,7 +574,7 @@ make web-dev
 - **Qué pasarle a Claude**: la URL que imprime Vite (normalmente `http://localhost:5173`), con el servidor abierto, para revisarla en Chrome.
 - **Resultado (17/11)**: servidor abierto por el usuario. Claude revisó la página en Chrome (1512×697): todos los pasos de «Hoy» y «En el pasado», con la orden cerrada, caben sin scroll desde `8ee155e`.
 
-## 25. Mac · 17/11/2026 · ⏳: actualizar los datos de la web sin reentrenar
+## 25. Mac · 17/11/2026 · ✅: actualizar los datos de la web sin reentrenar
 
 - **Por qué**: el enunciado pide actualización dinámica y el profesor acepta meter datos nuevos sin reentrenar. `make update` descarga las series hasta hoy y reescribe `web/public/data/market.json`; el workflow `update.yml` lo hace cada día.
 - **Comprobado por Claude**: `make test` (79 tests) y `make lint` pasan. Con los splits actuales, la función nueva reproduce byte a byte el `market.json` publicado. No se ha descargado nada ni se ha lanzado el workflow.
@@ -589,3 +589,4 @@ make web-dev
 
 - **2. En GitHub**, después de hacer `git push`: Actions → *Actualizar datos* → *Run workflow*. Si hay datos nuevos, el workflow hace un commit `chore(data)` y lanza *Publicar web*.
 - **Qué pasarle a Claude**: la salida de `make update` (fecha de los datos y precio), si la web muestra la nueva fecha en «Datos de la EIA y FRED hasta el…», y si el workflow terminó en verde o con qué error.
+- **Resultado (17/11)**: `make update` en el Mac, datos hasta el 11/11 (antes 03/11): 6 días nuevos, ninguno de los anteriores revisado; Brent a 92,14 $. Falta lanzar el workflow en GitHub.
