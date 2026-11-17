@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>El precio del Brent</title>
 <meta name="description" content="Veintiséis años de precios, quince mercados y cuatro redes neuronales que intentan anticipar el barril de Brent.">
-<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='7' fill='%230d0f12'/><circle cx='16' cy='17' r='7' fill='%23f2b84b'/></svg>">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='7' fill='%231c1c1f'/><circle cx='16' cy='17' r='7' fill='%23b9a2ff'/></svg>">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,100..900&family=Geist:wght@300..700&display=swap" rel="stylesheet">
@@ -13,12 +13,12 @@
 <link rel="stylesheet" href="scrollcraft.css">
 <style>
   :root {
-    --sc-canvas:     #0b1a21;
-    --sc-surface:    #15181d;
-    --sc-ink:        #eef0f2;
-    --sc-ink-soft:   #b4c2c8;
-    --sc-accent:     #f2b84b;
-    --sc-accent-ink: #15110a;
+    --sc-canvas:     #1c1c1f;
+    --sc-surface:    #2a2a2f;
+    --sc-ink:        #f2f1ee;
+    --sc-ink-soft:   #b7b6bc;
+    --sc-accent:     #b9a2ff;   /* violeta del producto: la previsión */
+    --sc-accent-ink: #120d22;
     --sc-font-display: "Archivo", system-ui, sans-serif;
     --sc-font-text:    "Geist", system-ui, sans-serif;
     --sheen: #76d3c6;          /* reflejo del crudo: sucesos y datos de entrada */
@@ -39,14 +39,14 @@
   /* Barra */
   .site-bar { position: fixed; inset: 0 0 auto 0; z-index: 6; display: flex; justify-content: space-between; align-items: center;
     padding: var(--sc-4) var(--sc-gutter); background: linear-gradient(to bottom, var(--sc-canvas) 30%, transparent); }
-  .mark { font-family: var(--sc-font-display); font-stretch: 125%; font-weight: 700; letter-spacing: 0.02em; text-decoration: none; color: var(--sc-ink); font-size: var(--sc-t-sm); }
+  .mark { font-family: var(--sc-font-display); font-stretch: 125%; font-weight: 900; letter-spacing: 0.03em; line-height: 1; text-decoration: none; color: var(--sc-ink); font-size: 22px; }
   .mark i { font-style: normal; color: var(--sc-accent); }
-  .cta { display: inline-flex; align-items: center; gap: .5em; font-weight: 560; text-decoration: none; color: var(--sc-accent-ink);
-    background: var(--sc-accent); border-radius: 999px; padding: .62em 1.15em; font-size: var(--sc-t-sm);
+  .cta { display: inline-flex; align-items: center; gap: .5em; font-weight: 650; text-decoration: none; color: var(--sc-canvas);
+    background: var(--sc-ink); border-radius: 999px; padding: .62em 1.15em; font-size: var(--sc-t-sm);
     transition: transform 140ms var(--sc-ease-out), background-color 160ms var(--sc-ease-out); }
-  .cta:hover { background: #f6c86d; }
+  @media (hover: hover) and (pointer: fine) { .cta:hover { background: color-mix(in srgb, var(--sc-ink) 82%, var(--sc-canvas)); } }
   .cta:active { transform: scale(0.97); }
-  .cta:focus-visible { outline: 2px solid var(--sc-accent); outline-offset: 3px; }
+  .cta:focus-visible { outline: 2px solid var(--sc-ink); outline-offset: 3px; }
   .cta--big { font-size: var(--sc-t-base); padding: .85em 1.5em; }
 
   /* Escenas: la gota narra, el texto a la izquierda */
@@ -55,7 +55,7 @@
   .scene h1, .scene h2 { margin: 0; font-stretch: 118%; }
   .scene h2.sc-display--lg { font-size: var(--sc-t-4xl); line-height: .95; }
   .scene .lede { margin: var(--sc-5) 0 0; font-family: var(--sc-font-display); font-stretch: 100%; font-size: var(--sc-t-2xl); line-height: 1.12; font-weight: 340; letter-spacing: -0.015em; max-width: 20ch; text-wrap: balance; }
-  .scene h1, .scene h2, .scene .lede, .scene .sub, .step { text-shadow: 0 2px 28px rgba(4, 12, 16, 0.75); }
+  .scene h1, .scene h2, .scene .lede, .scene .sub, .step { text-shadow: 0 2px 28px rgba(10, 10, 12, 0.75); }
   .scene .sub { margin: var(--sc-6) 0 0; padding-left: var(--sc-5); border-left: 1px solid color-mix(in srgb, var(--sheen) 55%, transparent); font-size: var(--sc-t-lg); line-height: 1.55; color: var(--sc-ink-soft); max-width: 40ch; text-wrap: pretty; }
   .scene--hero { min-height: 100svh; align-items: flex-end; padding-bottom: 16vh; }
   .scene--center { justify-content: center; text-align: center; }
@@ -80,7 +80,7 @@
 
   .graphic { position: relative; width: 100%; height: 100%; max-height: 760px; }
   .graphic::before, .scene__viz::before { content: ""; position: absolute; inset: -8% -10%; z-index: -1; pointer-events: none;
-    background: radial-gradient(closest-side, rgba(6, 16, 21, .78), rgba(6, 16, 21, .45) 60%, transparent); }
+    background: radial-gradient(closest-side, rgba(22, 22, 25, .78), rgba(22, 22, 25, .45) 60%, transparent); }
   .scene__viz { position: relative; }
   .graphic svg { width: 100%; height: 100%; display: block; overflow: visible; }
   .layer { position: absolute; inset: 0; opacity: 0; pointer-events: none; transition: opacity 360ms var(--sc-ease-out); display: flex; flex-direction: column; justify-content: center; }
@@ -467,10 +467,10 @@
   <section class="story" id="story-result" data-story="result">
     <div class="story__graphic"><div class="graphic" id="g-result"></div></div>
     <div class="story__steps">
-      <div class="step" data-step="0"><h3>Cómo leer el gráfico</h3><p>La línea <b>blanca</b> es el precio real. La <b class="a">ámbar</b> es lo que predijo la red y la franja ámbar, su rango del 80&nbsp;%. La <b style="color:var(--persist)">gris discontinua</b> es la persistencia: el precio de hace h días.</p><p>Abajo, el error típico (RMSE) de cada una en los cuatro plazos.</p></div>
+      <div class="step" data-step="0"><h3>Cómo leer el gráfico</h3><p>La línea <b>blanca</b> es el precio real. La <b class="a">violeta</b> es lo que predijo la red y la franja violeta, su rango del 80&nbsp;%. La <b style="color:var(--persist)">gris discontinua</b> es la persistencia: el precio de hace h días.</p><p>Abajo, el error típico (RMSE) de cada una en los cuatro plazos.</p></div>
       <div class="step" data-step="1"><span class="when a">5,46 $<small>frente a 5,36 $</small></span><h3>A una semana</h3><p>La red casi empata: falla un <b>1,8&nbsp;%</b> más que repetir el precio. Su rango acierta el 78&nbsp;% de los días, tan bien como los cuantiles históricos.</p></div>
       <div class="step" data-step="2"><span class="when a">11,56 $<small>frente a 10,69 $</small></span><h3>A un mes</h3><p>La franja se ensancha y la red se queda un <b>8,1&nbsp;%</b> por detrás. El rango acierta el 86&nbsp;% de los días.</p></div>
-      <div class="step" data-step="3"><span class="when a">28,24 $<small>frente a 17,54 $</small></span><h3>A tres meses</h3><p>El peor caso: un <b>61&nbsp;%</b> más de error. Fíjate en cómo la línea ámbar exagera cada subida.</p></div>
+      <div class="step" data-step="3"><span class="when a">28,24 $<small>frente a 17,54 $</small></span><h3>A tres meses</h3><p>El peor caso: un <b>61&nbsp;%</b> más de error. Fíjate en cómo la línea violeta exagera cada subida.</p></div>
       <div class="step" data-step="4"><h3>Acierta la dirección, no el tamaño</h3><p>A 3 meses, la red acierta si el precio sube o baja el <b>60&nbsp;%</b> de los días. Pero de media predice una subida del <b>11&nbsp;%</b>, cuando la real fue del 1,7&nbsp;%.</p></div>
       <div class="step" data-step="5"><span class="when a">33,03 $<small>frente a 22,71 $</small></span><h3>A un año</h3><p>El rango contiene el precio real el <b>92&nbsp;%</b> de los días, pero porque es tan ancho que cabe casi todo.</p></div>
       <div class="step" data-step="6"><h3>Peor, pero no se puede asegurar</h3><p>En ningún plazo la red mejora a la persistencia. Tampoco se puede afirmar que sea peor: ninguna diferencia es significativa (contraste de Diebold-Mariano, p&nbsp;&gt;&nbsp;0,05).</p><p>A 3 meses y a 1 año solo hay unos 15 y 3 pronósticos independientes: demasiado pocos para distinguirlas.</p></div>
@@ -612,10 +612,10 @@ const clamp01 = (x) => Math.min(1, Math.max(0, x));
 const $ = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => [...r.querySelectorAll(s)];
 const parse = d3.utcParse("%Y-%m-%d");
-const AMBER = "#f2b84b", SHEEN = "#76d3c6", INK = "#eef0f2", SOFT = "#a3abb5", PERSIST = "#8d96a1";
+const ACCENT = "#b9a2ff", SHEEN = "#76d3c6", INK = "#f2f1ee", SOFT = "#b7b6bc", PERSIST = "#8d96a1";
 const D2 = await (await fetch("data2.json")).json();
 const DV = {};
-const LAV = "#b9a3f0", ROSE = "#e59fb5";
+const CORAL = "#f28b82", ROSE = "#e59fb5";
 const fmtN = (v, d = 2) => new Intl.NumberFormat("es-ES", { minimumFractionDigits: d, maximumFractionDigits: d }).format(v);
 const sgn = (v, d = 1) => (v > 0.0001 ? "+" : v < -0.0001 ? "−" : "") + fmtN(Math.abs(v), d) + " %";
 const mk = (sel, W, H) => d3.select(sel).append("svg").attr("viewBox", `0 0 ${W} ${H}`).attr("preserveAspectRatio", "xMidYMid meet");
@@ -654,7 +654,7 @@ function showLayer(root, name) { $$(".layer", root).forEach((l) => l.classList.t
   const gr = defs.append("linearGradient").attr("id", "oilfill").attr("x1", 0).attr("x2", 0).attr("y1", 0).attr("y2", 1);
   gr.append("stop").attr("offset", "0%").attr("stop-color", SHEEN).attr("stop-opacity", 0.32);
   gr.append("stop").attr("offset", "55%").attr("stop-color", "#9a7bd8").attr("stop-opacity", 0.10);
-  gr.append("stop").attr("offset", "100%").attr("stop-color", "#0d0f12").attr("stop-opacity", 0);
+  gr.append("stop").attr("offset", "100%").attr("stop-color", "#1c1c1f").attr("stop-opacity", 0);
   const clip = defs.append("clipPath").attr("id", "bclip").append("rect").attr("y", 0).attr("height", H).attr("x", m.l).attr("width", W - m.l - m.r);
 
   svg.append("g").attr("class", "grid").selectAll("line").data([50, 100, 150]).join("line")
@@ -686,7 +686,7 @@ function showLayer(root, name) { $$(".layer", root).forEach((l) => l.classList.t
   const marks = svg.append("g").selectAll("g").data(EV.filter(Boolean)).join("g").attr("opacity", 0)
     .attr("transform", (e) => `translate(${x(parse(e.d))},${y(e.v)})`);
   marks.append("circle").attr("r", 13).attr("fill", SHEEN).attr("opacity", 0.18);
-  marks.append("circle").attr("r", 5.5).attr("fill", SHEEN).attr("stroke", "#0d0f12").attr("stroke-width", 2);
+  marks.append("circle").attr("r", 5.5).attr("fill", SHEEN).attr("stroke", "#1c1c1f").attr("stroke-width", 2);
   // Arriba del punto si es un máximo; a la derecha si es un mínimo, para no pisar el eje
   const hiE = (e) => e.v > 80, right = (e) => x(parse(e.d)) > W - 120;
   marks.append("text").attr("class", "evt-label").attr("x", (e) => (hiE(e) ? 0 : 18)).attr("y", (e) => (hiE(e) ? -24 : -2))
@@ -792,7 +792,7 @@ const GL = (svg, x1, x2, ys, y) => svg.append("g").selectAll("line").data(ys).jo
   const ann = svg.append("g");
   [["2009-01-06", "enero de 2009 · 7,3 % al día", 1], ["2014-06-19", "junio de 2014 · 0,8 %", -1]].forEach(([d, label, side]) => {
     const i = R.t.indexOf(d), px = x(t[i]), py = side > 0 ? yR(R.v[i]) : yR(-R.v[i]);
-    ann.append("circle").attr("cx", px).attr("cy", py).attr("r", 5).attr("fill", SHEEN).attr("stroke", "#0b1a21").attr("stroke-width", 2);
+    ann.append("circle").attr("cx", px).attr("cy", py).attr("r", 5).attr("fill", SHEEN).attr("stroke", "#1c1c1f").attr("stroke-width", 2);
     ann.append("line").attr("x1", px).attr("x2", px).attr("y1", side > 0 ? py - 6 : py + 6).attr("y2", side > 0 ? py - 34 : yR(-10.5)).attr("stroke", SHEEN).attr("opacity", 0.6);
     ftext(ann, "cap", px + (side > 0 ? 8 : -8), side > 0 ? py - 38 : yR(-10.5) + 4, label, side > 0 ? "start" : "end");
   });
@@ -871,7 +871,7 @@ const GL = (svg, x1, x2, ys, y) => svg.append("g").selectAll("line").data(ys).jo
 {
   const Hh = D2.hist, keys = ["usd_per_eur", "gold", "brent", "vix"];
   const NM = { usd_per_eur: "Dólares por euro", gold: "Oro", brent: "Brent", vix: "VIX" };
-  const COL = { usd_per_eur: LAV, gold: ROSE, brent: INK, vix: SHEEN };
+  const COL = { usd_per_eur: CORAL, gold: ROSE, brent: INK, vix: SHEEN };
   const W = 820, H = 440, m = { l: 20, r: 20, t: 70, b: 56 };
   const svg = mk("#g-hist", W, H);
   const x = d3.scaleLinear().domain([0, 59]).range([m.l, W - m.r]);
@@ -976,7 +976,7 @@ const GL = (svg, x1, x2, ys, y) => svg.append("g").selectAll("line").data(ys).jo
     const endG = svg.append("g");
     endG.append("circle").attr("cx", xe).attr("cy", y(pe)).attr("r", 5).attr("fill", INK);
     ftext(endG, "cap", xe + 16, y(pe) - 6, `real · ${fmtN(pe)} $`);
-    svg.append("circle").attr("cx", x0).attr("cy", y(p0)).attr("r", 6).attr("fill", INK).attr("stroke", "#0b1a21").attr("stroke-width", 2);
+    svg.append("circle").attr("cx", x0).attr("cy", y(p0)).attr("r", 6).attr("fill", INK).attr("stroke", "#1c1c1f").attr("stroke-width", 2);
     svg.append("path").attr("d", `M${x0},${H - m.b + 16} V${H - m.b + 22} H${xe} V${H - m.b + 16}`).attr("fill", "none").attr("stroke", SOFT);
     ftext(svg, "lbl", (x0 + xe) / 2, H - m.b + 42, "63 días hábiles ≈ 3 meses", "middle");
     DV.persist = (k) => {
@@ -1026,7 +1026,7 @@ const GL = (svg, x1, x2, ys, y) => svg.append("g").selectAll("line").data(ys).jo
     const cellsG = svg.append("g");
     [[40, 170, 0.35, "día t−1"], [270, 550, 1, "día t"], [650, 780, 0.35, "día t+1"]].forEach(([a, b, o, t]) => {
       const g = cellsG.append("g").attr("opacity", o);
-      g.append("rect").attr("x", a).attr("y", 110).attr("width", b - a).attr("height", 290).attr("rx", 24).attr("fill", "#0f242c").attr("stroke", SHEEN).attr("stroke-opacity", 0.55);
+      g.append("rect").attr("x", a).attr("y", 110).attr("width", b - a).attr("height", 290).attr("rx", 24).attr("fill", "#232327").attr("stroke", SHEEN).attr("stroke-opacity", 0.55);
       g.append("line").attr("x1", (a + b) / 2).attr("x2", (a + b) / 2).attr("y1", 470).attr("y2", 404).attr("stroke", SOFT).attr("stroke-width", 1.6).attr("marker-end", "url(#arrC)");
       ftext(g, "lbl", (a + b) / 2, 492, t, "middle");
     });
@@ -1035,13 +1035,13 @@ const GL = (svg, x1, x2, ys, y) => svg.append("g").selectAll("line").data(ys).jo
     ftext(svg, "evt-sub", 410, 455, "16 números del día", "middle").attr("dx", 70);
     const line = (y, c) => { const g = svg.append("g"); g.append("line").attr("x1", 0).attr("x2", W).attr("y1", y).attr("y2", y).attr("stroke", c).attr("stroke-opacity", 0.35).attr("stroke-width", 2);
       g.append("line").attr("class", "flow").attr("x1", 0).attr("x2", W).attr("y1", y).attr("y2", y).attr("stroke", c).attr("stroke-width", 4).attr("stroke-linecap", "round"); return g; };
-    line(hy, AMBER);
-    ftext(svg, "cap", 220, hy - 14, "resumen", "middle").style("fill", AMBER);
-    ftext(svg, "cap", 600, hy - 14, "resumen", "middle").style("fill", AMBER);
+    line(hy, ACCENT);
+    ftext(svg, "cap", 220, hy - 14, "resumen", "middle").style("fill", ACCENT);
+    ftext(svg, "cap", 600, hy - 14, "resumen", "middle").style("fill", ACCENT);
     const cG = line(cy, SHEEN);
     ftext(cG, "cap", 220, cy - 14, "memoria", "middle").style("fill", SHEEN);
     const gate = (g, px, py, t, sym) => {
-      g.append("circle").attr("cx", px).attr("cy", py).attr("r", 22).attr("fill", "#14323c").attr("stroke", INK).attr("stroke-width", 1.4);
+      g.append("circle").attr("cx", px).attr("cy", py).attr("r", 22).attr("fill", "#2a2a2f").attr("stroke", INK).attr("stroke-width", 1.4);
       ftext(g, "cap", px, py + 5, sym, "middle");
       ftext(g, "lbl", px, py + 42, t, "middle");
     };
@@ -1064,7 +1064,7 @@ const GL = (svg, x1, x2, ys, y) => svg.append("g").selectAll("line").data(ys).jo
     const W = 820, H = 620, m = { l: 150, r: 28, t: 100, b: 70 };
     const svg = mk("#g-grid", W, H);
     const HZ4 = [5, 21, 63, 252], NM = ["1 semana", "1 mes", "3 meses", "1 año"];
-    const NC = { rnn: LAV, lstm: SHEEN, gru: AMBER }, NN = { rnn: "RNN", lstm: "LSTM", gru: "GRU" };
+    const NC = { rnn: CORAL, lstm: SHEEN, gru: ACCENT }, NN = { rnn: "RNN", lstm: "LSTM", gru: "GRU" };
     const x = d3.scaleLinear().domain([-20, 8]).range([m.l, W - m.r]).clamp(true);
     const bandH = (H - m.t - m.b) / 4, rowY = (h) => m.t + HZ4.indexOf(h) * bandH + bandH / 2;
     const nodes = D2.grid.map(([net, h, n, l, d, lr, sk]) => ({ net, h, n, l, d, lr, sk, x: x(sk), y: rowY(h) }));
@@ -1111,8 +1111,8 @@ const GL = (svg, x1, x2, ys, y) => svg.append("g").selectAll("line").data(ys).jo
       g.append("rect").attr("x", x(parse("2000-08-30"))).attr("width", x(hold) - x(parse("2000-08-30"))).attr("height", rowH).attr("rx", 6).attr("fill", INK).attr("opacity", 0.16);
       if (i === 0) ftext(g, "lbl", x(parse("2000-08-30")) + 14, rowH / 2 + 4, "entrena con todo el pasado");
       g.append("rect").attr("x", x(hold)).attr("width", x(A) - x(hold) - 4).attr("height", rowH).attr("rx", 6).attr("fill", SHEEN).attr("opacity", 0.45);
-      g.append("rect").attr("x", x(A)).attr("width", x(B) - x(A)).attr("height", rowH).attr("rx", 6).attr("fill", AMBER);
-      ftext(g, "lbl", (x(A) + x(B)) / 2, -7, `${A.getUTCFullYear()}–${String(B.getUTCFullYear()).slice(2)}`, "middle").style("fill", AMBER);
+      g.append("rect").attr("x", x(A)).attr("width", x(B) - x(A)).attr("height", rowH).attr("rx", 6).attr("fill", ACCENT);
+      ftext(g, "lbl", (x(A) + x(B)) / 2, -7, `${A.getUTCFullYear()}–${String(B.getUTCFullYear()).slice(2)}`, "middle").style("fill", ACCENT);
     });
     const ty = yr(4);
     const tx0 = x(parse("2023-01-25")), tx1 = x(parse("2026-11-03"));
@@ -1123,7 +1123,7 @@ const GL = (svg, x1, x2, ys, y) => svg.append("g").selectAll("line").data(ys).jo
     svg.append("g").attr("class", "ax").attr("transform", `translate(0,${ty})`).selectAll("text").data([2000, 2005, 2010, 2015, 2020, 2025]).join("text")
       .attr("x", (v) => x(new Date(Date.UTC(v, 0, 1)))).attr("text-anchor", "middle").text((v) => v);
     const leg = svg.append("g").attr("transform", `translate(${m.l},${ty + 40})`);
-    [["Entrenamiento", INK, 0.3], ["Año para decidir cuándo parar", SHEEN, 0.6], ["Examen (2 años)", AMBER, 1]].forEach(([t, c, o], i) => {
+    [["Entrenamiento", INK, 0.3], ["Año para decidir cuándo parar", SHEEN, 0.6], ["Examen (2 años)", ACCENT, 1]].forEach(([t, c, o], i) => {
       const g = leg.append("g").attr("transform", `translate(${i * 220},0)`);
       g.append("rect").attr("width", 14).attr("height", 14).attr("rx", 3).attr("fill", c).attr("opacity", o).attr("y", -11);
       ftext(g, "lbl", 22, 0, t);
@@ -1134,7 +1134,7 @@ const GL = (svg, x1, x2, ys, y) => svg.append("g").selectAll("line").data(ys).jo
   {
     const V = { 5: [["gru", -1.1, 0.9, 1], ["rnn", -0.7, 0.6], ["lstm", -2.0, 2.1]], 21: [["lstm", 0.0, 1.0, 1], ["rnn", -3.2, 0.1], ["gru", -4.0, 2.6]],
       63: [["gru", 4.8, 0.6, 1], ["rnn", 1.4, 1.0], ["lstm", 0.1, 0.3]], 252: [["rnn", -4.3, 3.4, 1], ["gru", -5.3, 3.6], ["lstm", -5.0, 2.4]] };
-    const NC = { rnn: LAV, lstm: SHEEN, gru: AMBER }, NN = { rnn: "RNN", lstm: "LSTM", gru: "GRU" };
+    const NC = { rnn: CORAL, lstm: SHEEN, gru: ACCENT }, NN = { rnn: "RNN", lstm: "LSTM", gru: "GRU" };
     const W = 820, H = 580, m = { l: 150, r: 40, t: 110, b: 70 };
     const svg = mk("#g-val", W, H);
     const x = d3.scaleLinear().domain([-10, 10]).range([m.l, W - m.r]);
@@ -1224,14 +1224,14 @@ const vizFns = {};
   const xh = X(N), p0 = yv(N), xp = 600, yc = p0 - 18, hi = yc - 100, lo = yc + 100;
   const past = svg.append("path").attr("fill", "none").attr("stroke", INK).attr("stroke-width", 2).attr("d", d3.line().x(X).y(yv)(d3.range(0, N + 1)));
   const fc = svg.append("g");
-  fc.append("path").attr("d", `M${xh},${p0} L${xp},${hi} L${xp},${lo} Z`).attr("fill", AMBER).attr("opacity", 0.14);
-  fc.append("rect").attr("x", xp - 6).attr("width", 12).attr("y", hi).attr("height", lo - hi).attr("rx", 6).attr("fill", AMBER).attr("opacity", 0.45);
-  fc.append("line").attr("x1", xh).attr("x2", xp).attr("y1", p0).attr("y2", yc).attr("stroke", AMBER).attr("stroke-width", 2);
-  fc.append("circle").attr("cx", xp).attr("cy", yc).attr("r", 8).attr("fill", AMBER);
-  ftext(fc, "cap", (xh + xp) / 2 + 40, yc - 30, "8 de cada 10", "middle").style("fill", AMBER);
+  fc.append("path").attr("d", `M${xh},${p0} L${xp},${hi} L${xp},${lo} Z`).attr("fill", ACCENT).attr("opacity", 0.14);
+  fc.append("rect").attr("x", xp - 6).attr("width", 12).attr("y", hi).attr("height", lo - hi).attr("rx", 6).attr("fill", ACCENT).attr("opacity", 0.45);
+  fc.append("line").attr("x1", xh).attr("x2", xp).attr("y1", p0).attr("y2", yc).attr("stroke", ACCENT).attr("stroke-width", 2);
+  fc.append("circle").attr("cx", xp).attr("cy", yc).attr("r", 8).attr("fill", ACCENT);
+  ftext(fc, "cap", (xh + xp) / 2 + 40, yc - 30, "8 de cada 10", "middle").style("fill", ACCENT);
   ftext(fc, "cap", 666, hi + 5, "techo del rango");
   ftext(fc, "evt-sub", 666, hi + 23, "1 de cada 10 queda por encima");
-  ftext(fc, "cap", 666, yc + 5, "precio central").style("fill", AMBER);
+  ftext(fc, "cap", 666, yc + 5, "precio central").style("fill", ACCENT);
   ftext(fc, "cap", 666, lo + 5, "suelo del rango");
   ftext(fc, "evt-sub", 666, lo + 23, "1 de cada 10 queda por debajo");
   const pers = svg.append("g");
@@ -1258,7 +1258,7 @@ const vizFns = {};
   const x = d3.scaleLinear().domain([0, 40]).range([m.l, W - m.r]);
   const NM = ["1 semana", "1 mes", "3 meses", "1 año"];
   const leg = svg.append("g").attr("transform", "translate(0,24)");
-  leg.append("circle").attr("cx", 7).attr("cy", -5).attr("r", 7).attr("fill", AMBER);
+  leg.append("circle").attr("cx", 7).attr("cy", -5).attr("r", 7).attr("fill", ACCENT);
   ftext(leg, "spark-name", 22, 0, "red neuronal");
   leg.append("circle").attr("cx", 157).attr("cy", -5).attr("r", 7).attr("fill", PERSIST);
   ftext(leg, "spark-name", 172, 0, "repetir el último precio");
@@ -1272,9 +1272,9 @@ const vizFns = {};
     ftext(svg, "cap-big", 0, yy + 6, NM[i]);
     const bar = g.append("line").attr("y1", yy).attr("y2", yy).attr("stroke", INK).attr("stroke-opacity", 0.22).attr("stroke-width", 8).attr("stroke-linecap", "round");
     const pb = g.append("circle").attr("cy", yy).attr("r", 9).attr("fill", PERSIST);
-    const pn = g.append("circle").attr("cy", yy).attr("r", 9).attr("fill", AMBER);
+    const pn = g.append("circle").attr("cy", yy).attr("r", 9).attr("fill", ACCENT);
     const tb = ftext(g, "num", 0, yy + 28, `${fmtN(r.rmse_b)} $`, "end").style("fill", PERSIST);
-    const tn = ftext(g, "num", 0, yy + 28, `${fmtN(r.rmse)} $`, "start").style("fill", AMBER);
+    const tn = ftext(g, "num", 0, yy + 28, `${fmtN(r.rmse)} $`, "start").style("fill", ACCENT);
     ftext(g, "cap", W, yy + 5, `${fmtN((r.rmse / r.rmse_b - 1) * 100, r.rmse / r.rmse_b > 1.2 ? 0 : 1)} % más de error`, "end");
     return { r, bar, pb, pn, tb, tn };
   });
@@ -1314,15 +1314,15 @@ const vizFns = {};
   inp.append("text").attr("class", "evt-sub").attr("x", gx).attr("y", gy - 13).text("del más antiguo al más reciente →");
   [{ x: 330, t: "Capa 1" }, { x: 480, t: "Capa 2" }].forEach((l) => {
     const g = mid.append("g").attr("transform", `translate(${l.x},${gy - 10})`);
-    g.append("rect").attr("width", 110).attr("height", 280).attr("rx", 18).attr("fill", "#15181d").attr("stroke", SHEEN).attr("stroke-opacity", 0.6);
-    for (let i = 0; i < 9; i++) g.append("circle").attr("cx", 55).attr("cy", 30 + i * 28).attr("r", 8).attr("fill", "#2a2f37").attr("stroke", SHEEN).attr("stroke-opacity", 0.5);
+    g.append("rect").attr("width", 110).attr("height", 280).attr("rx", 18).attr("fill", "#232327").attr("stroke", SHEEN).attr("stroke-opacity", 0.6);
+    for (let i = 0; i < 9; i++) g.append("circle").attr("cx", 55).attr("cy", 30 + i * 28).attr("r", 8).attr("fill", "#34343a").attr("stroke", SHEEN).attr("stroke-opacity", 0.5);
     g.append("text").attr("class", "evt-label").attr("x", 55).attr("y", -14).attr("text-anchor", "middle").text(l.t);
     g.append("text").attr("class", "evt-sub").attr("x", 55).attr("y", 304).attr("text-anchor", "middle").text("128 neuronas GRU");
   });
   mid.append("text").attr("class", "evt-sub").attr("x", 465).attr("y", gy + 336).attr("text-anchor", "middle").text("puertas de actualización y de reinicio en cada día");
   [["10 %", "suelo"], ["50 %", "central"], ["90 %", "techo"]].forEach(([q, t], i) => {
     const g = out.append("g").attr("transform", `translate(700,${gy + 50 + i * 80})`);
-    g.append("circle").attr("r", 22).attr("fill", AMBER).attr("opacity", i === 1 ? 1 : 0.55);
+    g.append("circle").attr("r", 22).attr("fill", ACCENT).attr("opacity", i === 1 ? 1 : 0.55);
     g.append("text").attr("class", "evt-label").attr("x", 34).attr("y", -2).text(q);
     g.append("text").attr("class", "evt-sub").attr("x", 34).attr("y", 15).text(t);
   });
@@ -1337,7 +1337,7 @@ const vizFns = {};
     s2.append("line").attr("x1", m.l).attr("x2", W2 - m.r).attr("y1", y(0)).attr("y2", y(0)).attr("stroke", "rgba(238,240,242,.12)");
     [[0.1, 0.45], [0.5, 0.7], [0.9, 1]].forEach(([tau, o]) => {
       const pts = d3.range(-1, 1.001, 0.02).map((u) => [u, u >= 0 ? tau * u : (tau - 1) * u]);
-      s2.append("path").attr("d", d3.line().x((p) => x(p[0])).y((p) => y(p[1]))(pts)).attr("fill", "none").attr("stroke", AMBER).attr("stroke-width", 2.2).attr("opacity", o);
+      s2.append("path").attr("d", d3.line().x((p) => x(p[0])).y((p) => y(p[1]))(pts)).attr("fill", "none").attr("stroke", ACCENT).attr("stroke-width", 2.2).attr("opacity", o);
       const right = tau >= 0.5;
       s2.append("text").attr("class", "lbl").attr("x", x(right ? 0.98 : -0.98)).attr("y", y(right ? tau * 0.98 : (1 - tau) * 0.98) - 8)
         .attr("text-anchor", right ? "end" : "start").text(`τ = ${String(tau).replace(".", ",")}`);
@@ -1356,13 +1356,13 @@ const vizFns = {};
       g.append("text").attr("class", "evt-label").attr("x", 16).attr("y", 26).text(t);
       g.append("text").attr("class", "evt-sub").attr("x", 16).attr("y", 45).text(`mejor época: ${c.best}`);
       g.append("path").attr("d", d3.line().x((_, j) => x(j + 1)).y((v) => y(v))(c.train)).attr("fill", "none").attr("stroke", SOFT).attr("stroke-width", 1.4).attr("stroke-dasharray", "3 3");
-      g.append("path").attr("d", d3.line().x((_, j) => x(j + 1)).y((v) => y(v))(c.val)).attr("fill", "none").attr("stroke", AMBER).attr("stroke-width", 2);
-      g.append("circle").attr("cx", x(c.best)).attr("cy", y(c.val[c.best - 1])).attr("r", 5).attr("fill", AMBER).attr("stroke", "#0d0f12").attr("stroke-width", 2);
+      g.append("path").attr("d", d3.line().x((_, j) => x(j + 1)).y((v) => y(v))(c.val)).attr("fill", "none").attr("stroke", ACCENT).attr("stroke-width", 2);
+      g.append("circle").attr("cx", x(c.best)).attr("cy", y(c.val[c.best - 1])).attr("r", 5).attr("fill", ACCENT).attr("stroke", "#1c1c1f").attr("stroke-width", 2);
       g.append("line").attr("x1", 16).attr("x2", cw - 30).attr("y1", ch - 40).attr("y2", ch - 40).attr("stroke", "rgba(238,240,242,.12)");
       g.append("text").attr("class", "lbl").attr("x", cw - 30).attr("y", ch - 22).attr("text-anchor", "end").text("épocas →");
     });
     const lg = s3.append("g").attr("transform", `translate(16,${H3 - 6})`);
-    lg.append("line").attr("x2", 22).attr("stroke", AMBER).attr("stroke-width", 2).attr("y1", -4).attr("y2", -4);
+    lg.append("line").attr("x2", 22).attr("stroke", ACCENT).attr("stroke-width", 2).attr("y1", -4).attr("y2", -4);
     lg.append("text").attr("class", "lbl").attr("x", 30).text("error en el año reservado");
     lg.append("line").attr("x1", 250).attr("x2", 272).attr("stroke", SOFT).attr("stroke-dasharray", "3 3").attr("y1", -4).attr("y2", -4);
     lg.append("text").attr("class", "lbl").attr("x", 280).text("error en entrenamiento");
@@ -1393,16 +1393,16 @@ const vizFns = {};
   const shade2026 = svg.append("rect").attr("x", x(parse("2026-01-01"))).attr("width", x(T[T.length - 1]) - x(parse("2026-01-01"))).attr("y", m.t).attr("height", CH - m.t).attr("fill", SHEEN).attr("opacity", 0);
 
   const plot = svg.append("g").attr("clip-path", "url(#rclip)");
-  const band = plot.append("path").attr("fill", AMBER).attr("opacity", 0.16);
+  const band = plot.append("path").attr("fill", ACCENT).attr("opacity", 0.16);
   const base = plot.append("path").attr("fill", "none").attr("stroke", PERSIST).attr("stroke-width", 1.4).attr("stroke-dasharray", "4 4");
   const real = plot.append("path").attr("fill", "none").attr("stroke", INK).attr("stroke-width", 2).attr("stroke-linejoin", "round");
-  const pred = plot.append("path").attr("fill", "none").attr("stroke", AMBER).attr("stroke-width", 2).attr("stroke-linejoin", "round");
+  const pred = plot.append("path").attr("fill", "none").attr("stroke", ACCENT).attr("stroke-width", 2).attr("stroke-linejoin", "round");
   const ln = () => d3.line().x((_, i) => x(T[i])).y((v) => y(v)).curve(d3.curveMonotoneX);
   const ar = d3.area().x((_, i) => x(T[i])).y0((p) => y(p[0])).y1((p) => y(p[1])).curve(d3.curveMonotoneX);
   real.attr("d", ln()(HZ[0].y));
 
   const lg = svg.append("g").attr("transform", `translate(${m.l},22)`);
-  [["Precio real", "line", INK], ["Predicción de la red", "line", AMBER], ["Rango del 80 %", "fill", AMBER], ["Repetir el último precio", "dash", PERSIST]].reduce((ox, [t, kind, c]) => {
+  [["Precio real", "line", INK], ["Predicción de la red", "line", ACCENT], ["Rango del 80 %", "fill", ACCENT], ["Repetir el último precio", "dash", PERSIST]].reduce((ox, [t, kind, c]) => {
     const g = lg.append("g").attr("transform", `translate(${ox},0)`);
     if (kind === "fill") g.append("rect").attr("y", -9).attr("width", 20).attr("height", 12).attr("rx", 3).attr("fill", c).attr("opacity", 0.3);
     else g.append("line").attr("x2", 20).attr("y1", -3).attr("y2", -3).attr("stroke", c).attr("stroke-width", 2).attr("stroke-dasharray", kind === "dash" ? "4 3" : null);
@@ -1416,9 +1416,9 @@ const vizFns = {};
   const bv = d3.scaleLinear().domain([0, 36]).range([0, bh]);
   const bars = svg.append("g").selectAll("g").data(HZ).join("g").attr("transform", (_, i) => `translate(${bx(i)},${by})`);
   const bw = bx.bandwidth() / 2 - 4;
-  bars.append("rect").attr("x", 0).attr("width", bw).attr("y", (d) => bh - bv(d.rmse)).attr("height", (d) => bv(d.rmse)).attr("rx", 3).attr("fill", AMBER);
+  bars.append("rect").attr("x", 0).attr("width", bw).attr("y", (d) => bh - bv(d.rmse)).attr("height", (d) => bv(d.rmse)).attr("rx", 3).attr("fill", ACCENT);
   bars.append("rect").attr("x", bw + 8).attr("width", bw).attr("y", (d) => bh - bv(d.rmse_b)).attr("height", (d) => bv(d.rmse_b)).attr("rx", 3).attr("fill", PERSIST);
-  bars.append("text").attr("class", "lbl").attr("x", bw / 2).attr("y", (d) => bh - bv(d.rmse) - 6).attr("text-anchor", "middle").style("fill", AMBER).text((d) => nf2.format(d.rmse));
+  bars.append("text").attr("class", "lbl").attr("x", bw / 2).attr("y", (d) => bh - bv(d.rmse) - 6).attr("text-anchor", "middle").style("fill", ACCENT).text((d) => nf2.format(d.rmse));
   bars.append("text").attr("class", "lbl").attr("x", bw * 1.5 + 8).attr("y", (d) => bh - bv(d.rmse_b) - 6).attr("text-anchor", "middle").text((d) => nf2.format(d.rmse_b));
   bars.append("text").attr("class", "spark-name").attr("x", bw + 4).attr("y", bh + 22).attr("text-anchor", "middle").text((_, i) => NAMES[i]);
   svg.append("text").attr("class", "lbl").attr("x", m.l).attr("y", by - 22).text("Error típico (RMSE), en dólares: red y persistencia");
@@ -1457,7 +1457,7 @@ room.dispose(); pmrem.dispose();
 const camera = new THREE.PerspectiveCamera(32, 1, 0.1, 100);
 const CAM = new THREE.Vector3(0, 0, 14);
 const key = new THREE.DirectionalLight(0xfff1dc, 2.2); key.position.set(4, 6, 6); scene.add(key);
-const rim = new THREE.DirectionalLight(0xf2b84b, 1.4); rim.position.set(-6, 2, -4); scene.add(rim);
+const rim = new THREE.DirectionalLight(0xb9a2ff, 1.4); rim.position.set(-6, 2, -4); scene.add(rim);
 scene.add(new THREE.HemisphereLight(0x9fb2c8, 0x0d0f12, 0.25));
 const oilMat = new THREE.MeshPhysicalMaterial({ color: 0x060607, roughness: 0.12, clearcoat: 1, clearcoatRoughness: 0.04,
   iridescence: 0.55, iridescenceIOR: 1.32, iridescenceThicknessRange: [180, 560] });
@@ -1476,7 +1476,7 @@ function wobble(t) {
 }
 const NI = 16;
 const mini = new THREE.InstancedMesh(new THREE.IcosahedronGeometry(1, 12), oilMat, NI); scene.add(mini);
-const wireMat = new THREE.LineBasicMaterial({ color: 0xf2b84b, transparent: true, opacity: 0 });
+const wireMat = new THREE.LineBasicMaterial({ color: 0xb9a2ff, transparent: true, opacity: 0 });
 const wireGeo = new THREE.BufferGeometry(); wireGeo.setAttribute("position", new THREE.BufferAttribute(new Float32Array(400 * 6), 3));
 const wireLines = new THREE.LineSegments(wireGeo, wireMat); scene.add(wireLines);
 
@@ -1559,7 +1559,7 @@ const bgMat = new THREE.ShaderMaterial({
       vec2 w = p + .9 * r + ring * .045;
       float h  = fbm(w * .8 + vec2(t * .7, -t));
       float h2 = fbm(w * .55 - vec2(t, t * .5) + 7.);
-      vec3 deep = vec3(.045, .11, .135), shallow = vec3(.10, .215, .245);
+      vec3 deep = vec3(.075, .075, .083), shallow = vec3(.15, .15, .162);
       vec3 col = mix(deep, shallow, (smoothstep(-.7, .9, h2) * .8) * (1. - uCalm * .75) + uv.y * .25);
       // Vetas finas: crestas del campo de espesor
       float ridge = pow(1. - abs(fbm(w * 1.25 + 5.) ), 7.);
