@@ -60,6 +60,7 @@ const restart = (el: HTMLElement, cls: string) => {
   void el.offsetWidth;
   el.classList.add(cls);
 };
+const PAST = 126; // días hábiles de historia en el gráfico de plazos
 const STEP_NAMES: Record<Step, string> = { dia: "Día", carga: "Carga", entrega: "Entrega", decision: "Decisión" };
 
 async function loadJson<T>(path: string): Promise<T> {
@@ -107,6 +108,7 @@ async function init() {
     loadJson<TestQuality[]>("data/quality.json"),
   ]);
   const qOf = (h: number) => quality.find((q) => q.horizon === h);
+  const histIdx = new Map(mk.history.map((p, i) => [p.t, i]));
   const testYears = (() => {
     const q = qOf(5) ?? quality[0];
     return `${q.period[0].slice(0, 4)}–${q.period[1].slice(2, 4)}`;
@@ -251,31 +253,34 @@ async function init() {
       f: DayFc;
     }[];
     if (!fs.length) return '<p class="rcap">Calculando la franja con la red…</p>';
-    const lo = Math.min(day.price, ...fs.map((o) => o.f.p10));
-    const hi = Math.max(day.price, ...fs.map((o) => o.f.p90));
+    // Últimos seis meses reales hasta el día de partida, a la izquierda; las franjas, a la derecha
+    const end = histIdx.get(day.t) ?? mk.history.length - 1;
+    const hist = mk.history.slice(Math.max(0, end - PAST), end + 1);
+    const lo = Math.min(day.price, ...hist.map((p) => p.close), ...fs.map((o) => o.f.p10));
+    const hi = Math.max(day.price, ...hist.map((p) => p.close), ...fs.map((o) => o.f.p90));
     const pad = (hi - lo) * 0.08;
     const y = (v: number) => (1 - (v - lo + pad) / (hi - lo + 2 * pad)) * 100;
-    const x = (h: number) => 3 + (h / 252) * 92;
+    const x = (h: number) => 2 + ((h + PAST) / (PAST + 252)) * 94;
     const start = c.isPast ? shortDate(day.t) : "Hoy";
     const bars = fs
       .map(
         ({ x: hz, f }) => `
         <div class="hz-bar" data-h="${hz.h}" style="left:${x(hz.h)}%;top:${y(f.p90)}%;height:${y(f.p10) - y(f.p90)}%"><i style="top:${((f.p90 - f.p50) / (f.p90 - f.p10)) * 100}%"></i></div>
-        <div class="hz-rng num" data-h="${hz.h}" style="left:${x(hz.h)}%;top:${y(f.p90)}%">${nf(f.p10)}–${nf(f.p90)} $</div>`,
+        <div class="hz-rng num" data-h="${hz.h}" style="left:${x(hz.h)}%;top:${y(f.p90)}%"><b>${hz.n} ${hz.unit}</b>${nf(f.p10)}–${nf(f.p90)} $</div>`,
       )
       .join("");
-    const labs = HORIZONS.map(
-      (hz) => `<span class="hz-lab" data-h="${hz.h}" style="left:${x(hz.h)}%">${hz.n} ${hz.unit}</span>`,
-    ).join("");
     const aria = fs.map((o) => `${o.x.long}, entre ${usd(o.f.p10)} y ${usd(o.f.p90)}`).join("; ");
     return `<p class="rcap">Cuanto más lejos, más ancha la franja</p>
       <div class="hz" id="hz" data-sel="${S.picks.entrega ?? ""}" role="img" aria-label="${start} ${usd(day.price)}. ${aria}.">
         <div class="hz-plot">
-          <div class="hz-today" style="top:${y(day.price)}%"></div>
-          <span class="hz-today-l num" style="top:${y(day.price)}%">${start} ${usd(day.price)}</span>
+          <svg class="hz-line" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"><polyline points="${hist
+            .map((p, i) => `${x(i - (hist.length - 1)).toFixed(2)},${y(p.close).toFixed(2)}`)
+            .join(" ")}"/></svg>
+          <div class="hz-today" style="top:${y(day.price)}%;left:${x(0)}%"></div>
+          <i class="hz-dot" style="top:${y(day.price)}%;left:${x(0)}%"></i>
           ${bars}
         </div>
-        <div class="hz-axis">${labs}</div>
+        <div class="hz-axis"><span class="hz-lab hz-ago" style="left:${x(-PAST)}%">Hace 6 meses</span><span class="hz-lab hz-now num" style="left:${x(0)}%">${start} ${usd(day.price)}</span></div>
       </div>`;
   }
   function refreshHz() {

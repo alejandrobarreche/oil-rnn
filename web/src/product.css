@@ -190,7 +190,7 @@ button {
   gap: 6px;
   min-height: 36px;
   padding: 0 14px;
-  border-radius: 999px;
+  border-radius: 8px;
   background: var(--fill);
   font-size: 14px;
   font-weight: 600;
@@ -213,7 +213,7 @@ button {
   display: grid;
   place-items: center;
   border: 0;
-  border-radius: 999px;
+  border-radius: 8px;
   background: transparent;
   cursor: pointer;
   transition:
@@ -458,7 +458,7 @@ h1 {
   text-align: left;
   background: var(--card);
   border: 1px solid var(--card-edge);
-  border-radius: 10px;
+  border-radius: 6px;
   padding: 12px 14px;
   display: flex;
   flex-direction: column;
@@ -654,15 +654,35 @@ h1 {
 .hz-axis > * {
   position: absolute;
 }
+.hz-line {
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+.hz-line polyline {
+  fill: none;
+  stroke: var(--ink);
+  stroke-width: 1.5;
+  stroke-linejoin: round;
+  vector-effect: non-scaling-stroke;
+}
 .hz-today {
-  left: 0;
   right: 0;
   border-top: 1.5px dashed var(--ink);
+  opacity: 0.5;
+}
+.hz-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--ink);
+  transform: translate(-50%, -50%);
 }
 .hz-today-l {
-  left: 9%;
-  transform: translateY(calc(-100% - 4px));
-  font: 600 13px/1 var(--font-display);
+  transform: translate(calc(-100% - 8px), 6px);
+  font: 700 13px/1 var(--font-display);
+  white-space: nowrap;
 }
 .hz-bar {
   width: 14px;
@@ -680,7 +700,11 @@ h1 {
   background: var(--accent);
 }
 .hz-rng {
-  transform: translate(-50%, calc(-100% - 4px));
+  transform: translate(-50%, calc(-100% - 5px));
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
   white-space: nowrap;
   font: 700 13px/1 var(--font-display);
   color: var(--accent);
@@ -703,9 +727,19 @@ h1 {
 .hz-lab[data-h="5"] {
   transform: translateX(-4px);
 }
+.hz-lab.hz-ago {
+  transform: none;
+}
+.hz-rng b {
+  color: var(--ink);
+}
+.hz-lab.hz-now {
+  transform: translateX(-50%);
+  font-weight: 700;
+}
 .hz:not([data-sel=""]) .hz-bar,
 .hz:not([data-sel=""]) .hz-rng,
-.hz:not([data-sel=""]) .hz-lab {
+.hz:not([data-sel=""]) .hz-lab:not(.hz-ago) {
   opacity: 0.3;
 }
 .hz[data-sel="5"] [data-h="5"],
@@ -823,7 +857,7 @@ h1 {
   font-weight: 650;
   padding: 10px 22px;
   min-height: 44px;
-  border-radius: 999px;
+  border-radius: 8px;
   border: 0;
   background: var(--fill-2);
   cursor: pointer;
