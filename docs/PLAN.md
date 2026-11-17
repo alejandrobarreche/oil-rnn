@@ -2,7 +2,7 @@
 
 ## Resumen
 
-Entrega el 20/11/2026: repositorio, aplicación y 5 diapositivas. Están hechas la comparativa, la evaluación en test, la mesa de compras, la página explicativa y la actualización diaria. Falta la presentación.
+Entrega el 20/11/2026: repositorio, aplicación y 5 diapositivas. Están hechas la comparativa, la evaluación en test, la web de previsión, la página explicativa y la actualización diaria. Falta la presentación.
 
 ## Fases
 
@@ -11,7 +11,7 @@ Entrega el 20/11/2026: repositorio, aplicación y 5 diapositivas. Están hechas 
 | 0–2. Decisiones, datos y pipeline | Hecha | Configuración fijada y código de entrenamiento |
 | 3. Comparar RNN, LSTM y GRU | Hecha | 432 entrenamientos y finalistas con 3 semillas |
 | 4. Evaluar en test | Hecha | Ninguna red mejora a la persistencia; R² y mejora por año en el README |
-| 5. Aplicación | Hecha | Mesa de compras en [GitHub Pages](https://alejandrobarreche.github.io/oil-rnn/) con los 4 horizontes |
+| 5. Aplicación | Hecha | Previsión a 4 plazos en un clic en [GitHub Pages](https://alejandrobarreche.github.io/oil-rnn/) |
 | 5b. Documento de decisiones | Hecha | Explorador revisado por el usuario |
 | 6. Página explicativa | Hecha | «El precio del Brent» (`web/public/brent/`): 8 capítulos con índice, paleta del producto y paso «Año a año» |
 | 7. Actualización diaria | Hecha | `make update` y workflow diario, sin reentrenar, como acepta el profesor; lanzado a mano en verde |

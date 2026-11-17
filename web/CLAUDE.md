@@ -1,13 +1,13 @@
 # web
 
-Web del proyecto en dos partes: el producto (mesa de compras del Brent en una pantalla, Vite + TypeScript + ONNX Runtime Web) y el estudio, «El precio del Brent» (desarrollo del trabajo con scroll, Three.js, D3 y KaTeX). Las reglas generales están en el `CLAUDE.md` de la raíz.
+Web del proyecto en dos partes: el producto (previsión del Brent a 4 plazos en una pantalla y un clic, Vite + TypeScript + ONNX Runtime Web) y el estudio, «El precio del Brent» (desarrollo del trabajo con scroll, Three.js, D3 y KaTeX). Las reglas generales están en el `CLAUDE.md` de la raíz.
 
 ## Reglas clave
 
 **Siempre**
 - Usa los tokens que ya existen: los de `src/product.css` en el producto y las variables `--sc-*` de `public/brent/index.html` en el estudio.
-- Mantén el producto en una pantalla sin scroll en escritorio: enseña por qué es útil y deja probarlo. Las métricas van en la orden de compra; el pie solo lleva la fuente de los datos, sin enlaces repetidos.
-- Trabaja los dos temas, claro y oscuro, en cada cambio, y compruébalos en el navegador.
+- Mantén el producto en una pantalla sin scroll en escritorio, con una sola acción principal. Las métricas van en la fila de cada plazo; el pie solo lleva la fuente de los datos, sin enlaces repetidos.
+- El producto solo tiene tema claro y el estudio solo oscuro; compruébalo en el navegador en escritorio y móvil.
 - Haz que cada pantalla responda una pregunta con una cifra o un gráfico de datos reales; el texto solo nombra lo que se ve.
 - Usa un objeto 3D solo si su forma o su movimiento enseñan el concepto (una ventana que avanza, un estado que pasa de un día al siguiente, un rango que se abre); si no, un gráfico 2D.
 - Explica la red con sus datos reales: entradas, salida, error frente a la persistencia y curva de entrenamiento.
@@ -37,12 +37,11 @@ make web-build     # Compilación a web/dist (lo ejecuta el usuario)
 
 | Ruta | Qué contiene |
 |---|---|
-| `index.html`, `src/main.ts` | Producto: portada con el petrolero y, al empezar, la mesa de compras (barriles, plazo y decisión, con orden de compra); «Hoy» (ONNX) y «En el pasado» (días clave de test de `quality.json`) |
-| `src/desk.ts` | Cálculos de la mesa sin DOM: días clave, eslora por barriles, diez futuros, regla de precios y resultado de la decisión |
-| `src/ship.ts`, `public/img/` | Petrolero en foto animado con un shader WebGL: agua que ondula, cabeceo y flotación que sube al cargar; escala por barriles y foto por tema |
+| `index.html`, `src/main.ts` | Producto: cuatro planos en CSS 3D, uno por red, con la misma serie real; «Calcular desde hoy» los separa y abre la franja p10–p90 de cada plazo (ONNX), con una fila por plazo y su cobertura de test frente a la persistencia (`quality.json`) |
+| `src/forecast.ts` | Cálculos sin DOM: plazos, fechas hábiles, escala común de precios y cobertura |
 | `src/model.ts` | Réplica del preprocesado de `features.py` e inferencia ONNX |
-| `src/icons.ts` | Iconos SVG (tema y flecha) |
-| `src/product.css` | Estilos y temas claro y oscuro del producto |
+| `src/icons.ts` | Iconos SVG (flecha) |
+| `src/product.css` | Estilos del producto, solo tema claro |
 | `public/brent/` | «El precio del Brent»: `index.html`, `scrollcraft.css`, `scrollcraft.js` y sus datos; los capítulos se marcan con `data-chapter` y de ahí salen el botón de índice, su panel y el raíl lateral |
 
 ## Convenciones
@@ -50,7 +49,7 @@ make web-build     # Compilación a web/dist (lo ejecuta el usuario)
 - **Skills**: antes de tocar la interfaz, carga las que apliquen si están instaladas: `scroll-craft`, `threejs-*` y `gsap-scrolltrigger` (estudio), `dataviz` (gráficos), `emil-skills:apple-design`, `threejs-*` y `laws-of-ux` (producto).
 - **Tipografía (producto y estudio)**: Archivo para marca, títulos y cifras; Geist para texto. Nada de serif editoriales (Newsreader, Source Serif, Instrument Serif).
 - **Página del Brent, color**: la paleta oscura del producto (fondo `#1c1c1f`, tinta `#f2f1ee`, botón principal en tinta, botones con 8 px de radio como en el producto); un solo acento, el violeta de la previsión (`--sc-accent`, `#b9a2ff`); `--sheen` para sucesos y datos de entrada; `--persist` para la persistencia. En los gráficos de celdas, RNN coral, LSTM `--sheen` y GRU violeta. Nada de beige, ámbar ni azul petróleo.
-- **Producto, color**: el violeta del brillo del crudo marca la previsión (`#6a4cf0` en claro, `#b9a2ff` en oscuro); verde y rojo solo para sube y baja. El tema sigue al sistema y se puede cambiar con el botón.
+- **Producto, color**: el violeta `#6a4cf0` marca la previsión (franja y lo probable); la tinta, el precio real. «Cómo se hizo» va con el fondo oscuro del estudio para que se vea que es otro sitio.
 - **Producto, movimiento**: muelles críticamente amortiguados que parten del valor en pantalla; iconos que se animan al pulsar; un solo momento de entrada; todo respeta `prefers-reduced-motion`.
 - **Controles**: todo botón responde al pasar, al pulsar (`scale(0.97)`) y al foco de teclado; nunca `transition: all`.
 - **Página del Brent, composición**: sin columnas de texto, recuadros decorativos ni notas pequeñas en gris.
@@ -60,8 +59,6 @@ make web-build     # Compilación a web/dist (lo ejecuta el usuario)
 
 ## Cuidado con
 
-- **«En el pasado»**: en `quality.json`, `t` es la fecha objetivo; el día de partida está `h` días hábiles antes. Solo hay días de test (2023–2026): antes, el modelo final ya vio los datos.
-- **«Fijar el precio»**: en la realidad sería un futuro o una cobertura; la mesa lo simplifica con el precio spot.
-- **Fotos del barco**: las cuatro comparten encuadre píxel a píxel; si se cambia una, se cambian todas o la carga salta. La silueta (`HULL`) y la franja roja del shader están medidas sobre esas fotos. Falta `barco-vacio-oscuro.jpg` (de momento, la clara oscurecida por CSS).
+- **Planos 3D**: los chips y el hilo de «Hoy» no giran con el plano; se colocan en JS sobre la proyección de `.pin` y `.pin0`. Si cambias el giro o el tamaño del plano, revisa que sigan en su sitio.
 - **`public/brent/data.json` y `data2.json`**: ningún comando los regenera; si cambian los runs, quedan desfasados.
 - **Librerías**: se cargan desde jsDelivr con versión fija (three 0.170.0, d3 7.9.0 y katex 0.16.11, solo en el estudio); no cambies una versión sin probar la página.
