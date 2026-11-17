@@ -11,7 +11,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,100..900&family=Geist:wght@300..700&display=swap" rel="stylesheet" />
   </head>
   <body>
-    <div class="wrap">
+    <div class="app">
       <header class="top">
         <a class="logo" href="./" aria-label="Brent, inicio">BRENT<span>.</span></a>
         <nav class="tabs" aria-label="Secciones">
@@ -22,18 +22,30 @@
         <span class="live num" id="live"></span>
       </header>
 
-      <main class="card">
-        <!-- Cuatro planos, uno por plazo, con la misma serie real: al calcular se separan y cada uno abre su franja -->
-        <div class="stack" id="stack" data-open="false" role="img" aria-label="Cuatro redes, una por plazo, sobre la misma serie del Brent"></div>
-
-        <section class="panel" aria-labelledby="title">
-          <h1 id="title">El Brent a cuatro plazos</h1>
-          <p class="lead" id="lead">Una red recurrente por plazo da la franja donde caerá el precio en 8 de cada 10 casos.</p>
-          <div class="actions" id="actions">
-            <button type="button" class="btn primary" id="run">Calcular desde hoy</button>
+      <main class="main">
+        <section class="chartcard" aria-label="Precio del Brent y previsión">
+          <div class="tools" role="toolbar" aria-label="Opciones del gráfico">
+            <div class="seg" id="range" role="group" aria-label="Historia visible"></div>
+            <div class="seg" id="scale" role="group" aria-label="Escala">
+              <button type="button" data-scale="lin" aria-pressed="true">Lineal</button>
+              <button type="button" data-scale="log" aria-pressed="false">Log</button>
+            </div>
+            <button type="button" class="tog" data-tog="ma50" aria-pressed="false"><i class="sw ma50"></i>Media 50</button>
+            <button type="button" class="tog" data-tog="ma200" aria-pressed="false"><i class="sw ma200"></i>Media 200</button>
+            <button type="button" class="tog" data-tog="events" aria-pressed="false">Sucesos</button>
+            <button type="button" class="tog" data-tog="test" aria-pressed="false"><i class="sw test"></i>Previsión en test</button>
           </div>
-          <ol class="rows" id="rows" hidden></ol>
+          <div class="chart" id="chart"></div>
         </section>
+
+        <aside class="panel" aria-labelledby="title">
+          <h1 id="title">El Brent a cuatro plazos</h1>
+          <p class="lead" id="lead">Cuatro redes recurrentes, una por plazo, leen los últimos días del mercado y dan la franja donde caerá el precio en 8 de cada 10 casos.</p>
+          <div class="intro" id="intro">
+            <button type="button" class="btn primary" id="run">Prever con las 4 redes</button>
+          </div>
+          <div class="detail" id="detail" hidden></div>
+        </aside>
       </main>
 
       <footer class="foot">

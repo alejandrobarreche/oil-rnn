@@ -10,11 +10,20 @@ export interface PricePoint {
   t: string;
   close: number;
 }
+export interface TestPoint {
+  t: string;
+  actual: number;
+  pred: number;
+  lo80: number;
+  hi80: number;
+  persistence: number;
+}
 export interface TestQuality {
   horizon: number;
   period: [string, string];
   metrics: { mae: number; coverage80: number };
   baseline: { mae: number; coverage80: number };
+  backtest?: TestPoint[];
 }
 
 /** Plazos del enunciado en días hábiles: una red por plazo. */
@@ -57,4 +66,48 @@ export function priceScale(values: number[]): { lo: number; hi: number } {
 /** Cobertura de la franja del 80 % en test, de la red y de la persistencia, en casos de cada 100. */
 export function coverage(q: TestQuality): { net: number; base: number } {
   return { net: Math.round(q.metrics.coverage80 * 100), base: Math.round(q.baseline.coverage80 * 100) };
+}
+
+/** Historia visible por rango, en días hábiles. */
+export const RANGES = [
+  { k: "6M", n: 126 },
+  { k: "1A", n: 252 },
+  { k: "5A", n: 1260 },
+  { k: "Todo", n: Number.POSITIVE_INFINITY },
+] as const;
+
+/** Media móvil simple de `n` días; null mientras no hay `n` valores. */
+export function sma(values: number[], n: number): (number | null)[] {
+  let acc = 0;
+  return values.map((v, i) => {
+    acc += v;
+    if (i >= n) acc -= values[i - n];
+    return i >= n - 1 ? acc / n : null;
+  });
+}
+
+/** Marcas «redondas» del eje (paso 1, 2, 2,5 o 5 por potencia de 10) dentro de [lo, hi]. */
+export function niceTicks(lo: number, hi: number, n = 5): number[] {
+  const raw = (hi - lo) / Math.max(1, n);
+  const p = 10 ** Math.floor(Math.log10(raw));
+  const step = [1, 2, 2.5, 5, 10].map((m) => m * p).find((s) => s >= raw * 0.75) ?? 10 * p;
+  const out: number[] = [];
+  for (let v = Math.ceil(lo / step) * step; v <= hi + 1e-9; v += step) out.push(Number(v.toFixed(6)));
+  return out;
+}
+
+/** Posición de cada plazo en el tramo futuro del gráfico (0–1): un hueco igual por plazo, como una
+ * curva de plazos; el eje no es de tiempo lineal y cada hueco lleva su etiqueta y su fecha. */
+export const futurePos = (h: number) => {
+  const k = HORIZONS.findIndex((x) => x.h === h);
+  return k < 0 ? 0 : (k + 1) / HORIZONS.length;
+};
+
+/** Cambio porcentual frente al precio de hoy. */
+export const pct = (v: number, ref: number) => ((v - ref) / ref) * 100;
+
+/** Suceso del mercado marcado en market.json. */
+export interface MarketEventLite {
+  t: string;
+  label: string;
 }

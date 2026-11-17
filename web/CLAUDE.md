@@ -37,8 +37,8 @@ make web-build     # Compilación a web/dist (lo ejecuta el usuario)
 
 | Ruta | Qué contiene |
 |---|---|
-| `index.html`, `src/main.ts` | Producto: cuatro planos en CSS 3D, uno por red, con la misma serie real; «Calcular desde hoy» los separa y abre la franja p10–p90 de cada plazo (ONNX), con una fila por plazo y su cobertura de test frente a la persistencia (`quality.json`) |
-| `src/forecast.ts` | Cálculos sin DOM: plazos, fechas hábiles, escala común de precios y cobertura |
+| `index.html`, `src/main.ts` | Producto: gráfico SVG de la serie real con el tramo futuro (un hueco por plazo); antes de prever, una ventana recorre la serie; «Prever con las 4 redes» (ONNX) abre la franja p10–p90 plazo a plazo. Barra de herramientas (rango, escala, medias 50 y 200, sucesos, previsión en test frente a la persistencia) y panel del plazo elegido con sus métricas de test |
+| `src/forecast.ts` | Cálculos sin DOM: plazos, fechas hábiles, escala, marcas del eje, media móvil, posición de los plazos y cobertura |
 | `src/model.ts` | Réplica del preprocesado de `features.py` e inferencia ONNX |
 | `src/icons.ts` | Iconos SVG (flecha) |
 | `src/product.css` | Estilos del producto, solo tema claro |
@@ -59,6 +59,7 @@ make web-build     # Compilación a web/dist (lo ejecuta el usuario)
 
 ## Cuidado con
 
-- **Planos 3D**: los chips y el hilo de «Hoy» no giran con el plano; se colocan en JS sobre la proyección de `.pin` y `.pin0`. Si cambias el giro o el tamaño del plano, revisa que sigan en su sitio.
+- **Eje futuro**: los cuatro plazos van en huecos iguales (no es tiempo lineal); cada hueco lleva su etiqueta y el panel su fecha.
+- **Ajustar a la ventana**: `.app` mide `100dvh` y el gráfico se redibuja con su tamaño real (`ResizeObserver`); no le pongas alturas mínimas en escritorio.
 - **`public/brent/data.json` y `data2.json`**: ningún comando los regenera; si cambian los runs, quedan desfasados.
 - **Librerías**: se cargan desde jsDelivr con versión fija (three 0.170.0, d3 7.9.0 y katex 0.16.11, solo en el estudio); no cambies una versión sin probar la página.

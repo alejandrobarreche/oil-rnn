@@ -1,6 +1,16 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
-import { coverage, HORIZONS, priceScale, type TestQuality, tradingDayAfter, usd } from "../src/forecast";
+import {
+  coverage,
+  futurePos,
+  HORIZONS,
+  niceTicks,
+  priceScale,
+  sma,
+  type TestQuality,
+  tradingDayAfter,
+  usd,
+} from "../src/forecast";
 
 const read = <T>(p: string) => JSON.parse(readFileSync(new URL(p, import.meta.url), "utf8")) as T;
 
@@ -40,5 +50,21 @@ describe("cobertura", () => {
       baseline: { mae: 3.6, coverage80: 0.7927 },
     };
     expect(coverage(q)).toEqual({ net: 78, base: 79 });
+  });
+});
+
+describe("serie", () => {
+  it("media móvil sin valores hasta tener n días", () => {
+    expect(sma([1, 2, 3, 4], 2)).toEqual([null, 1.5, 2.5, 3.5]);
+  });
+  it("marcas redondas dentro del rango", () => {
+    expect(niceTicks(62, 118, 5)).toEqual([70, 80, 90, 100, 110]);
+    expect(niceTicks(84, 104, 4)).toEqual([85, 90, 95, 100]);
+  });
+  it("los plazos quedan ordenados en el tramo futuro y el año al final", () => {
+    const xs = HORIZONS.map((x) => futurePos(x.h));
+    expect([...xs].sort((a, b) => a - b)).toEqual(xs);
+    expect(xs[3]).toBe(1);
+    expect(xs[1] - xs[0]).toBeCloseTo(xs[3] - xs[2]);
   });
 });
