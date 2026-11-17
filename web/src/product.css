@@ -464,8 +464,8 @@ h1 {
 .shipslot {
   height: clamp(150px, 26vh, 230px);
   margin: -6px 0 -2px;
-  -webkit-mask-image: linear-gradient(to bottom, transparent, #000 38%), linear-gradient(to right, transparent, #000 12%, #000 88%, transparent);
-  mask-image: linear-gradient(to bottom, transparent, #000 38%), linear-gradient(to right, transparent, #000 12%, #000 88%, transparent);
+  -webkit-mask-image: linear-gradient(to bottom, transparent, #000 34%, #000 86%, transparent), linear-gradient(to right, transparent, #000 12%, #000 88%, transparent);
+  mask-image: linear-gradient(to bottom, transparent, #000 34%, #000 86%, transparent), linear-gradient(to right, transparent, #000 12%, #000 88%, transparent);
   -webkit-mask-composite: source-in;
   mask-composite: intersect;
 }
