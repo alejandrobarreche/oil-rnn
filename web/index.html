@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-    <title>Brent: previsión del precio</title>
+    <title>Mesa de compras del Brent</title>
     <meta name="color-scheme" content="light dark" />
     <link rel="icon" href="data:," />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -26,29 +26,54 @@
     </script>
   </head>
   <body>
-    <header class="bar">
-      <a class="brand" href="./" aria-label="Brent, inicio"><span class="mark">BRENT<i>.</i></span></a>
-      <span class="grow"></span>
-      <a class="btn btn-ghost" id="study" href="./brent/index.html"></a>
-      <button class="btn btn-icon" id="theme" type="button" aria-label="Cambiar entre tema claro y oscuro"></button>
-    </header>
+    <div class="wrap">
+      <header class="top">
+        <a class="logo" href="./" aria-label="Brent, inicio">BRENT<span>.</span></a>
+        <span class="spacer"></span>
+        <span class="ticker num" id="ticker"></span>
+        <div class="segbox" role="group" aria-label="Modo">
+          <div class="seg-ind" id="segInd" aria-hidden="true"></div>
+          <button type="button" class="seg on" id="segHoy" aria-pressed="true">Hoy</button>
+          <button type="button" class="seg" id="segPas" aria-pressed="false">En el pasado</button>
+        </div>
+        <a class="howlink" href="./brent/index.html">Cómo se hizo</a>
+        <button type="button" class="themebtn" id="theme" aria-label="Cambiar entre tema claro y oscuro"></button>
+      </header>
 
-    <main class="app">
-      <section class="stage" id="stage" aria-label="Precio del Brent y previsión"></section>
+      <h1 class="a-rise" id="headline">Mesa de compras del Brent</h1>
 
-      <section class="panel" id="panel">
-        <h1 class="title">Previsión del Brent</h1>
+      <div class="desk">
+        <section class="main" aria-label="Pasos de la compra">
+          <nav class="steps" aria-label="Pasos">
+            <div class="stepbtns" id="stepBtns"></div>
+            <div class="bar"><div class="prog" id="prog"></div></div>
+          </nav>
+          <div class="stage" id="stage"></div>
+        </section>
 
-        <div class="seg seg-h" id="horizon" role="radiogroup" aria-label="Plazo"></div>
-        <div class="seg seg-m" id="mode" role="radiogroup" aria-label="Desde cuándo"></div>
-        <div class="scrub" id="scrub" hidden></div>
+        <aside class="side" aria-label="Orden de compra">
+          <div class="ticket-wrap a-print">
+            <div class="ticket" id="ticket">
+              <div class="tk-head">
+                <span class="tk-title">Orden de compra</span>
+                <span class="tk-no num" id="orderNo">Nº —</span>
+              </div>
+              <div class="tk-rule"></div>
+              <dl id="lines"></dl>
+              <div class="tk-total" aria-live="polite">
+                <span class="tk-tlabel" id="totalLabel">Total</span>
+                <span class="tk-tval num empty hatch" id="totalVal"></span>
+              </div>
+            </div>
+          </div>
+        </aside>
+      </div>
 
-        <div class="result" id="result" aria-live="polite"></div>
-
-        <div class="actions" id="actions"></div>
-        <a class="verdict" id="verdict" href="./brent/index.html"></a>
-      </section>
-    </main>
+      <footer class="foot">
+        <p id="verdict"></p>
+        <a href="./brent/index.html">Ver cómo se hizo</a>
+      </footer>
+    </div>
     <script type="module" src="./src/main.ts"></script>
   </body>
 </html>

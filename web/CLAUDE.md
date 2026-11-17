@@ -1,6 +1,6 @@
 # web
 
-Web del proyecto en dos partes: el producto (previsión del Brent en una pantalla, Vite + TypeScript + ONNX Runtime Web + Three.js) y el estudio, «El precio del Brent» (desarrollo del trabajo con scroll, Three.js, D3 y KaTeX). Las reglas generales están en el `CLAUDE.md` de la raíz.
+Web del proyecto en dos partes: el producto (mesa de compras del Brent en una pantalla, Vite + TypeScript + ONNX Runtime Web + Three.js) y el estudio, «El precio del Brent» (desarrollo del trabajo con scroll, Three.js, D3 y KaTeX). Las reglas generales están en el `CLAUDE.md` de la raíz.
 
 ## Reglas clave
 
@@ -37,11 +37,12 @@ make web-build     # Compilación a web/dist (lo ejecuta el usuario)
 
 | Ruta | Qué contiene |
 |---|---|
-| `index.html`, `src/main.ts` | Producto: controles, «Hoy» (ONNX) y «Un día pasado» (previsiones de test de `quality.json`) |
-| `src/stage.ts` | Escena 3D: lámina del precio, volumen de la previsión, gota y precio real revelado |
+| `index.html`, `src/main.ts` | Producto, mesa de compras: carga, entrega y decisión con orden de compra; «Hoy» (ONNX) y «En el pasado» (días clave de test de `quality.json`) |
+| `src/desk.ts` | Cálculos de la mesa sin DOM: días clave, diez futuros, regla de precios y resultado de la decisión |
+| `src/ship.ts` | Petrolero 3D con geometría propia: cambia de eslora con la carga y se hunde al llenarse |
 | `src/icons.ts` | Iconos SVG con sus partes animables |
 | `src/product.css` | Estilos y temas claro y oscuro del producto |
-| `src/sonda/bundle.js`, `src/sonda.ts` | Solo formato de cifras y fechas (`S.fmt`) y días hábiles (`S.tradingDays`) |
+| `src/sonda/bundle.js`, `src/sonda.ts` | Formato y días hábiles de la versión anterior; los usa el portal, no la mesa |
 | `src/portal/`, `src/explain.ts` | Simulador y cálculos de la versión anterior; el producto no los usa |
 | `public/brent/` | «El precio del Brent»: `index.html`, `scrollcraft.css`, `scrollcraft.js` y sus datos |
 
@@ -61,6 +62,7 @@ make web-build     # Compilación a web/dist (lo ejecuta el usuario)
 ## Cuidado con
 
 - **`src/sonda/bundle.js`**: lleva cambios propios; no lo sustituyas por el original del sistema de diseño.
-- **«Un día pasado»**: en `quality.json`, `t` es la fecha objetivo; el día de partida está `h` días hábiles antes.
+- **«En el pasado»**: en `quality.json`, `t` es la fecha objetivo; el día de partida está `h` días hábiles antes. Solo hay días de test (2023–2026): antes, el modelo final ya vio los datos.
+- **«Fijar el precio»**: en la realidad sería un futuro o una cobertura; la mesa lo simplifica con el precio spot.
 - **`public/brent/data.json` y `data2.json`**: ningún comando los regenera; si cambian los runs, quedan desfasados.
 - **Librerías**: se cargan desde jsDelivr con versión fija (three 0.170.0 en producto y estudio, d3 7.9.0, katex 0.16.11); no cambies una versión sin probar las dos páginas.
