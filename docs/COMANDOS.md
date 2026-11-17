@@ -589,4 +589,4 @@ make web-dev
 
 - **2. En GitHub**, después de hacer `git push`: Actions → *Actualizar datos* → *Run workflow*. Si hay datos nuevos, el workflow hace un commit `chore(data)` y lanza *Publicar web*.
 - **Qué pasarle a Claude**: la salida de `make update` (fecha de los datos y precio), si la web muestra la nueva fecha en «Datos de la EIA y FRED hasta el…», y si el workflow terminó en verde o con qué error.
-- **Resultado (17/11)**: `make update` en el Mac, datos hasta el 11/11 (antes 03/11): 6 días nuevos, ninguno de los anteriores revisado; Brent a 92,14 $. Falta lanzar el workflow en GitHub.
+- **Resultado (17/11)**: `make update` en el Mac, datos hasta el 11/11 (antes 03/11): 6 días nuevos, ninguno de los anteriores revisado; Brent a 92,14 $. Workflow lanzado a mano en GitHub: verde en 29 s, «Sin datos nuevos» (la descarga desde GitHub funciona) y sin publicar la web, como se esperaba. Solo avisos de Node.js 20 obsoleto en las acciones.
