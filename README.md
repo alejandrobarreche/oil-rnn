@@ -27,7 +27,7 @@ Una RNN simple, una LSTM y una GRU predicen el Brent a **1 semana, 1 mes, 3 mese
   <img src="docs/img/forecast-light.svg" alt="Esquema: ventana de 60 días y, para cada horizonte, mediana e intervalo del 80 %" width="100%">
 </picture>
 
-La red lee los últimos 60 días de 15 variables de mercado y da, para cada horizonte, la mediana y un intervalo del 80 %. Hay un modelo por horizonte.
+La red lee los últimos 60 días (20 a 1 semana) de 15 variables de mercado y da, para cada horizonte, la mediana y un intervalo del 80 %. Hay un modelo por horizonte.
 
 <sub>Esquema: el tamaño de los intervalos es ilustrativo.</sub>
 
@@ -78,6 +78,7 @@ make web-dev
 
 - **Rejilla**: 36 configuraciones (tamaño oculto 32–256, 1 o 2 capas, dropout 0 o 0,3, tasa de aprendizaje 1e‑4 a 1e‑3) para las tres celdas y los cuatro horizontes: 432 validaciones walk-forward.
 - **Criterio**: en cada horizonte, la red con menor pérdida pinball media en 3 semillas.
+- **1 semana**: una GRU de 16 unidades (rejilla aparte de redes pequeñas, ventana de 20 días) empata con la de 256 dentro de la variación entre semillas y se elige por coste: 125 veces menos parámetros.
 - **Test**: la elección se fijó antes de evaluar en test, y test se evaluó una sola vez.
 - **Mejora**: 1 − error de la red / error de la referencia. Positiva = la red es mejor.
 - **Referencias**: persistencia para el RMSE; cuantiles históricos del rendimiento a `h` días en train para el pinball.
@@ -86,7 +87,8 @@ Mejor configuración de cada red, media ± desviación en 3 semillas. En negrita
 
 | h | Red | Pinball | Mejora pinball | Mejora RMSE | Pliegues mejores que la persistencia |
 |---|---|---|---|---|---|
-| 5 | **GRU** | **0,847 ± 0,010** | +1,5 % ± 1,1 | −1,1 % ± 0,9 | 2 / 12 |
+| 5 | **GRU-16** | **0,853 ± 0,008** | +0,7 % ± 1,1 | −0,4 % ± 0,3 | 4 / 12 |
+| 5 | GRU-256 | 0,847 ± 0,010 | +1,5 % ± 1,1 | −1,1 % ± 0,9 | 2 / 12 |
 | 5 | RNN | 0,848 ± 0,006 | +1,3 % ± 0,6 | −0,7 % ± 0,6 | 4 / 12 |
 | 5 | LSTM | 0,852 ± 0,016 | +0,6 % ± 2,0 | −2,0 % ± 2,1 | 2 / 12 |
 | 21 | **LSTM** | **1,832 ± 0,018** | +0,5 % ± 0,8 | +0,0 % ± 1,0 | 8 / 12 |
@@ -105,11 +107,11 @@ Mejor configuración de cada red, media ± desviación en 3 semillas. En negrita
 <summary><b>Evaluación en test</b>: 955 días, 25/01/2023–03/11/2026</summary>
 
 - **Modelos**: entrenados con train + val, semilla 42.
-- **Unidades**: precios en $/barril; tiempos en una RTX 3050 Ti Laptop.
+- **Unidades**: precios en $/barril; tiempos en una RTX 3050 Ti Laptop, salvo el de 5 días, entrenado en un Mac.
 
 | h | Red | Configuración | Parámetros | Entrenamiento | RMSE red / persistencia | Mejora RMSE | MAE red / persistencia | Mejora pinball | Cobertura 80 % (red / histórica) |
 |---|---|---|---|---|---|---|---|---|---|
-| 5 | GRU | 256 · 1 capa · lr 1e‑3 | 211 203 | 17 s | 5,55 / 5,36 | −3,6 % | 3,73 / 3,62 | −1,4 % | 78 % / 79 % |
+| 5 | GRU | 16 · 1 capa · ventana 20 · lr 1e‑4 | 1 683 | 66 s | 5,46 / 5,36 | −1,8 % | 3,73 / 3,62 | +0,0 % | 78 % / 79 % |
 | 21 | LSTM | 64 · 1 capa · lr 1e‑4 | 21 187 | 11 s | 11,56 / 10,69 | −8,1 % | 7,42 / 7,00 | −6,7 % | 86 % / 84 % |
 | 63 | GRU | 128 · 2 capas · dropout 0,3 · lr 1e‑4 | 155 523 | 29 s | 28,24 / 17,54 | −61 % | 16,94 / 11,44 | −39 % | 68 % / 86 % |
 | 252 | RNN | 256 · 2 capas · dropout 0,3 · lr 1e‑4 | 202 499 | 10 s | 33,03 / 22,71 | −45 % | 23,62 / 16,72 | −34 % | 92 % / 92 % |
@@ -124,7 +126,7 @@ Mejor configuración de cada red, media ± desviación en 3 semillas. En negrita
 
 | h | Red | Pronósticos (independientes ≈ n/h) | Error cuadrático: estadístico · p | Error absoluto: estadístico · p |
 |---|---|---|---|---|
-| 5 | GRU | 955 (191) | +1,22 · 0,22 | +1,32 · 0,19 |
+| 5 | GRU | 955 (191) | +1,00 · 0,32 | +1,86 · 0,063 |
 | 21 | LSTM | 955 (45) | +0,73 · 0,46 | +0,74 · 0,46 |
 | 63 | GRU | 955 (15) | +1,10 · 0,27 | +1,72 · 0,087 |
 | 252 | RNN | 955 (3) | +0,83 · 0,40 | +1,05 · 0,29 |
@@ -134,7 +136,7 @@ Mejor configuración de cada red, media ± desviación en 3 semillas. En negrita
 <details>
 <summary><b>Conclusión por horizonte</b></summary>
 
-- **5 días**: la red queda un 3,6 % por detrás de la persistencia en RMSE. Su intervalo cubre el 78 % de los casos, tan bien como los cuantiles históricos, no mejor. En validación las tres celdas no se distinguían: la diferencia de pinball era menor que la variación entre semillas.
+- **5 días**: la GRU-16 queda un 1,8 % por detrás de la persistencia en RMSE (p = 0,32). Su intervalo cubre el 78 % de los casos, tan bien como los cuantiles históricos, no mejor. En validación no se distinguían ni las tres celdas ni la GRU de 16 frente a la de 256: la diferencia de pinball era menor que la variación entre semillas.
 - **5 días, retraso de publicación**: la EIA publica el spot con retraso, y el futuro del Brent ya se conoce. Actualizar el último spot con lo que se ha movido el futuro mejora a la persistencia en validación un 8,5 % con 1 día y un 31 % con 3 (`make naive-futures`). Buena parte de la dificultad a 5 días es ese retraso, no la red.
 - **21 días**: sin mejora ni en validación ni en test.
 - **63 días**: la mejora de validación venía sobre todo del pliegue 2021–2023 (+21 %). En test la red predice de media una subida del 11 %, cuando la real fue del 1,7 %. Acierta el signo el 60 % de los días (correlación 0,27): la dirección lleva algo de información; lo que falla es la magnitud.
