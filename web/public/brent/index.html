@@ -67,24 +67,101 @@
   .phead { display: flex; align-items: baseline; gap: 14px; margin: 0 0 6px; font-family: var(--sc-font-display); font-stretch: 112%; font-weight: 620;
     font-size: clamp(1.6rem, 1.2rem + 1vw, 2.1rem); line-height: 1.15; letter-spacing: -0.01em; }
   .phead span { color: var(--sc-ink-soft); font-weight: 450; }
-  .panel { position: relative; display: grid; grid-template-columns: minmax(0, 1.55fr) minmax(0, 1fr); gap: clamp(24px, 3vw, 44px); align-items: center;
-    padding: clamp(20px, 2.4vw, 32px); border-radius: 16px; border: 1px solid var(--hair);
-    background: color-mix(in srgb, var(--sc-surface) 62%, transparent); }
+  /* Figuras sin cajas: el espacio, las líneas finas y la forma de cada página hacen la estructura.
+     panel = gráfico y texto al lado; wide = gráfico a todo el ancho y texto debajo en dos columnas;
+     duo = dos figuras juntas; pipeline (Datos), funnel (Validación) y score (Resultado). */
+  .panel { position: relative; display: grid; grid-template-columns: minmax(0, 1.55fr) minmax(0, 1fr); gap: clamp(24px, 3vw, 48px); align-items: center;
+    padding: clamp(28px, 4vh, 48px) 0; border-top: 1px solid var(--hair); }
+  .phead + .panel, .phead + .duo > .panel, .phead + .pipeline .panel:first-of-type { border-top: 0; }
   .panel__g { position: relative; display: flex; flex-direction: column; gap: 12px; height: min(60vh, 520px); min-width: 0; }
   .panel__g.tall { height: min(72vh, 640px); }
   .panel__g.short, .panel__g.auto { height: auto; }
   .panel__g.short .fill { height: 240px; flex: none; }
   .panel__g svg { width: 100%; height: 100%; display: block; overflow: visible; }
   .panel__g .btn svg, .panel__g .tog svg { width: 18px; height: 18px; }
-  .panel__c { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+  .panel__c, .hd, .bd { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
   .panel__c p { margin: 0; }
   .lab { font-size: 13.5px; font-weight: 600; color: var(--sc-ink-soft); letter-spacing: .01em; }
   .claim { font-family: var(--sc-font-display); font-stretch: 106%; font-weight: 600; font-size: clamp(1.15rem, 0.95rem + 0.55vw, 1.45rem); line-height: 1.3;
     letter-spacing: -0.005em; color: var(--sc-ink); text-wrap: pretty; }
-  .panel__c p:not(.lab):not(.claim) { font-size: 15.5px; line-height: 1.6; color: color-mix(in srgb, var(--sc-ink) 72%, var(--sc-canvas)); max-width: 46ch; text-wrap: pretty; }
+  .bd p:not(.shape) { font-size: 15.5px; line-height: 1.6; color: color-mix(in srgb, var(--sc-ink) 72%, var(--sc-canvas)); max-width: 46ch; text-wrap: pretty; }
   .fill { width: 100%; flex: 1; min-height: 0; }
   .fill svg { width: 100%; height: 100%; display: block; overflow: visible; }
   .next { align-self: flex-end; margin-top: 10px; }
+
+  /* A todo el ancho: el gráfico manda y el texto se lee debajo en dos columnas */
+  .panel.wide { grid-template-columns: minmax(0, 1fr); gap: 28px; }
+  .panel.wide .panel__g { height: min(64vh, 600px); }
+  .panel.wide .panel__g.tall { height: min(76vh, 700px); }
+  .panel.wide .panel__g.auto { height: auto; }
+  .panel.wide .panel__c { display: grid; grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr); gap: clamp(24px, 4vw, 64px); align-items: start; }
+  .panel.wide .bd p:not(.shape) { max-width: 60ch; }
+
+  /* Dos figuras juntas: cada una con su texto debajo */
+  .duo { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: clamp(28px, 4vw, 64px); border-top: 1px solid var(--hair); }
+  .phead + .duo { border-top: 0; }
+  .duo .panel { grid-template-columns: minmax(0, 1fr); align-items: start; align-content: start; gap: 22px; border-top: 0; }
+  .duo .panel__g { height: min(46vh, 400px); }
+  .band { margin: 8px 0 -6px; font: 600 14px var(--sc-font-text); letter-spacing: .04em; text-transform: uppercase; color: var(--persist); }
+
+  /* Datos: una tubería vertical que une las seis etapas y se llena al bajar */
+  .pipeline { position: relative; padding-left: 72px; }
+  .pipeline::before, .pipeline__fill { content: ""; position: absolute; left: 21px; top: 56px; bottom: 56px; width: 2px; border-radius: 2px; background: var(--hair); }
+  .pipeline__fill { background: var(--sheen); transform-origin: top; transform: scaleY(0); transition: transform 120ms linear; }
+  .stage { border-top: 0; }
+  .stage + .stage { border-top: 1px solid var(--hair); }
+  .node { position: absolute; left: -72px; top: 50%; translate: 0 -50%; display: grid; place-items: center; width: 44px; height: 44px; border-radius: 50%;
+    font: 650 17px var(--sc-font-display); font-stretch: 110%; color: var(--sc-ink-soft); background: var(--sc-canvas); border: 2px solid var(--hair);
+    transition: color 200ms ease, border-color 200ms ease, background-color 200ms ease; }
+  .stage.done .node { color: #0d1f1c; background: var(--sheen); border-color: var(--sheen); }
+  .shape { order: 9; align-self: flex-start; margin-top: 4px !important; padding: 6px 12px; border-radius: 999px; font: 600 14px var(--sc-font-text);
+    color: var(--sheen); background: color-mix(in srgb, var(--sheen) 10%, transparent); }
+
+  /* Validación: el embudo fijo a la izquierda marca la etapa que se ve */
+  .funnel { display: grid; grid-template-columns: minmax(0, 13rem) minmax(0, 1fr); gap: clamp(24px, 3vw, 48px); border-top: 1px solid var(--hair); }
+  .funnel__nav { position: sticky; top: 96px; align-self: start; margin: 0; padding: 36px 0 0; list-style: none; display: flex; flex-direction: column; gap: 6px; }
+  .funnel__nav li { position: relative; }
+  .funnel__nav li + li::before { content: ""; display: block; width: 2px; height: 14px; margin: 0 0 6px 22px; background: var(--hair); }
+  .funnel__nav button { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; width: 100%; min-height: 44px; padding: 10px 14px; border: 0;
+    border-left: 2px solid transparent; border-radius: 0 8px 8px 0; background: transparent; color: var(--sc-ink-soft); text-align: left; cursor: pointer;
+    transition: color 160ms ease, background-color 160ms ease, border-color 160ms ease, transform 120ms var(--ease-out); }
+  .funnel__nav b { font: 600 clamp(1.6rem, 1.2rem + 1vw, 2.2rem) var(--sc-font-display); font-stretch: 110%; line-height: 1; color: inherit; font-variant-numeric: tabular-nums; }
+  .funnel__nav span { font-size: 14px; line-height: 1.35; }
+  .funnel__nav li.is-on button { color: var(--sc-ink); border-left-color: var(--sc-accent); background: color-mix(in srgb, var(--sc-accent) 9%, transparent); }
+  @media (hover: hover) and (pointer: fine) { .funnel__nav button:hover { color: var(--sc-ink); } }
+  .funnel__nav button:active { transform: scale(0.97); }
+  .funnel__nav button:focus-visible { outline: 2px solid var(--sc-ink); outline-offset: 2px; }
+  .funnel__body .panel:first-child { border-top: 0; }
+  .funnel__body .panel.wide .panel__g { height: min(58vh, 520px); }
+  .funnel__body .panel.wide .panel__g.tall { height: min(68vh, 620px); }
+
+  /* Redes: las cuatro redes elegidas en columnas */
+  .nets { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .net-col { display: flex; flex-direction: column; gap: 6px; padding: 4px 20px 4px 0; font-size: 15px; color: var(--sc-ink-soft); font-variant-numeric: tabular-nums; }
+  .net-col + .net-col { padding-left: 20px; border-left: 1px solid var(--hair); }
+  .net-col p { margin: 0; }
+  .nc-h { font: 640 19px var(--sc-font-display); font-stretch: 110%; color: var(--sc-ink); }
+  .nc-net { font: 600 clamp(1.8rem, 1.3rem + 1.4vw, 2.6rem) var(--sc-font-display); font-stretch: 112%; line-height: 1.05; color: var(--sc-accent); margin-bottom: 6px !important; }
+
+  /* Resultado: marcador alineado por plazo */
+  .score { display: grid; grid-template-columns: minmax(0, 1.2fr) repeat(4, minmax(0, 1fr)); padding: 8px 0 36px; font-variant-numeric: tabular-nums; }
+  .score p { margin: 0; min-height: 52px; display: flex; flex-wrap: wrap; align-items: center; gap: 0 6px; padding: 8px 14px 8px 0; border-top: 1px solid var(--hair); font-size: 15px; }
+  .score__rows p { color: var(--sc-ink-soft); font-size: 14px; line-height: 1.35; }
+  .score__rows p:first-child, .score__col .sc-h { border-top: 0; }
+  .sc-h { font: 640 19px var(--sc-font-display); font-stretch: 110%; }
+  .sc-h span { font: 600 15px var(--sc-font-text); color: var(--sc-accent); }
+  .score b { font: 600 19px var(--sc-font-display); font-stretch: 108%; color: var(--sc-ink); }
+  .score__col span { color: var(--sc-ink-soft); }
+  .score .neg { color: var(--coral); font: 600 19px var(--sc-font-display); font-stretch: 108%; }
+  .score__col { padding-left: 14px; }
+  .score__note { grid-column: 1 / -1; min-height: 0 !important; padding-top: 14px !important; color: var(--sc-ink-soft); font-size: 14px !important; }
+
+  /* Lo que se aprende: cuatro cifras en fila */
+  [data-in="lessons"] .panel__g { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0; }
+  [data-in="lessons"] .lesson { grid-template-columns: 1fr; gap: 10px; padding: 4px 20px 4px 0; border-top: 0; align-content: start; }
+  [data-in="lessons"] .lesson + .lesson { padding-left: 20px; border-left: 1px solid var(--hair); }
+  [data-in="lessons"] .lesson p { font-size: 15px; }
+
 
   /* Herramientas encima del gráfico */
   .panel__g > .tools, .arch-tools { flex: none; min-height: 44px; }
@@ -141,6 +218,8 @@
   .arch-tex .katex-display { margin: 0; text-align: left; }
   .arch-tex .katex-display > .katex { text-align: left; }
   #eq-scale { opacity: 0; } #eq-scale.is-on { opacity: 1; }
+  .arch { flex: 1; min-height: 0; display: flex; flex-direction: column; gap: 10px; }
+  .arch-svg { margin-bottom: 14px; }
   .arch-info { flex: none; margin: 0; padding-top: 18px; font-size: 15px; color: var(--sc-ink-soft); }
 
   .table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
@@ -167,11 +246,37 @@
     .figs { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     .fig:nth-child(3) { padding-left: 0; border-left: 0; }
     .fig:nth-child(n+3) { border-top: 1px solid var(--hair); }
-    .page { padding: 3vh var(--sc-gutter) 6vh; gap: 16px; }
-    .panel { grid-template-columns: 1fr; padding: 16px; gap: 18px; }
+    .page { padding: 3vh var(--sc-gutter) 6vh; gap: 8px; }
+    .panel { grid-template-columns: 1fr; padding: 28px 0; gap: 20px; }
     .panel__g { height: min(54vh, 420px); }
     .panel__g.tall { height: min(66vh, 520px); }
+    .panel.wide .panel__g, .funnel__body .panel.wide .panel__g { height: min(54vh, 420px); }
+    .panel.wide .panel__g.tall, .funnel__body .panel.wide .panel__g.tall { height: min(66vh, 520px); }
+    .panel.wide .panel__c { grid-template-columns: 1fr; gap: 12px; }
     .claim { font-size: 19px; }
+    .duo { grid-template-columns: 1fr; gap: 0; }
+    .duo .panel + .panel { border-top: 1px solid var(--hair); }
+    .pipeline { padding-left: 0; }
+    .pipeline::before, .pipeline__fill { display: none; }
+    .node { position: static; translate: none; width: 36px; height: 36px; font-size: 15px; margin-bottom: -6px; }
+    .funnel { grid-template-columns: 1fr; gap: 0; }
+    .funnel__nav { top: 56px; z-index: 3; flex-direction: row; gap: 0; padding: 6px 0; margin: 0 calc(-1 * var(--sc-gutter)); padding-inline: var(--sc-gutter);
+      background: var(--sc-canvas); border-bottom: 1px solid var(--hair); }
+    .funnel__nav li { flex: 1; }
+    .funnel__nav li + li::before { display: none; }
+    .funnel__nav button { border-left: 0; border-bottom: 2px solid transparent; border-radius: 8px 8px 0 0; padding: 6px 4px; align-items: center; text-align: center; }
+    .funnel__nav li.is-on button { border-bottom-color: var(--sc-accent); }
+    .funnel__nav b { font-size: 22px; }
+    .funnel__nav span { font-size: 13px; }
+    .nets, [data-in="lessons"] .panel__g { grid-template-columns: repeat(2, minmax(0, 1fr)); row-gap: 20px; }
+    .net-col:nth-child(3), [data-in="lessons"] .lesson:nth-child(3) { padding-left: 0; border-left: 0; }
+    .score { grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 16px; }
+    .score__rows { display: none; }
+    .score__col { padding-left: 0; padding-bottom: 18px; }
+    .score p { min-height: 0; padding: 6px 0; }
+    .score__col p:nth-child(2)::before { content: "RMSE"; width: 100%; font: 600 13px var(--sc-font-text); color: var(--sc-ink-soft); }
+    .score__col p:nth-child(3)::before { content: "Mejora del error"; width: 100%; font: 600 13px var(--sc-font-text); color: var(--sc-ink-soft); }
+    .score__col p:nth-child(4)::before { content: "Rango del 80 %"; width: 100%; font: 600 13px var(--sc-font-text); color: var(--sc-ink-soft); }
     .table td { font-size: 15px; padding: 10px 8px 10px 0; }
     .table th:nth-child(5), .table td:nth-child(5) { display: none; }
     .mapcard { width: auto; max-width: 70%; padding: 8px 12px; bottom: 0; }
@@ -228,44 +333,62 @@
     <div class="page">
       <h1 class="phead"><span>1</span>Mercado</h1>
 
-      <article class="panel" data-in="map">
+      <article class="panel wide" data-in="map">
         <div class="panel__g"><div class="mapwrap"><div id="g-map"></div><div class="mapcard" id="map-card" aria-live="polite"></div></div></div>
         <div class="panel__c">
-          <p class="lab">Plazas de las 15 series de entrada; pulsa un punto</p>
-          <p class="claim">La red predice el Brent del Mar del Norte con su propia historia y catorce series de otros mercados, las que fija el enunciado.</p>
-          <p>El Brent es la referencia de cerca de dos tercios del crudo mundial. La serie es su precio spot diario en dólares por barril (EIA, DCOILBRENTEU), que se publica con unos días de retraso.</p>
-          <p>Las otras catorce son el WTI y su futuro, el gas Henry Hub, el dólar frente al euro y al yuan, el índice del dólar, el tipo de depósito del BCE, el cobre, el oro y el VIX. No se comprobó si mejoran la predicción frente a usar solo el Brent.</p>
+          <div class="hd">
+            <p class="lab">Plazas de las 15 series de entrada; pulsa un punto</p>
+            <p class="claim">La red predice el Brent del Mar del Norte con su propia historia y catorce series de otros mercados, las que fija el enunciado.</p>
+          </div>
+          <div class="bd">
+            <p>El Brent es la referencia de cerca de dos tercios del crudo mundial. La serie es su precio spot diario en dólares por barril (EIA, DCOILBRENTEU), que se publica con unos días de retraso.</p>
+            <p>Las otras catorce son el WTI y su futuro, el gas Henry Hub, el dólar frente al euro y al yuan, el índice del dólar, el tipo de depósito del BCE, el cobre, el oro y el VIX. No se comprobó si mejoran la predicción frente a usar solo el Brent.</p>
+          </div>
         </div>
       </article>
 
-      <article class="panel" data-in="brent">
+      <article class="panel wide" data-in="brent">
         <div class="panel__g"><div class="chips" id="ev-chips" role="group" aria-label="Sucesos"></div><div id="g-brent" class="fill"></div></div>
         <div class="panel__c">
-          <p class="lab">Brent spot diario, 2000 a 2026, dólares por barril</p>
-          <p class="claim">En 26 años el precio va de 9,12 $ a 143,95 $, y los grandes movimientos llegan con sucesos que no estaban en los datos del día anterior.</p>
-          <p>El máximo de julio de 2008 precede a la crisis financiera; después vienen el exceso de oferta de 2014 a 2016, la pandemia, la invasión de Ucrania y la subida de 2026, cuya causa no se documenta en este proyecto.</p>
-          <p>El 20 de abril de 2020 el WTI llegó a cerrar en −36,98 $. El último dato de la serie es del 3 de noviembre de 2026: 107,03 $.</p>
+          <div class="hd">
+            <p class="lab">Brent spot diario, 2000 a 2026, dólares por barril</p>
+            <p class="claim">En 26 años el precio va de 9,12 $ a 143,95 $, y los grandes movimientos llegan con sucesos que no estaban en los datos del día anterior.</p>
+          </div>
+          <div class="bd">
+            <p>El máximo de julio de 2008 precede a la crisis financiera; después vienen el exceso de oferta de 2014 a 2016, la pandemia, la invasión de Ucrania y la subida de 2026, cuya causa no se documenta en este proyecto.</p>
+            <p>El 20 de abril de 2020 el WTI llegó a cerrar en −36,98 $. El último dato de la serie es del 3 de noviembre de 2026: 107,03 $.</p>
+          </div>
         </div>
       </article>
 
-      <article class="panel" data-in="plazos">
+      <div class="duo">
+      <article class="panel stack" data-in="plazos">
         <div class="panel__g"><div id="v-plazos" class="fill"></div></div>
         <div class="panel__c">
-          <p class="lab">Horizontes, en días con precio del Brent</p>
-          <p class="claim">Hay una red para cada plazo: 5, 21, 63 y 252 días, del orden de una semana, un mes, tres meses y un año.</p>
-          <p>Cada red predice el rendimiento logarítmico entre el último precio conocido y el del plazo; al final se convierte a dólares. Un plazo de 5 días son 5 días con dato del Brent, no 5 días laborables.</p>
-          <p>Cuanto más lejos, más se abre lo que puede pasar, y menos pronósticos independientes hay para evaluar: a 1 año, unos 3 en todo el periodo de test.</p>
+          <div class="hd">
+            <p class="lab">Horizontes, en días con precio del Brent</p>
+            <p class="claim">Hay una red para cada plazo: 5, 21, 63 y 252 días, del orden de una semana, un mes, tres meses y un año.</p>
+          </div>
+          <div class="bd">
+            <p>Cada red predice el rendimiento logarítmico entre el último precio conocido y el del plazo; al final se convierte a dólares. Un plazo de 5 días son 5 días con dato del Brent, no 5 días laborables.</p>
+            <p>Cuanto más lejos, más se abre lo que puede pasar, y menos pronósticos independientes hay para evaluar: a 1 año, unos 3 en todo el periodo de test.</p>
+          </div>
         </div>
       </article>
 
-      <article class="panel" data-in="rango">
+      <article class="panel stack" data-in="rango">
         <div class="panel__g"><div id="v-rango" class="fill"></div></div>
         <div class="panel__c">
-          <p class="lab">Esquema de la salida, no datos</p>
-          <p class="claim">La salida no es un precio sino tres cuantiles, el 10, el 50 y el 90 %: entre el primero y el último debería caer el precio 8 de cada 10 veces.</p>
-          <p>Todo se compara con referencias triviales: la persistencia, que supone que el precio no cambia, para el error; y los cuantiles históricos de train para el rango. Una red solo aporta si las bate.</p>
+          <div class="hd">
+            <p class="lab">Esquema de la salida, no datos</p>
+            <p class="claim">La salida no es un precio sino tres cuantiles, el 10, el 50 y el 90 %: entre el primero y el último debería caer el precio 8 de cada 10 veces.</p>
+          </div>
+          <div class="bd">
+            <p>Todo se compara con referencias triviales: la persistencia, que supone que el precio no cambia, para el error; y los cuantiles históricos de train para el rango. Una red solo aporta si las bate.</p>
+          </div>
         </div>
       </article>
+      </div>
       <a class="btn next" href="#/datos">2 Datos<svg class="go" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
     </div>
   </section>
@@ -275,68 +398,100 @@
     <div class="page">
       <h1 class="phead"><span>2</span>Datos</h1>
 
-      <article class="panel" data-in="sparks">
+      <div class="pipeline"><i class="pipeline__fill" aria-hidden="true"></i>
+      <article class="panel stage" data-in="sparks"><span class="node" aria-hidden="true">1</span>
         <div class="panel__g tall"><div id="g-sparks" class="fill"></div></div>
         <div class="panel__c">
-          <p class="lab">Las 15 series de entrada, un punto por mes, 2000 a 2026</p>
-          <p class="claim">Cada día entran 16 números: las 15 series de mercado y la volatilidad del Brent.</p>
-          <p>La volatilidad es la desviación típica de los últimos 21 rendimientos diarios del Brent: en junio de 2014 era del 0,8 % diario y en enero de 2009, del 7,3 %. Dice a la red cuánto se está moviendo el precio; no se midió si mejora el rango.</p>
-          <p>La cesta de la OPEP, que pide el enunciado, no está disponible. El futuro del Brent empieza en 2007 y no se usó como entrada.</p>
+          <div class="hd">
+            <p class="lab">Las 15 series de entrada, un punto por mes, 2000 a 2026</p>
+            <p class="claim">Cada día entran 16 números: las 15 series de mercado y la volatilidad del Brent.</p>
+          </div>
+          <div class="bd">
+            <p class="shape">15 series de mercado y la volatilidad del Brent</p>
+            <p>La volatilidad es la desviación típica de los últimos 21 rendimientos diarios del Brent: en junio de 2014 era del 0,8 % diario y en enero de 2009, del 7,3 %. Dice a la red cuánto se está moviendo el precio; no se midió si mejora el rango.</p>
+            <p>La cesta de la OPEP, que pide el enunciado, no está disponible. El futuro del Brent empieza en 2007 y no se usó como entrada.</p>
+          </div>
         </div>
       </article>
 
-      <article class="panel" data-in="align">
+      <article class="panel stage" data-in="align"><span class="node" aria-hidden="true">2</span>
         <div class="panel__g"><div id="g-align" class="fill"></div></div>
         <div class="panel__c">
-          <p class="lab">Mayo de 2003, valores de seis series</p>
-          <p class="claim">Se usan los días con precio del Brent y cada hueco se rellena con el último valor conocido, nunca con uno posterior.</p>
-          <p>Cada mercado cierra en sus festivos. El 26 de mayo de 2003 Londres cotizó el Brent, pero Estados Unidos cerró por el Memorial Day. En las 15 series hay 2 901 huecos.</p>
-          <p>El relleno no usa información del futuro, pero la red no distingue un día sin dato de un día sin cambio: faltó un indicador de disponibilidad.</p>
+          <div class="hd">
+            <p class="lab">Mayo de 2003, valores de seis series</p>
+            <p class="claim">Se usan los días con precio del Brent y cada hueco se rellena con el último valor conocido, nunca con uno posterior.</p>
+          </div>
+          <div class="bd">
+            <p class="shape">un solo calendario: los días con Brent</p>
+            <p>Cada mercado cierra en sus festivos. El 26 de mayo de 2003 Londres cotizó el Brent, pero Estados Unidos cerró por el Memorial Day. En las 15 series hay 2 901 huecos.</p>
+            <p>El relleno no usa información del futuro, pero la red no distingue un día sin dato de un día sin cambio: faltó un indicador de disponibilidad.</p>
+          </div>
         </div>
       </article>
 
-      <article class="panel" data-in="morph">
+      <article class="panel stage" data-in="morph"><span class="node" aria-hidden="true">3</span>
         <div class="panel__g"><div class="eq"><div class="formula" id="f-logret"></div><div class="formula formula--ej" id="f-logret-ej"></div><p class="eq-cap">31 de diciembre de 2007 a 2 de enero de 2008</p></div><div id="g-morph" class="fill"></div></div>
         <div class="panel__c">
-          <p class="lab">Brent en train, del precio al rendimiento diario</p>
-          <p class="claim">La red recibe cambios diarios, no precios: un barril a 100 $ no significa lo mismo en 2008 que en 2014, y una subida del 3 % sí.</p>
-          <p>Se usa el rendimiento logarítmico: casi igual que el porcentaje para cambios pequeños y aditivo en el tiempo, de modo que los cambios de varios días se suman.</p>
-          <p>El tipo del BCE, que puede ser negativo, entra como diferencia; el volumen del futuro, como diferencia de log(1 + x). El WTI tiene un suelo de 1 $ para que el logaritmo exista.</p>
+          <div class="hd">
+            <p class="lab">Brent en train, del precio al rendimiento diario</p>
+            <p class="claim">La red recibe cambios diarios, no precios: un barril a 100 $ no significa lo mismo en 2008 que en 2014, y una subida del 3 % sí.</p>
+          </div>
+          <div class="bd">
+            <p class="shape">de precios a cambios diarios</p>
+            <p>Se usa el rendimiento logarítmico: casi igual que el porcentaje para cambios pequeños y aditivo en el tiempo, de modo que los cambios de varios días se suman.</p>
+            <p>El tipo del BCE, que puede ser negativo, entra como diferencia; el volumen del futuro, como diferencia de log(1 + x). El WTI tiene un suelo de 1 $ para que el logaritmo exista.</p>
+          </div>
         </div>
       </article>
 
-      <article class="panel" data-in="hist">
+      <article class="panel stage" data-in="hist"><span class="node" aria-hidden="true">4</span>
         <div class="panel__g">
           <div class="tools"><div class="seg" id="scale-seg" role="group" aria-label="Escala"><button type="button" data-z="0" aria-pressed="true">Cada una en su escala</button><button type="button" data-z="1" aria-pressed="false">Misma escala</button></div></div>
           <div class="eq" id="eq-scale"><div class="formula" id="f-scale"></div></div>
           <div id="g-hist" class="fill"></div>
         </div>
         <div class="panel__c">
-          <p class="lab">Distribución del rendimiento diario de cuatro series en train</p>
-          <p class="claim">Cada serie se estandariza con la media y la desviación de train, de 2000 a 2019, y todas pasan a medirse en desviaciones.</p>
-          <p>Sin estandarizar, el VIX cambia un 7,06 % al día y el dólar frente al euro un 0,63 %, y la red atendería sobre todo a lo que más se mueve.</p>
-          <p>La media y la desviación salen solo de train y se guardan con el modelo; la web aplica las mismas en el navegador.</p>
+          <div class="hd">
+            <p class="lab">Distribución del rendimiento diario de cuatro series en train</p>
+            <p class="claim">Cada serie se estandariza con la media y la desviación de train, de 2000 a 2019, y todas pasan a medirse en desviaciones.</p>
+          </div>
+          <div class="bd">
+            <p class="shape">cada serie en desviaciones de train</p>
+            <p>Sin estandarizar, el VIX cambia un 7,06 % al día y el dólar frente al euro un 0,63 %, y la red atendería sobre todo a lo que más se mueve.</p>
+            <p>La media y la desviación salen solo de train y se guardan con el modelo; la web aplica las mismas en el navegador.</p>
+          </div>
         </div>
       </article>
 
-      <article class="panel" data-in="clip">
+      <article class="panel stage" data-in="clip"><span class="node" aria-hidden="true">5</span>
         <div class="panel__g"><div id="g-clip" class="fill"></div></div>
         <div class="panel__c">
-          <p class="lab">Cambio diario del WTI en 2020, en desviaciones</p>
-          <p class="claim">Las entradas estandarizadas se recortan a ±5 desviaciones para que un solo día no domine el entrenamiento.</p>
-          <p>El 20 de abril de 2020 el WTI cerró a −36,98 $. Con el suelo de 1 $, el cambio de ese día equivale a 118 desviaciones; tras el recorte pesa como cualquier otro día extremo.</p>
+          <div class="hd">
+            <p class="lab">Cambio diario del WTI en 2020, en desviaciones</p>
+            <p class="claim">Las entradas estandarizadas se recortan a ±5 desviaciones para que un solo día no domine el entrenamiento.</p>
+          </div>
+          <div class="bd">
+            <p class="shape">todo entre −5 y +5</p>
+            <p>El 20 de abril de 2020 el WTI cerró a −36,98 $. Con el suelo de 1 $, el cambio de ese día equivale a 118 desviaciones; tras el recorte pesa como cualquier otro día extremo.</p>
+          </div>
         </div>
       </article>
 
-      <article class="panel" data-in="window">
+      <article class="panel stage" data-in="window"><span class="node" aria-hidden="true">6</span>
         <div class="panel__g"><div id="g-window" class="fill"></div></div>
         <div class="panel__c">
-          <p class="lab">Ventana sobre los 16 números, desde septiembre de 2008</p>
-          <p class="claim">Cada ejemplo son los 60 días anteriores en orden, 20 en la red de 1 semana, y la ventana avanza un día cada vez.</p>
-          <p>Los ejemplos se solapan: a 252 días, dos ejemplos seguidos comparten casi todo su objetivo, por eso hay muchos menos pronósticos independientes que filas.</p>
-          <p>No se probó una ventana de 120 días; con redes pequeñas, 20 y 60 dan lo mismo.</p>
+          <div class="hd">
+            <p class="lab">Ventana sobre los 16 números, desde septiembre de 2008</p>
+            <p class="claim">Cada ejemplo son los 60 días anteriores en orden, 20 en la red de 1 semana, y la ventana avanza un día cada vez.</p>
+          </div>
+          <div class="bd">
+            <p class="shape">60 días por 16 números en cada ejemplo</p>
+            <p>Los ejemplos se solapan: a 252 días, dos ejemplos seguidos comparten casi todo su objetivo, por eso hay muchos menos pronósticos independientes que filas.</p>
+            <p>No se probó una ventana de 120 días; con redes pequeñas, 20 y 60 dan lo mismo.</p>
+          </div>
         </div>
       </article>
+      </div>
       <a class="btn next" href="#/redes">3 Redes<svg class="go" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
     </div>
   </section>
@@ -346,7 +501,7 @@
     <div class="page">
       <h1 class="phead"><span>3</span>Redes</h1>
 
-      <article class="panel" data-in="cell">
+      <article class="panel wide" data-in="cell">
         <div class="panel__g tall">
           <div class="arch" id="arch">
             <div class="tools arch-tools">
@@ -360,48 +515,58 @@
           </div>
         </div>
         <div class="panel__c">
-          <p class="lab">Esquema de una celda leyendo 60 días reales del Brent</p>
-          <p class="claim">Las tres redes leen la ventana día a día y guardan un resumen, el estado oculto; lo que cambia es cómo deciden qué conservar.</p>
-          <p>La RNN simple mezcla cada día con el resumen mediante una tangente hiperbólica, y lo antiguo se diluye en pocos pasos. La LSTM añade una memoria aparte y tres puertas, olvidar, añadir y sacar; la GRU usa dos, reiniciar y actualizar, con menos parámetros.</p>
-          <p>La barra superior ilustra cuánto pesa cada día pasado en el resumen. Es un esquema: no son activaciones medidas de las redes.</p>
+          <div class="hd">
+            <p class="lab">Esquema de una celda leyendo 60 días reales del Brent</p>
+            <p class="claim">Las tres redes leen la ventana día a día y guardan un resumen, el estado oculto; lo que cambia es cómo deciden qué conservar.</p>
+          </div>
+          <div class="bd">
+            <p>La RNN simple mezcla cada día con el resumen mediante una tangente hiperbólica, y lo antiguo se diluye en pocos pasos. La LSTM añade una memoria aparte y tres puertas, olvidar, añadir y sacar; la GRU usa dos, reiniciar y actualizar, con menos parámetros.</p>
+            <p>La barra superior ilustra cuánto pesa cada día pasado en el resumen. Es un esquema: no son activaciones medidas de las redes.</p>
+          </div>
         </div>
       </article>
 
-      <article class="panel" data-in="arch">
+      <div class="duo">
+      <article class="panel stack" data-in="arch">
         <div class="panel__g"><div id="g-arch" class="fill"></div></div>
         <div class="panel__c">
-          <p class="lab">GRU de 3 meses: entrada, capas y salida</p>
-          <p class="claim">Dos capas de 128 neuronas leen los 60 días y, del último estado, una capa lineal saca tres números: los cuantiles 10, 50 y 90 % del rendimiento.</p>
-          <p>Los cuantiles se convierten en precios a partir del último Brent publicado. En la web, la misma red exportada a ONNX corre en el navegador con el preprocesado replicado en TypeScript.</p>
+          <div class="hd">
+            <p class="lab">GRU de 3 meses: entrada, capas y salida</p>
+            <p class="claim">Dos capas de 128 neuronas leen los 60 días y, del último estado, una capa lineal saca tres números: los cuantiles 10, 50 y 90 % del rendimiento.</p>
+          </div>
+          <div class="bd">
+            <p>Los cuantiles se convierten en precios a partir del último Brent publicado. En la web, la misma red exportada a ONNX corre en el navegador con el preprocesado replicado en TypeScript.</p>
+          </div>
         </div>
       </article>
 
-      <article class="panel" data-in="pinball">
+      <article class="panel stack" data-in="pinball">
         <div class="panel__g"><div class="formula" id="f-pinball"></div><div id="g-pinball" class="fill"></div></div>
         <div class="panel__c">
-          <p class="lab">Pérdida pinball para τ = 0,1, 0,5 y 0,9</p>
-          <p class="claim">Cada salida aprende su cuantil con la pérdida pinball, que castiga de forma asimétrica.</p>
-          <p>Para τ = 0,9, quedarse corto cuesta nueve veces más que pasarse, así que la salida se coloca donde solo el 10 % de los casos queda por encima. Para τ = 0,5 es el error absoluto.</p>
-          <p>Las redes se entrenan y se eligen con esta pérdida, pero los resultados se dan en RMSE, que no es la métrica de entrenamiento.</p>
+          <div class="hd">
+            <p class="lab">Pérdida pinball para τ = 0,1, 0,5 y 0,9</p>
+            <p class="claim">Cada salida aprende su cuantil con la pérdida pinball, que castiga de forma asimétrica.</p>
+          </div>
+          <div class="bd">
+            <p>Para τ = 0,9, quedarse corto cuesta nueve veces más que pasarse, así que la salida se coloca donde solo el 10 % de los casos queda por encima. Para τ = 0,5 es el error absoluto.</p>
+            <p>Las redes se entrenan y se eligen con esta pérdida, pero los resultados se dan en RMSE, que no es la métrica de entrenamiento.</p>
+          </div>
         </div>
       </article>
+      </div>
 
-      <article class="panel" data-in="table">
-        <div class="panel__g short">
-          <table class="table">
-            <thead><tr><th>Plazo</th><th>Red</th><th>Neuronas y capas</th><th>Parámetros</th><th>Entrenamiento</th></tr></thead>
-            <tbody>
-              <tr><td>1 semana</td><td class="net">GRU</td><td>16, 1 capa</td><td>1 683</td><td>66 s</td></tr>
-              <tr><td>1 mes</td><td class="net">LSTM</td><td>64, 1 capa</td><td>21 187</td><td>11 s</td></tr>
-              <tr><td>3 meses</td><td class="net">GRU</td><td>128, 2 capas</td><td>155 523</td><td>29 s</td></tr>
-              <tr><td>1 año</td><td class="net">RNN</td><td>256, 2 capas</td><td>202 499</td><td>10 s</td></tr>
-            </tbody>
-          </table>
+      <article class="panel wide" data-in="table">
+        <div class="panel__g auto">
+          <div class="nets"><div class="net-col"><p class="nc-h">1 semana</p><p class="nc-net">GRU</p><p>16 neuronas, 1 capa</p><p><b>1 683</b> parámetros</p><p>66 s de entrenamiento</p></div><div class="net-col"><p class="nc-h">1 mes</p><p class="nc-net">LSTM</p><p>64 neuronas, 1 capa</p><p><b>21 187</b> parámetros</p><p>11 s de entrenamiento</p></div><div class="net-col"><p class="nc-h">3 meses</p><p class="nc-net">GRU</p><p>128 neuronas, 2 capas</p><p><b>155 523</b> parámetros</p><p>29 s de entrenamiento</p></div><div class="net-col"><p class="nc-h">1 año</p><p class="nc-net">RNN</p><p>256 neuronas, 2 capas</p><p><b>202 499</b> parámetros</p><p>10 s de entrenamiento</p></div></div>
         </div>
         <div class="panel__c">
-          <p class="lab">Red elegida para cada plazo</p>
-          <p class="claim">En validación ganó la GRU a 1 semana y a 3 meses, la LSTM a 1 mes y la RNN simple a 1 año.</p>
-          <p>A 1 semana, una GRU de 16 neuronas empata con la de 256 dentro de la variación entre semillas y se queda por ser 125 veces más pequeña. Cada red final se reentrena con todos los datos hasta enero de 2023 y se examina una sola vez en test.</p>
+          <div class="hd">
+            <p class="lab">Red elegida para cada plazo</p>
+            <p class="claim">En validación ganó la GRU a 1 semana y a 3 meses, la LSTM a 1 mes y la RNN simple a 1 año.</p>
+          </div>
+          <div class="bd">
+            <p>A 1 semana, una GRU de 16 neuronas empata con la de 256 dentro de la variación entre semillas y se queda por ser 125 veces más pequeña. Cada red final se reentrena con todos los datos hasta enero de 2023 y se examina una sola vez en test.</p>
+          </div>
         </div>
       </article>
       <a class="btn next" href="#/validacion">4 Validación<svg class="go" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
@@ -413,35 +578,53 @@
     <div class="page">
       <h1 class="phead"><span>4</span>Validación</h1>
 
-      <article class="panel" data-in="persist">
+      <p class="band">Lo que hay que batir</p>
+      <div class="duo">
+      <article class="panel stack" data-in="persist">
         <div class="panel__g"><div id="g-persist" class="fill"></div></div>
         <div class="panel__c">
-          <p class="lab">Brent, 1 de junio de 2017, a 3 meses, en train</p>
-          <p class="claim">La persistencia es la referencia del error y los cuantiles históricos, la del rango: una red solo aporta si las bate.</p>
-          <p>El 1 de junio de 2017 el Brent cerró a 50,41 $ y tres meses después a 51,64 $: la persistencia falló por 1,23 $.</p>
-          <p>En train, 8 de cada 10 veces el Brent cambió en tres meses entre un −21 % y un +25 %. Aplicado a ese día, el rango de referencia va de 39,87 $ a 62,84 $.</p>
+          <div class="hd">
+            <p class="lab">Brent, 1 de junio de 2017, a 3 meses, en train</p>
+            <p class="claim">La persistencia es la referencia del error y los cuantiles históricos, la del rango: una red solo aporta si las bate.</p>
+          </div>
+          <div class="bd">
+            <p>El 1 de junio de 2017 el Brent cerró a 50,41 $ y tres meses después a 51,64 $: la persistencia falló por 1,23 $.</p>
+            <p>En train, 8 de cada 10 veces el Brent cambió en tres meses entre un −21 % y un +25 %. Aplicado a ese día, el rango de referencia va de 39,87 $ a 62,84 $.</p>
+          </div>
         </div>
       </article>
 
-      <article class="panel" data-in="fut">
+      <article class="panel stack" data-in="fut">
         <div class="panel__g"><div id="g-fut" class="fill"></div><div class="eq"><div class="formula" id="f-fut"></div></div></div>
         <div class="panel__c">
-          <p class="lab">Esquema de la regla con futuros</p>
-          <p class="claim">Una regla sin red, que mueve el último spot publicado lo mismo que el futuro del Brent, gana a la persistencia un 8,5 % a 1 semana en validación.</p>
-          <p>El spot de la EIA llega con días de retraso; el futuro se conoce al momento. Buena parte de la dificultad a 1 semana es ese retraso, no la red, y el futuro del Brent no se probó como entrada.</p>
+          <div class="hd">
+            <p class="lab">Esquema de la regla con futuros</p>
+            <p class="claim">Una regla sin red, que mueve el último spot publicado lo mismo que el futuro del Brent, gana a la persistencia un 8,5 % a 1 semana en validación.</p>
+          </div>
+          <div class="bd">
+            <p>El spot de la EIA llega con días de retraso; el futuro se conoce al momento. Buena parte de la dificultad a 1 semana es ese retraso, no la red, y el futuro del Brent no se probó como entrada.</p>
+          </div>
         </div>
       </article>
+      </div>
 
-      <article class="panel" data-in="folds">
+      <div class="funnel">
+        <ol class="funnel__nav" aria-label="De 432 entrenamientos a 4 redes"><li data-fn="0"><button type="button"><b>4</b><span>exámenes por configuración</span></button></li><li data-fn="1"><button type="button"><b>432</b><span>entrenamientos</span></button></li><li data-fn="2"><button type="button"><b>12</b><span>finalistas con 3 semillas</span></button></li><li data-fn="3"><button type="button"><b>4</b><span>redes finales</span></button></li></ol>
+        <div class="funnel__body">
+      <article class="panel wide" data-in="folds" data-fn="0">
         <div class="panel__g"><div id="g-folds" class="fill"></div></div>
         <div class="panel__c">
-          <p class="lab">Validación temporal en cuatro bloques de dos años</p>
-          <p class="claim">Cada configuración se examina cuatro veces, siempre con datos posteriores a los de entrenamiento; desde el 25 de enero de 2023 no se mira nada hasta el final.</p>
-          <p>En cada examen entrena con todo el pasado disponible, reserva el último año para decidir cuándo parar (paciencia de 10 épocas) y se evalúa en los dos años siguientes, sin reentrenar dentro del bloque.</p>
+          <div class="hd">
+            <p class="lab">Validación temporal en cuatro bloques de dos años</p>
+            <p class="claim">Cada configuración se examina cuatro veces, siempre con datos posteriores a los de entrenamiento; desde el 25 de enero de 2023 no se mira nada hasta el final.</p>
+          </div>
+          <div class="bd">
+            <p>En cada examen entrena con todo el pasado disponible, reserva el último año para decidir cuándo parar (paciencia de 10 épocas) y se evalúa en los dos años siguientes, sin reentrenar dentro del bloque.</p>
+          </div>
         </div>
       </article>
 
-      <article class="panel" data-in="grid">
+      <article class="panel wide" data-in="grid" data-fn="1">
         <div class="panel__g tall">
           <div class="tools" id="grid-tools" role="group" aria-label="Redes visibles">
             <button type="button" class="tog" data-net="rnn" aria-pressed="true"><i class="sw" style="color:var(--coral)"></i>RNN</button>
@@ -451,31 +634,45 @@
           <div id="g-grid" class="fill"></div>
         </div>
         <div class="panel__c">
-          <p class="lab">432 entrenamientos: mejora del error frente a la persistencia, validación</p>
-          <p class="claim">De 432 entrenamientos, solo 45 quedan por delante de la persistencia, y 36 de ellos son a 3 meses.</p>
-          <p>Son 3 redes por 4 plazos por 36 configuraciones: 4 tamaños (de 32 a 256 neuronas), 3 formas (una capa, dos capas y dos capas con dropout de 0,3) y 3 tasas de aprendizaje.</p>
-          <p>Para cada red y plazo se elige la configuración con menor pérdida pinball media en los cuatro bloques.</p>
+          <div class="hd">
+            <p class="lab">432 entrenamientos: mejora del error frente a la persistencia, validación</p>
+            <p class="claim">De 432 entrenamientos, solo 45 quedan por delante de la persistencia, y 36 de ellos son a 3 meses.</p>
+          </div>
+          <div class="bd">
+            <p>Son 3 redes por 4 plazos por 36 configuraciones: 4 tamaños (de 32 a 256 neuronas), 3 formas (una capa, dos capas y dos capas con dropout de 0,3) y 3 tasas de aprendizaje.</p>
+            <p>Para cada red y plazo se elige la configuración con menor pérdida pinball media en los cuatro bloques.</p>
+          </div>
         </div>
       </article>
 
-      <article class="panel" data-in="val">
+      <article class="panel wide" data-in="val" data-fn="2">
         <div class="panel__g"><div id="g-val" class="fill"></div></div>
         <div class="panel__c">
-          <p class="lab">Finalistas con tres semillas, validación</p>
-          <p class="claim">Solo la GRU a 3 meses ganaba con claridad: un 4,8 % menos de error que la persistencia.</p>
-          <p>A 1 semana y a 1 mes las redes empatan con la persistencia; a 1 año, todas pierden.</p>
-          <p>La mejora a 3 meses venía casi entera de un solo bloque, de 2021 a 2023. Elegir entre muchas configuraciones encuentra la que tuvo suerte.</p>
+          <div class="hd">
+            <p class="lab">Finalistas con tres semillas, validación</p>
+            <p class="claim">Solo la GRU a 3 meses ganaba con claridad: un 4,8 % menos de error que la persistencia.</p>
+          </div>
+          <div class="bd">
+            <p>A 1 semana y a 1 mes las redes empatan con la persistencia; a 1 año, todas pierden.</p>
+            <p>La mejora a 3 meses venía casi entera de un solo bloque, de 2021 a 2023. Elegir entre muchas configuraciones encuentra la que tuvo suerte.</p>
+          </div>
         </div>
       </article>
 
-      <article class="panel" data-in="curves">
+      <article class="panel wide" data-in="curves" data-fn="3">
         <div class="panel__g tall"><div id="g-curves" class="fill"></div></div>
         <div class="panel__c">
-          <p class="lab">Curvas de entrenamiento de las cuatro redes finales</p>
-          <p class="claim">A 1 año la mejor época es la primera: la red casi no aprende de los datos.</p>
-          <p>Se entrena hasta 60 épocas (400 a 1 semana) y se para cuando el error del año reservado deja de bajar. A 1 semana, 1 mes y 3 meses ese error baja un 26, un 21 y un 23 %.</p>
+          <div class="hd">
+            <p class="lab">Curvas de entrenamiento de las cuatro redes finales</p>
+            <p class="claim">A 1 año la mejor época es la primera: la red casi no aprende de los datos.</p>
+          </div>
+          <div class="bd">
+            <p>Se entrena hasta 60 épocas (400 a 1 semana) y se para cuando el error del año reservado deja de bajar. A 1 semana, 1 mes y 3 meses ese error baja un 26, un 21 y un 23 %.</p>
+          </div>
         </div>
       </article>
+        </div>
+      </div>
       <a class="btn next" href="#/resultado">5 Resultado<svg class="go" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
     </div>
   </section>
@@ -494,24 +691,28 @@
           <div id="g-result" class="fill"></div>
         </div>
         <div class="panel__c">
-          <p class="lab">Test, 2023 a 2026: precio real, predicción, rango del 80 % y persistencia</p>
-          <p class="claim">En test ninguna red bate a la persistencia, y ninguna diferencia es significativa (Diebold-Mariano, p &gt; 0,05).</p>
-          <p>RMSE de la red frente a la persistencia: 5,46 $ frente a 5,36 $ a 1 semana; 11,56 $ frente a 10,69 $ a 1 mes; 28,24 $ frente a 17,54 $ a 3 meses, y 33,03 $ frente a 22,71 $ a 1 año.</p>
-          <p>A 3 meses acierta si el precio sube o baja el 60 % de los días, pero predice de media una subida del 11 % cuando fue del 1,7 %. A 3 meses y a 1 año solo hay unos 15 y 3 pronósticos independientes: no significativo no quiere decir igual.</p>
-          <p>Año a año, solo gana a la persistencia en 2 de 16 casillas: a 1 mes en 2024, el año más tranquilo, y a 1 año en 2026.</p>
+          <div class="hd">
+            <p class="lab">Test, 2023 a 2026: precio real, predicción, rango del 80 % y persistencia</p>
+            <p class="claim">En test ninguna red bate a la persistencia, y ninguna diferencia es significativa (Diebold-Mariano, p &gt; 0,05).</p>
+          </div>
+          <div class="bd">
+            <p>RMSE de la red frente a la persistencia: 5,46 $ frente a 5,36 $ a 1 semana; 11,56 $ frente a 10,69 $ a 1 mes; 28,24 $ frente a 17,54 $ a 3 meses, y 33,03 $ frente a 22,71 $ a 1 año.</p>
+            <p>A 3 meses acierta si el precio sube o baja el 60 % de los días, pero predice de media una subida del 11 % cuando fue del 1,7 %. A 3 meses y a 1 año solo hay unos 15 y 3 pronósticos independientes: no significativo no quiere decir igual.</p>
+            <p>Año a año, solo gana a la persistencia en 2 de 16 casillas: a 1 mes en 2024, el año más tranquilo, y a 1 año en 2026.</p>
+          </div>
         </div>
       </article>
 
-      <article class="panel" data-in="cover">
-        <div class="panel__g short"><div id="g-cover" class="fill"></div></div>
-        <div class="panel__c">
-          <p class="lab">Cobertura del rango del 80 % en test, red y cuantiles históricos</p>
-          <p class="claim">El rango acierta como la referencia a 1 semana, 1 mes y 1 año, pero en 2026 cubrió solo entre el 48 y el 58 % en los tres plazos cortos.</p>
-          <p>A 3 meses cubre el 68 % frente al 86 % de la referencia. A 1 año acierta el 92 % porque es tan ancho que cabe casi todo. El ancho se ajustó en validación, y la subida de 2026 queda fuera de lo que se había visto.</p>
-        </div>
-      </article>
+      <section class="score" aria-label="Marcador en test">
+        <div class="score__rows"><p></p><p>Error típico (RMSE), red frente a persistencia</p><p>Mejora del error</p><p>Rango del 80 %, red frente a cuantiles históricos</p><p>Diebold-Mariano</p></div>
+        <div class="score__col"><p class="sc-h">1 semana <span>GRU</span></p><p><b>5,46 $</b> <span>frente a 5,36 $</span></p><p class="neg">−1,8 %</p><p><b>78 %</b> <span>frente a 79 %</span></p><p>p = 0,32</p></div>
+        <div class="score__col"><p class="sc-h">1 mes <span>LSTM</span></p><p><b>11,56 $</b> <span>frente a 10,69 $</span></p><p class="neg">−8,1 %</p><p><b>86 %</b> <span>frente a 84 %</span></p><p>p = 0,46</p></div>
+        <div class="score__col"><p class="sc-h">3 meses <span>GRU</span></p><p><b>28,24 $</b> <span>frente a 17,54 $</span></p><p class="neg">−61 %</p><p><b>68 %</b> <span>frente a 86 %</span></p><p>p = 0,27</p></div>
+        <div class="score__col"><p class="sc-h">1 año <span>RNN</span></p><p><b>33,03 $</b> <span>frente a 22,71 $</span></p><p class="neg">−45 %</p><p><b>92 %</b> <span>frente a 92 %</span></p><p>p = 0,40</p></div>
+        <p class="score__note">Test, 2023 a 2026. Mejora negativa: más error que la persistencia; ninguna diferencia es significativa (p &gt; 0,05). En 2026 el rango de los tres plazos cortos cubrió solo entre el 48 y el 58 %.</p>
+      </section>
 
-      <article class="panel" data-in="lessons">
+      <article class="panel wide" data-in="lessons">
         <div class="panel__g auto">
           <div class="lesson"><div class="lesson__n">78 %</div><p>El dato más fiable es el <b>rango a una semana</b>: cubre el 78 % de los casos en test, como los cuantiles históricos.</p></div>
           <div class="lesson"><div class="lesson__n">+8,5 %</div><p>Buena parte de la dificultad a una semana es el <b>retraso de publicación</b>: corregirlo con el futuro del Brent gana a la persistencia en validación.</p></div>
@@ -519,16 +720,20 @@
           <div class="lesson"><div class="lesson__n">60 %</div><p>A tres meses la dirección del cambio lleva algo de información; lo que falla es la <b>magnitud</b>.</p></div>
         </div>
         <div class="panel__c">
-          <p class="lab">Lo que se aprende y lo que se podría mejorar</p>
-          <p class="claim">El procedimiento es sólido; los huecos están en los datos y en el uso real.</p>
-          <ul class="improve">
-            <li>Probar solo el Brent como entrada.</li>
-            <li>Usar el futuro del Brent y modelar el retraso real de publicación.</li>
-            <li>Marcar los datos que faltan en vez de repetir el último valor.</li>
-            <li>Añadir la cesta de la OPEP.</li>
-            <li>Entrenar con una ventana deslizante.</li>
-            <li>Evaluar el test con varias semillas.</li>
-          </ul>
+          <div class="hd">
+            <p class="lab">Lo que se aprende y lo que se podría mejorar</p>
+            <p class="claim">El procedimiento es sólido; los huecos están en los datos y en el uso real.</p>
+          </div>
+          <div class="bd">
+            <ul class="improve">
+              <li>Probar solo el Brent como entrada.</li>
+              <li>Usar el futuro del Brent y modelar el retraso real de publicación.</li>
+              <li>Marcar los datos que faltan en vez de repetir el último valor.</li>
+              <li>Añadir la cesta de la OPEP.</li>
+              <li>Entrenar con una ventana deslizante.</li>
+              <li>Evaluar el test con varias semillas.</li>
+            </ul>
+          </div>
         </div>
       </article>
       <p class="foot">Aprendizaje Automático, caso 2. Datos de la EIA (serie DCOILBRENTEU), FRED y Yahoo Finance.</p>
@@ -1295,39 +1500,30 @@ const vizFns = {};
   ftext(svg, "lbl", x0, H - 6, "Septiembre de 2008 en adelante, cambio diario del Brent");
 }
 
-/* ================= Cobertura del rango del 80 % en test ================= */
-// Red: data.json (h[*].cov). Cuantiles históricos: docs/DECISIONES.md, «Resultado en test».
+/* ================= Datos: la tubería se llena al bajar ================= */
 {
-  const W = 820, H = 250, m = { l: 96, r: 30, t: 34, b: 34 };
-  const REF = { 5: 0.79, 21: 0.84, 63: 0.86, 252: 0.92 };
-  const NAMES = { 5: "1 semana", 21: "1 mes", 63: "3 meses", 252: "1 año" };
-  const rows = Object.keys(DATA.h).map((h) => ({ h, net: DATA.h[h].cov, ref: REF[h] }));
-  const svg = mk("#g-cover", W, H);
-  const x = d3.scaleLinear().domain([0.5, 1]).range([m.l, W - m.r]);
-  const y = d3.scalePoint().domain(rows.map((r) => r.h)).range([m.t + 14, H - m.b - 8]);
-  svg.append("g").attr("class", "ax").attr("transform", `translate(0,${H - m.b})`)
-    .call(d3.axisBottom(x).tickValues([0.5, 0.6, 0.7, 0.8, 0.9, 1]).tickFormat((v) => `${Math.round(v * 100)} %`).tickSize(0).tickPadding(10)).select(".domain").remove();
-  svg.append("line").attr("x1", x(0.8)).attr("x2", x(0.8)).attr("y1", m.t - 6).attr("y2", H - m.b).attr("stroke", INK).attr("stroke-opacity", 0.35).attr("stroke-dasharray", "3 4");
-  ftext(svg, "lbl", x(0.8) + 8, m.t - 2, "objetivo, 80 %");
-  const g = svg.selectAll(".row").data(rows).join("g").attr("transform", (r) => `translate(0,${y(r.h)})`);
-  ftext(g, "num", 0, 5, "").text((r) => NAMES[r.h]);
-  g.append("line").attr("x1", m.l).attr("x2", W - m.r).attr("stroke", "var(--hair)");
-  const ln = g.append("line").attr("stroke", ACCENT).attr("stroke-opacity", 0.5).attr("stroke-width", 2).attr("x1", (r) => x(r.ref)).attr("x2", (r) => x(r.ref));
-  const ref = g.append("circle").attr("r", 7).attr("cx", (r) => x(r.ref)).attr("fill", PERSIST);
-  const net = g.append("circle").attr("r", 8).attr("cx", x(0.8)).attr("fill", ACCENT).attr("opacity", 0);
-  const lab = ftext(g, "tip", 0, -14, "").attr("text-anchor", "middle").attr("x", (r) => x(r.net)).attr("opacity", 0).text((r) => `${Math.round(r.net * 100)} %`).style("fill", ACCENT);
-  const lg = svg.append("g").attr("transform", `translate(${m.l},${12})`);
-  [[ACCENT, "Red"], [PERSIST, "Cuantiles históricos"]].forEach(([c, t], i) => {
-    const it = lg.append("g").attr("transform", `translate(${i * 70},0)`);
-    it.append("circle").attr("r", 6).attr("cx", 0).attr("cy", -4).attr("fill", c);
-    ftext(it, "lbl", 12, 1, t);
-  });
-  DV.cover = () => {
-    const d = reduced ? 0 : 900;
-    net.interrupt().attr("cx", x(0.8)).attr("opacity", 0).transition().duration(d).delay((r, i) => i * 120).ease(d3.easeCubicOut).attr("cx", (r) => x(r.net)).attr("opacity", 1);
-    ln.interrupt().attr("x2", (r) => x(r.ref)).transition().duration(d).delay((r, i) => i * 120).ease(d3.easeCubicOut).attr("x2", (r) => x(r.net));
-    lab.interrupt().attr("opacity", 0).transition().delay((r, i) => d + i * 120).duration(200).attr("opacity", 1);
+  const pipe = $(".pipeline"), fill = $(".pipeline__fill"), stages = $$(".stage", pipe);
+  const upd = () => {
+    if (!pipe.closest(".view.is-on")) return;
+    const r = pipe.getBoundingClientRect(), mark = innerHeight * 0.55;
+    fill.style.transform = `scaleY(${clamp01((mark - r.top) / r.height)})`;
+    stages.forEach((el) => el.classList.toggle("done", el.getBoundingClientRect().top < mark));
   };
+  addEventListener("scroll", upd, { passive: true });
+  addEventListener("resize", upd);
+  addEventListener("tabchange", () => requestAnimationFrame(upd));
+}
+
+/* ================= Validación: el embudo marca la etapa que se ve ================= */
+{
+  const items = $$(".funnel__nav li");
+  const fio = new IntersectionObserver((es) => es.forEach((e) => {
+    if (e.isIntersecting) items.forEach((li) => li.classList.toggle("is-on", li.dataset.fn === e.target.dataset.fn));
+  }), { rootMargin: "-45% 0px -45% 0px" });
+  $$(".funnel__body article").forEach((el) => fio.observe(el));
+  items.forEach((li) => li.addEventListener("click", () =>
+    $(`.funnel__body article[data-fn="${li.dataset.fn}"]`).scrollIntoView({ behavior: reduced ? "auto" : "smooth", block: "center" })));
+  items[0].classList.add("is-on");
 }
 
 /* ================= Animaciones de entrada de cada figura ================= */
@@ -1384,7 +1580,6 @@ onIn("val", () => DV.val());
   vSeg.addEventListener("click", (e) => { const b = e.target.closest("button"); if (b) setV(b.dataset.v); });
   setV("serie"); setH(0); DV.shade(false);
 }
-onIn("cover", () => DV.cover());
 
 /* ================= La gota: personaje en 3D ================= */
 const canvas = $("#gl");
