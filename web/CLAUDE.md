@@ -43,7 +43,7 @@ make web-build     # Compilación a web/dist (lo ejecuta el usuario)
 | `src/model.ts` | Réplica del preprocesado de `features.py` e inferencia ONNX |
 | `src/icons.ts` | Iconos SVG (flecha) |
 | `src/product.css` | Estilos del producto, solo tema claro |
-| `public/brent/` | «El precio del Brent»: seis pestañas (`section[data-tab]`: Inicio, Mercado, Datos, Redes, Validación, Resultado), cada una cabe en una pantalla: índice de 4 a 6 pasos con «Anterior» y «Siguiente» (también flechas del teclado) y el gráfico al lado; cada cambio de paso o de pestaña relanza su animación; `nav.js` (rutas `#/pestaña` y transición entre vistas), `ui.css` (pestañas, botones, control segmentado y fondo de ambiente), `map.js` (mapa de los mercados de entrada), `arch.js` (celda RNN, LSTM y GRU interactiva), `scrollcraft.css` (tokens) y sus datos |
+| `public/brent/` | «El precio del Brent»: seis pestañas (`section[data-tab]`: Inicio, Mercado, Datos, Redes, Validación, Resultado), cada una cabe en una pantalla con todos sus textos a la vista (4 a 6) y el gráfico al lado; el texto elegido (al pulsarlo o con las flechas) manda el estado del gráfico, que es lo único que se anima; cada pestaña empieza arriba y por su primer texto; `nav.js` (rutas `#/pestaña` y transición entre vistas), `ui.css` (pestañas, botones, control segmentado y fondo de ambiente), `map.js` (mapa de los mercados de entrada), `arch.js` (celda RNN, LSTM y GRU interactiva), `scrollcraft.css` (tokens) y sus datos |
 
 ## Convenciones
 

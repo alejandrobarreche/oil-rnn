@@ -1,12 +1,11 @@
 // Pestañas de «Cómo se hizo»: una vista por pestaña, rutas con almohadilla (#/datos) para que los
 // enlaces, Atrás y Adelante funcionen. El cambio usa View Transitions: la vista sale hacia un lado y
-// la nueva entra desde el otro según el orden de las pestañas. Cada pestaña recuerda su scroll.
+// la nueva entra desde el otro según el orden de las pestañas. Cada pestaña empieza arriba.
 (() => {
   const views = [...document.querySelectorAll("section[data-tab]")];
   const ids = views.map((v) => v.dataset.tab);
   const tabs = [...document.querySelectorAll(".tab")];
   const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
-  const scrollOf = {};
   let cur = null;
 
   const idFromHash = () => {
@@ -15,13 +14,13 @@
   };
 
   function apply(id) {
-    if (cur) scrollOf[cur] = scrollY;
     views.forEach((v) => v.classList.toggle("is-on", v.dataset.tab === id));
     tabs.forEach((t) => (t.getAttribute("href") === `#/${id}` ? t.setAttribute("aria-current", "page") : t.removeAttribute("aria-current")));
     document.documentElement.dataset.tab = id;
     const title = tabs.find((t) => t.getAttribute("href") === `#/${id}`)?.textContent.trim();
     document.title = id === ids[0] ? "El precio del Brent" : `${title}, el precio del Brent`;
-    scrollTo(0, scrollOf[id] || 0);
+    scrollTo(0, 0);
+    document.querySelectorAll(".story__steps").forEach((l) => (l.scrollTop = 0));
     cur = id;
     dispatchEvent(new CustomEvent("tabchange", { detail: id }));
   }

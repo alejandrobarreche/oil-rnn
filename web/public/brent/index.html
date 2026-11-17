@@ -35,7 +35,7 @@
   #gl { position: fixed; inset: 0; width: 100%; height: 100%; z-index: 1; pointer-events: none; display: block; }
   .labels { display: none; }
   html:not([data-tab="inicio"]) :is(#bg, #gl) { display: none; }
-  main { position: relative; z-index: 2; padding-top: 64px; }
+  main { position: relative; z-index: 2; padding-top: 64px; overflow-x: clip; }
   b, strong { font-weight: 620; color: var(--sc-ink); }
   .k { color: var(--sheen); }
   .a { color: var(--sc-accent); }
@@ -78,25 +78,28 @@
   .layer.is-on { opacity: 1; visibility: visible; transition: opacity 360ms var(--ease-out), visibility 0s; }
   .fill { width: 100%; flex: 1; min-height: 0; }
   .fill svg { width: 100%; height: 100%; display: block; overflow: visible; }
-  .story__steps { grid-column: 1; grid-row: 1; display: flex; flex-direction: column; justify-content: center; gap: 2px; min-height: 0; padding: 3vh 0; }
-  .step { display: flex; flex-direction: column; gap: 10px; padding: 9px 0 9px 18px; border-left: 2px solid var(--hair); cursor: pointer; border-radius: 0 6px 6px 0;
+  .story__steps { grid-column: 1; grid-row: 1; display: flex; flex-direction: column; justify-content: safe center; gap: 4px; min-height: 0; overflow: auto; padding: 3vh 4px 3vh 0; }
+  .step { display: flex; flex-direction: column; gap: 4px; padding: 9px 0 9px 16px; border-left: 2px solid var(--hair); cursor: pointer; border-radius: 0 6px 6px 0;
     transition: border-color 200ms ease, background-color 160ms ease; -webkit-tap-highlight-color: transparent; }
-  .key { margin: 0; font-family: var(--sc-font-display); font-stretch: 106%; font-weight: 560; font-size: 16px; line-height: 1.3; color: var(--sc-ink-soft);
-    max-width: 30ch; text-wrap: balance; transition: color 160ms ease; }
-  .key small, .step p:not(.key) { display: none; }
-  .step.is-active { cursor: default; padding: 14px 0 16px 18px; border-left-color: var(--sheen); }
-  .step.is-active .key { font-weight: 600; font-size: clamp(1.55rem, 1.1rem + 1.3vw, 2.15rem); line-height: 1.08; letter-spacing: -0.015em; color: var(--sc-ink); max-width: 18ch; }
-  .step.is-active .key small { display: block; margin-top: 6px; font-family: var(--sc-font-text); font-stretch: 100%; font-weight: 450; font-size: 15px; line-height: 1.4; letter-spacing: 0; color: var(--sc-ink-soft); }
-  .step.is-active p:not(.key) { display: block; margin: 0; font-size: 18px; line-height: 1.55; color: color-mix(in srgb, var(--sc-ink) 86%, var(--sc-ink-soft)); max-width: 34ch; text-wrap: pretty; }
-  .step.is-active > * { animation: rise 340ms var(--ease-out) both; }
-  .step.is-active > p:not(.key) { animation-delay: 60ms; }
-  @keyframes rise { from { opacity: 0; transform: translateY(6px); } }
-  @media (hover: hover) and (pointer: fine) { .step:not(.is-active):hover { background: color-mix(in srgb, var(--sc-ink) 4%, transparent); } .step:not(.is-active):hover .key { color: var(--sc-ink); } }
+  .key { margin: 0; font-family: var(--sc-font-display); font-stretch: 106%; font-weight: 600; font-size: clamp(1.02rem, 0.85rem + 0.45vw, 1.25rem); line-height: 1.2;
+    letter-spacing: -0.005em; color: var(--sc-ink-soft); text-wrap: balance; transition: color 160ms ease; }
+  .key small { display: inline; margin-left: .4em; font-family: var(--sc-font-text); font-stretch: 100%; font-weight: 450; font-size: 14px; color: var(--sc-ink-soft); }
+  .step p:not(.key) { margin: 0; font-size: 15.5px; line-height: 1.5; color: var(--sc-ink-soft); max-width: 40ch; text-wrap: pretty; transition: color 160ms ease; }
+  .step.is-active { cursor: default; border-left-color: var(--sheen); background: color-mix(in srgb, var(--sc-ink) 4%, transparent); }
+  .step.is-active .key { color: var(--sc-ink); }
+  .step.is-active p:not(.key) { color: color-mix(in srgb, var(--sc-ink) 88%, var(--sc-ink-soft)); }
+  @media (hover: hover) and (pointer: fine) { .step:not(.is-active):hover .key { color: var(--sc-ink); } .step:not(.is-active):hover { border-left-color: color-mix(in srgb, var(--sc-ink) 30%, transparent); } }
   .step:focus-visible { outline: 2px solid var(--sc-ink); outline-offset: 2px; }
-  .stepper { display: flex; align-items: center; gap: 10px; margin-top: 20px; }
-  .stepper .count { min-width: 4.2em; font: 600 14px var(--sc-font-display); font-variant-numeric: tabular-nums; color: var(--sc-ink-soft); text-align: center; }
-  .stepper .btn[data-d="-1"] { padding: 0 12px; }
-  .stepper .btn:disabled { opacity: .35; cursor: default; }
+  .stepper { display: flex; margin-top: 14px; padding-left: 18px; }
+  /* Pantallas bajas: los textos se compactan para que quepan todos sin scroll */
+  @media (min-width: 861px) and (max-height: 820px) {
+    .story__steps { padding: 2vh 4px 2vh 0; gap: 2px; }
+    .step { padding: 6px 0 6px 14px; gap: 2px; }
+    .key { font-size: 16px; }
+    .key small { font-size: 13px; }
+    .step p:not(.key) { font-size: 14px; line-height: 1.42; }
+    .stepper { margin-top: 8px; }
+  }
 
   /* Herramientas encima del gráfico */
   .stage > .tools { flex: none; min-height: 44px; }
@@ -194,13 +197,10 @@
     .fig:nth-child(n+3) { border-top: 1px solid var(--hair); }
     .story { grid-template-columns: 1fr; grid-template-rows: minmax(0, 1.25fr) minmax(0, 1fr); gap: 6px; height: calc(100dvh - 56px - 72px); }
     .story__graphic { grid-column: 1; grid-row: 1; padding: 8px 0 0; }
-    .story__steps { grid-column: 1; grid-row: 2; justify-content: space-between; padding: 0 0 8px; }
-    .step:not(.is-active) { display: none; }
-    .step.is-active { padding: 6px 0 6px 14px; overflow: auto; }
-    .step.is-active .key { font-size: 22px; }
-    .step.is-active p:not(.key) { font-size: 16px; }
-    .stepper { margin-top: 8px; }
-    .stepper .btn.primary { flex: 1; }
+    .story__steps { grid-column: 1; grid-row: 2; justify-content: flex-start; padding: 4px 0 10px; }
+    .step { padding: 7px 0 7px 12px; }
+    .table td { font-size: 15px; padding: 10px 8px 10px 0; }
+    .table th:nth-child(5), .table td:nth-child(5) { display: none; }
     .mapcard { width: auto; max-width: 70%; padding: 8px 12px; bottom: 0; }
     .mc-row { display: none; }
     .lesson { grid-template-columns: 1fr; gap: var(--sc-2); }
@@ -473,8 +473,8 @@ tex("f-fut", String.raw`\hat{P}_{\text{hoy}} \;=\; P_{t}\cdot\frac{F_{\text{hoy}
 tex("f-pinball", String.raw`L_\tau(y, q) = \begin{cases} \tau\,(y - q) & \text{si } y \ge q \\ (1-\tau)\,(q - y) & \text{si } y < q \end{cases}`);
 
 /* ================= Pasos: qué paso está activo ================= */
-// Sin scroll: cada pestaña tiene un paso abierto. Se cambia con «Anterior» y «Siguiente», con las
-// flechas del teclado o pulsando su nombre en el índice; cada cambio vuelve a lanzar su animación.
+// Sin scroll: todos los textos de la pestaña a la vista; el elegido (al pulsarlo o con las flechas)
+// manda el estado del gráfico, y cada cambio vuelve a lanzar la animación del gráfico.
 const stories = {}, curStep = {};
 function onStep(name, fn) { stories[name] = fn; }
 const TAB_ORDER = $$(".tab").map((t) => [t.getAttribute("href").slice(2), t.textContent.trim()]);
@@ -482,27 +482,15 @@ function setStep(name, k) {
   const root = $(`[data-story="${name}"]`), steps = $$(".step", root), n = steps.length;
   k = Math.max(0, Math.min(n - 1, k)); curStep[name] = k;
   steps.forEach((s, i) => { const on = i === k; s.classList.toggle("is-active", on); s.setAttribute("aria-current", on ? "step" : "false"); s.tabIndex = on ? -1 : 0; });
-  const st = root.querySelector(".stepper");
-  st.querySelector(".count").textContent = `${k + 1} de ${n}`;
-  st.querySelector('[data-d="-1"]').disabled = k === 0;
-  const next = st.querySelector('[data-d="1"]'), ti = TAB_ORDER.findIndex(([id]) => id === name), nt = TAB_ORDER[ti + 1];
-  next.querySelector("span").textContent = k < n - 1 ? "Siguiente" : nt ? nt[1] : "Previsión";
+  if (matchMedia("(max-width: 860px)").matches) steps[k].scrollIntoView({ block: "nearest" });
   stories[name]?.(k);
 }
 $$("[data-story]").forEach((root) => {
   const name = root.dataset.story, list = root.querySelector(".story__steps");
-  list.insertAdjacentHTML("beforeend", `<div class="stepper"><button type="button" class="btn" data-d="-1" aria-label="Paso anterior"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg></button><span class="count" aria-live="polite"></span><button type="button" class="btn primary" data-d="1"><span>Siguiente</span><svg class="go" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button></div>`);
+  const ti = TAB_ORDER.findIndex(([id]) => id === name), nt = TAB_ORDER[ti + 1];
+  const href = nt ? `#/${nt[0]}` : "../index.html", txt = nt ? nt[1] : "Previsión";
+  list.insertAdjacentHTML("beforeend", `<div class="stepper"><a class="btn" href="${href}">${txt}<svg class="go" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a></div>`);
   list.addEventListener("click", (e) => {
-    const b = e.target.closest(".stepper button");
-    if (b) {
-      const d = +b.dataset.d, n = $$(".step", root).length, k = curStep[name] ?? 0;
-      if (d > 0 && k === n - 1) {
-        const ti = TAB_ORDER.findIndex(([id]) => id === name), nt = TAB_ORDER[ti + 1];
-        if (nt) location.hash = `#/${nt[0]}`; else location.href = "../index.html";
-        return;
-      }
-      return setStep(name, k + d);
-    }
     const s = e.target.closest(".step");
     if (s && !s.classList.contains("is-active")) setStep(name, +s.dataset.step);
   });
@@ -519,8 +507,8 @@ document.addEventListener("keydown", (e) => {
   e.preventDefault();
   setStep(name, (curStep[name] ?? 0) + d);
 });
-// Al entrar en una pestaña se repite la animación de su paso abierto
-addEventListener("tabchange", (e) => { if (stories[e.detail]) setStep(e.detail, curStep[e.detail] ?? 0); });
+// Al entrar en una pestaña se empieza por su primer texto y se lanza la animación de su gráfico
+addEventListener("tabchange", (e) => { if (stories[e.detail]) setStep(e.detail, 0); });
 function showLayer(root, name) { $$(".layer", root).forEach((l) => l.classList.toggle("is-on", l.dataset.layer === name)); }
 
 /* ================= Gráfico: historia del Brent ================= */
