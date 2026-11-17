@@ -7,6 +7,7 @@
 import * as ort from "onnxruntime-web/wasm";
 import {
   coverage,
+  downsample,
   type Fc,
   futurePos,
   HORIZONS,
@@ -23,6 +24,7 @@ import {
   tradingDayAfter,
   usd,
 } from "./forecast";
+import { type Drop, mountDrop } from "./drop";
 import * as I from "./icons";
 import { type Bundle, type Manifest, predict, type Row } from "./model";
 import "./product.css";
@@ -82,6 +84,18 @@ async function init() {
   $("live").innerHTML = `Brent <b>${usd(mk.last)}</b> el ${longDate(mk.ts)}`;
   $("source").textContent = `Datos diarios de la EIA y FRED hasta el ${longDate(mk.ts)}`;
   const fcs: Record<number, Fc> = {};
+  // La gota se agita según la anchura de la franja del plazo elegido
+  let drop: Drop | null = null;
+  const agitate = () => {
+    const f = fcs[S.sel];
+    if (drop && S.open && f) drop.agitate((f.p90 - f.p10) / f.p50);
+  };
+  mountDrop($("drop"))
+    .then((d) => {
+      drop = d;
+      agitate();
+    })
+    .catch(() => $("drop").remove());
 
   // Las cuatro redes se ejecutan en segundo plano desde que se abre la página
   const ready = (async () => {
@@ -107,14 +121,16 @@ async function init() {
     const xEnd = W - m.r;
     const n = Math.min(mk.history.length - 1, RANGES.find((r) => r.k === S.range)?.n ?? 252);
     const i0 = mk.history.length - 1 - n;
-    const vis = mk.history.slice(i0);
+    // Rangos largos: medias por bloques (semana en 5A, mes en Todo) para una línea más suave
+    const b = Math.max(1, Math.round(n / 300));
+    const line = downsample(closes.slice(i0), b).map((p) => ({ i: p.i + i0, v: p.v }));
     const xi = (i: number) => m.l + ((i - i0) / n) * (xT - m.l); // i: índice en la serie completa
     const xf = (h: number) => xT + (futurePos(h) - 0.05) * (xEnd - xT); // 0,2 a 0,95 del tramo
     const test = S.test ? (qOf(S.sel)?.backtest ?? []).filter((p) => (idx.get(p.t) ?? -1) >= i0) : [];
     const shown = S.open ? HORIZONS.map((x) => fcs[x.h]).filter(Boolean) : [];
 
     // Escala: lo visible, con las franjas y las previsiones de test si están a la vista
-    const vals = [...vis.map((p) => p.close), ...shown.flatMap((f) => [f.p10, f.p90])];
+    const vals = [...line.map((p) => p.v), ...shown.flatMap((f) => [f.p10, f.p90])];
     for (const k of [50, 200] as const)
       if (S[`ma${k}`]) for (let i = i0; i < closes.length; i++) if (ma[k][i] != null) vals.push(ma[k][i] as number);
     for (const p of test) vals.push(p.lo80, p.hi80);
@@ -137,7 +153,7 @@ async function init() {
     for (let i = i0 + 1; i < mk.history.length; i++) {
       const [a, b] = [mk.history[i - 1].t, mk.history[i].t];
       const cut = byYear ? a.slice(0, 4) !== b.slice(0, 4) : a.slice(0, 7) !== b.slice(0, 7);
-      if (!cut || xi(i) - last < (byYear ? 44 : 56) || xT - xi(i) < 36) continue;
+      if (!cut || xi(i) - last < (byYear ? 44 : 56) || xT - xi(i) < 36 || xi(i) < m.l + 18) continue;
       last = xi(i);
       const lab = byYear ? b.slice(0, 4) : `${MONTHS[Number(b.slice(5, 7)) - 1]}${b.slice(5, 7) === "01" ? ` ${b.slice(0, 4)}` : ""}`;
       out.push(`<line class="tick" x1="${xi(i)}" x2="${xi(i)}" y1="${H - m.b}" y2="${H - m.b + 5}"/><text class="ax" x="${xi(i)}" y="${H - m.b + 20}" text-anchor="middle">${lab}</text>`);
@@ -157,32 +173,52 @@ async function init() {
     });
     if (!narrow) out.push(`<text class="zone" x="${xT + 12}" y="${m.t - 8}">Previsión</text>`);
 
-    // Sucesos
-    if (S.events)
-      mk.events
-        .filter((e) => (idx.get(e.t) ?? -1) >= i0)
-        .forEach((e, k) => {
-          const px = xi(idx.get(e.t) as number);
-          out.push(`<line class="ev" x1="${px}" x2="${px}" y1="${m.t + (k % 2) * 18}" y2="${H - m.b}"/><text class="evl" x="${px + 5}" y="${m.t + 10 + (k % 2) * 18}">${e.label}</text>`);
-        });
-
     // Previsiones de test del plazo elegido: franja, red y persistencia sobre la serie real
     if (test.length) {
-      const P = test.map((p) => ({ x: xi(idx.get(p.t) as number), p }));
-      out.push(`<polygon class="tband" points="${pts([...P.map(({ x, p }) => [x, y(p.hi80)] as [number, number]), ...P.reverse().map(({ x, p }) => [x, y(p.lo80)] as [number, number])])}"/>`);
-      P.reverse();
-      out.push(`<polyline class="tpers" points="${pts(P.map(({ x, p }) => [x, y(p.persistence)]))}"/>`);
-      out.push(`<polyline class="tpred" points="${pts(P.map(({ x, p }) => [x, y(p.pred)]))}"/>`);
+      const t0 = idx.get(test[0].t) as number;
+      const ser = (f: (p: (typeof test)[number]) => number) =>
+        downsample(test.map(f), b).map((p) => [xi(t0 + p.i), y(p.v)] as [number, number]);
+      const hi = ser((p) => p.hi80);
+      const lo = ser((p) => p.lo80);
+      out.push(`<polygon class="tband" points="${pts([...hi, ...lo.reverse()])}"/>`);
+      out.push(`<polyline class="tpers" points="${pts(ser((p) => p.persistence))}"/>`);
+      out.push(`<polyline class="tpred" points="${pts(ser((p) => p.pred))}"/>`);
     }
 
     // Medias móviles y serie real
     for (const k of [50, 200] as const) {
       if (!S[`ma${k}`]) continue;
-      const a: [number, number][] = [];
-      for (let i = i0; i < closes.length; i++) if (ma[k][i] != null) a.push([xi(i), y(ma[k][i] as number)]);
+      const a = downsample(ma[k].slice(i0), b).map((p) => [xi(p.i + i0), y(p.v)] as [number, number]);
       out.push(`<polyline class="ma ma${k}" points="${pts(a)}"/>`);
     }
-    out.push(`<polyline class="price${S.draw ? " draw" : ""}" pathLength="1" points="${pts(vis.map((p, k) => [xi(i0 + k), y(p.close)]))}"/>`);
+    out.push(`<polyline class="price${S.draw ? " draw" : ""}" pathLength="1" points="${pts(line.map((p) => [xi(p.i), y(p.v)]))}"/>`);
+
+    // Sucesos: un punto sobre la línea y su nombre en una píldora, sin solaparse entre ellos
+    const ev: string[] = [];
+    if (S.events) {
+      const placed: { x0: number; x1: number; y: number }[] = [];
+      const at = (i: number) => {
+        const k = line.findIndex((p) => p.i >= i);
+        if (k <= 0) return line[Math.max(0, k)].v;
+        const [a, c] = [line[k - 1], line[k]];
+        return a.v + ((i - a.i) / (c.i - a.i)) * (c.v - a.v);
+      };
+      for (const e of mk.events) {
+        const ii = idx.get(e.t);
+        if (ii === undefined || ii < i0) continue;
+        const [px, py] = [xi(ii), y(at(ii))];
+        const w = e.label.length * 7.1 + 18;
+        const up = py - 40 > m.t;
+        let ly = up ? py - 30 : py + 30;
+        const lx = Math.max(m.l, Math.min(xT - w - 6, px - w / 2));
+        while (placed.some((q) => lx < q.x1 + 6 && lx + w > q.x0 - 6 && Math.abs(q.y - ly) < 26)) ly += up ? -26 : 26;
+        placed.push({ x0: lx, x1: lx + w, y: ly });
+        ev.push(`<g class="evg"><line class="evlead" x1="${px}" y1="${py}" x2="${px}" y2="${ly + (up ? 12 : -12)}"/>
+          <rect class="evpill" x="${lx}" y="${ly - 12}" width="${w}" height="24" rx="12"/>
+          <text class="evl" x="${lx + w / 2}" y="${ly + 4.5}" text-anchor="middle">${e.label}</text>
+          <circle class="evdot" cx="${px}" cy="${py}" r="4.5"/></g>`);
+      }
+    }
 
     // Ventana de entrada: recorre la serie antes de prever y se fija en los últimos días después
     const win = (S.open ? spec(S.sel)?.window : spec(21)?.window) ?? 60;
@@ -195,6 +231,7 @@ async function init() {
 
     // Hoy
     out.push(`<line class="now" x1="${xT}" x2="${xT}" y1="${m.t}" y2="${H - m.b}"/>${narrow ? "" : `<text class="hoy" x="${xT}" y="${H - m.b + 20}" text-anchor="middle">Hoy</text>`}`);
+    out.push(...ev);
 
     // Franjas: envolvente que se abre hacia la derecha, barra p10–p90 y p50 por plazo
     if (shown.length === HORIZONS.length) {
@@ -273,6 +310,7 @@ async function init() {
     S.reveal = false;
     detail();
     render();
+    agitate();
   };
   $("detail").addEventListener("click", (e) => {
     const b = (e.target as HTMLElement).closest<HTMLElement>("[data-h]");
@@ -301,6 +339,7 @@ async function init() {
     document.body.classList.add("is-open");
     detail();
     render();
+    agitate();
     setTimeout(() => (S.reveal = false), 2000);
   });
 

@@ -2,6 +2,7 @@ import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import {
   coverage,
+  downsample,
   futurePos,
   HORIZONS,
   niceTicks,
@@ -66,5 +67,19 @@ describe("serie", () => {
     expect([...xs].sort((a, b) => a - b)).toEqual(xs);
     expect(xs[3]).toBe(1);
     expect(xs[1] - xs[0]).toBeCloseTo(xs[3] - xs[2]);
+  });
+});
+
+describe("suavizado", () => {
+  it("promedia bloques y acaba en el último valor real", () => {
+    const d = downsample([1, 3, 5, 7, 9], 2);
+    expect(d.map((p) => p.v)).toEqual([2, 6, 9, 9]);
+    expect(d[d.length - 1]).toEqual({ i: 4, v: 9 });
+  });
+  it("sin bloques deja la serie igual y salta los huecos", () => {
+    expect(downsample([null, 2, 3], 1)).toEqual([
+      { i: 1, v: 2 },
+      { i: 2, v: 3 },
+    ]);
   });
 });

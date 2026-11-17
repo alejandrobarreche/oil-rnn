@@ -111,3 +111,26 @@ export interface MarketEventLite {
   t: string;
   label: string;
 }
+
+/** Serie más suave para rangos largos: media de cada bloque de `b` días, situada en el centro del
+ * bloque. El último punto es siempre el último valor real, para que la línea acabe en el precio de hoy. */
+export function downsample(values: (number | null)[], b: number): { i: number; v: number }[] {
+  const out: { i: number; v: number }[] = [];
+  if (b <= 1) {
+    values.forEach((v, i) => v != null && out.push({ i, v }));
+    return out;
+  }
+  for (let s = 0; s < values.length; s += b) {
+    let acc = 0;
+    let n = 0;
+    for (let k = s; k < Math.min(values.length, s + b); k++)
+      if (values[k] != null) {
+        acc += values[k] as number;
+        n++;
+      }
+    if (n) out.push({ i: Math.min(values.length - 1, s + (b - 1) / 2), v: acc / n });
+  }
+  const last = values.length - 1;
+  if (values[last] != null) out.push({ i: last, v: values[last] as number });
+  return out;
+}

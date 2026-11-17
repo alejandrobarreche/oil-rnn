@@ -336,17 +336,28 @@ button {
   stroke: var(--ma200);
   stroke-dasharray: 6 4;
 }
-.ev {
-  stroke: rgba(17, 17, 20, 0.35);
-  stroke-dasharray: 2 3;
+.evlead {
+  stroke: var(--ink);
+  stroke-width: 1;
+  opacity: 0.5;
+}
+.evpill {
+  fill: var(--card);
+  stroke: rgba(17, 17, 20, 0.18);
+  filter: drop-shadow(0 2px 6px rgba(40, 28, 110, 0.12));
 }
 .evl {
   font-size: 13px;
-  font-weight: 600;
+  font-weight: 650;
   fill: var(--ink);
-  paint-order: stroke;
-  stroke: var(--card);
-  stroke-width: 4px;
+}
+.evdot {
+  fill: var(--card);
+  stroke: var(--ink);
+  stroke-width: 2;
+}
+.evg {
+  animation: rise 360ms var(--ease-out) both;
 }
 .tband {
   fill: var(--accent-soft);
@@ -598,6 +609,36 @@ h1 {
   color: var(--ink-2);
 }
 
+/* la gota de Brent: ocupa el hueco que deja el panel */
+.drop {
+  position: relative;
+  flex: 1 1 auto;
+  min-height: 0;
+  margin: 0 -8px -8px;
+  opacity: 0;
+  transition: opacity 900ms ease;
+}
+.drop.ready {
+  opacity: 1;
+}
+.drop canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+.drop::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  bottom: 4%;
+  width: 46%;
+  height: 7%;
+  transform: translateX(-50%);
+  border-radius: 50%;
+  background: radial-gradient(closest-side, rgba(40, 28, 110, 0.22), transparent);
+}
+
 /* ── pie: la fuente de los datos ── */
 .foot {
   display: flex;
@@ -664,6 +705,10 @@ h1 {
   }
   .panel {
     order: -1;
+  }
+  .drop {
+    flex: none;
+    height: 180px;
   }
   .chart {
     flex: none;
