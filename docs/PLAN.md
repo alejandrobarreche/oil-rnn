@@ -2,9 +2,7 @@
 
 ## Resumen
 
-Entrega el 20/11/2026: repositorio, aplicación y 5 diapositivas. Están hechas la comparativa, la evaluación en test y Sonda. Faltan la página explicativa y la actualización diaria.
-
-Sistema de diseño: [Sonda](https://claude.ai/artifact/GJGpkQEKJT4ZGuDxg49E3H).
+Entrega el 20/11/2026: repositorio, aplicación y 5 diapositivas. Están hechas la comparativa, la evaluación en test, la mesa de compras, la página explicativa y la actualización diaria. Falta la presentación.
 
 ## Fases
 
@@ -12,58 +10,26 @@ Sistema de diseño: [Sonda](https://claude.ai/artifact/GJGpkQEKJT4ZGuDxg49E3H).
 | --- | --- | --- |
 | 0–2. Decisiones, datos y pipeline | Hecha | Configuración fijada y código de entrenamiento |
 | 3. Comparar RNN, LSTM y GRU | Hecha | 432 entrenamientos y finalistas con 3 semillas |
-| 4. Evaluar en test | Hecha | Ninguna red mejora a la persistencia |
-| 5. Sonda | Hecha | Publicada en [GitHub Pages](https://alejandrobarreche.github.io/oil-rnn/); la portada pasa a ser la mesa de compras (rama `feat/mesa-de-compras`) |
-| 5b. Documento de decisiones | Hecha | Falta revisar a mano el explorador |
-| 6. Página explicativa | Sin empezar | Definida, sin plan visual aprobado |
-| 7. Actualización diaria | Hecha | `make update` y workflow diario; sin reentrenar, como acepta el profesor |
-| 8. Presentación | La prepara el usuario | — |
+| 4. Evaluar en test | Hecha | Ninguna red mejora a la persistencia; R² y mejora por año en el README |
+| 5. Aplicación | Hecha | Mesa de compras en [GitHub Pages](https://alejandrobarreche.github.io/oil-rnn/) con los 4 horizontes |
+| 5b. Documento de decisiones | Hecha | Explorador revisado por el usuario |
+| 6. Página explicativa | Hecha | «El precio del Brent» (`web/public/brent/`): 8 capítulos con índice, paleta del producto y paso «Año a año» |
+| 7. Actualización diaria | Hecha | `make update` y workflow diario, sin reentrenar, como acepta el profesor; lanzado a mano en verde |
+| 8. Presentación | Pendiente | 5 diapositivas y su guion |
 
 ## Pendientes
 
-- [ ] Ver en pantalla las vistas de 1 mes, 3 meses y 1 año de Sonda.
-- [ ] Añadir a la bibliografía la referencia de la calibración conforme.
-- [ ] Escribir la causa del suceso de 2026.
+- [ ] Presentación: 5 diapositivas sin portada (problema y oportunidad, solución, comparativa de las tres redes, demostración con los tres horizontes y propuesta de valor) y su guion.
+- [ ] Ver en Actions la primera actualización automática con datos nuevos: commit `chore(data)` y nueva publicación de la web.
 - [ ] Averiguar cómo se puntúa «Resultados» en la rúbrica.
 
-## Página explicativa
+## Decidido sin hacer
 
-Recorrido en página web donde contamos:
-1. Contexto y objetivo del proyecto.
-2. Qué es Brent y sucesos históricos que afectan al precio.
-3. Datos importantes para entender los movimientos del precio de mercado.
-4. Soluciones posibles para predecir el precio del Brent y cómo se comparan.
-5. Definir la solución elegida y detallar cómo funciona.
-6. Explicar la arquitectura de la red elegida y cómo se entrena.
-7. Mostrar la predicción de Sonda y cómo se actualiza cada día.
-8. Conclusiones y posibles mejoras.
-
-### Pendiente
-- [ ] Definir el plan visual de la página.
-- [ ] Hacer la página web y publicarla en GitHub Pages.
-
-## Actualización diaria
-
-- [x] Descargar los datos cada día con GitHub Actions y publicarlos en la web (`make update`, `.github/workflows/update.yml`).
-- [x] Reentrenar queda a mano con `make train`: el profesor acepta actualizar los datos sin reentrenar.
-- [x] Añadir a `CLAUDE.md` la regla de GitHub Actions.
-- [x] Poner al día `README.md` y `docs/USAGE.md`.
-- [ ] Lanzar el workflow a mano una vez y comprobar que publica la web.
-
-## Si falta tiempo
-
-Se recorta en este orden:
-
-1. Probar el futuro del Brent como entrada.
-2. Probar una ventana de 120 días.
-3. Reentrenar cada cierto tiempo (queda a mano).
-4. Dejar los capítulos 4 y 5 de la página explicativa como figuras fijas.
-
-Nunca se recorta: la comparativa completa, la evaluación en test y Sonda con los horizontes del enunciado.
+- **Bibliografía de la calibración conforme**: el usuario no aporta la referencia. Se describe el método sin citar ningún artículo; `docs/references.bib` solo tiene Diebold y Mariano (1995) y Harvey, Leybourne y Newbold (1997).
+- **Causa del suceso de 2026**: no se documenta; la web lo dice así.
 
 ## Al cerrar cada fase
 
 - [ ] Pasan `make test` y `make lint`; también `make web-test` si se tocó la web.
 - [ ] La predicción del navegador coincide con la de Python.
 - [ ] El README solo cita cifras guardadas en los runs.
-- [ ] El workflow de actualización funciona lanzado a mano.
