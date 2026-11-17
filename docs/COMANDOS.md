@@ -492,7 +492,7 @@ git push
 - **(b) GRU-16 a 5 días, 3 semillas**: `cv_pinball_skill` +1,5 %, −0,7 % y +1,2 % (media +0,7 %); `cv_skill_vs_baseline` −0,3 %, −0,2 % y −0,7 % (media −0,4 %). GRU-256 publicada: +1,5 % y −1,1 % de media. La diferencia (0,8 puntos de `pinball_skill` a favor de la grande, 0,7 de error a favor de la pequeña) es menor que la variación entre semillas (desviación ≈ 1,1 puntos en las dos).
 - **Conclusión**: a 5 días las dos empatan dentro del ruido. Se elige la GRU-16 por el criterio de coste del enunciado: 1.683 parámetros frente a 211.203 y curvas que paran por *early stopping* (mejor época 34–163) en vez de memorizar en la época 1–2. Ninguna de las dos mejora a la persistencia en error medio.
 
-## 21. Windows GPU · 17/11/2026 · ⏳: modelo final GRU-16 a 5 días y su evaluación en test
+## 21. Mac · 17/11/2026 · ✅: modelo final GRU-16 a 5 días y su evaluación en test
 
 - **Pregunta**: ¿qué error tiene en test (2023–2026) la GRU-16 elegida en la entrada 20, frente a la persistencia y frente a la GRU-256 publicada (−3,6 % en `skill_vs_baseline`)?
 - **Qué hace**: `make train` con train+val y la misma configuración que la rejilla `m1`, calibrando el intervalo con su run de cv; después `make evaluate` en test una sola vez. Sin cambiar código ni `configs/config.yaml`.
@@ -513,3 +513,5 @@ git push
 ```
 
 - **Qué pasarle a Claude**: un aviso cuando esté subido. Después Claude cambia `web.models` en `configs/config.yaml` y `docs/DECISIONES.md`, y te da `make export-web` y `make web-release`.
+
+- **Resultado (17/11)**: ejecutado en el Mac (sin el Windows disponible), con los mismos comandos en zsh. Run `20261117-094043_final-gru16-h5_mac`, subido en `047fe16`. Test (955 pronósticos, 2023–2026): `skill_vs_baseline` −1,8 % (GRU-256 publicada: −3,6 %), `pinball_skill` +0,0 % (GRU-256: −1,4 %), cobertura 78 % frente a 79 % de la persistencia, acierto de dirección 48,6 % frente a 50,2 %. Diebold-Mariano con error cuadrático: p = 0,32, no significativo. No mejora a la persistencia; la elección se hizo en validación y no se revisa por esta cifra.

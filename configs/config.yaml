@@ -86,7 +86,7 @@ sweep:                           # comparativa de la fase 3 (make sweep · make 
 
 web:                             # make export-web: modelo de cada horizonte (decisión de la fase 4, docs/PLAN.md)
   models:
-    5: 20261112-125213_final-gru-h5_omen-pc
+    5: 20261117-094043_final-gru16-h5_mac    # GRU-16, ventana 20 (docs/COMANDOS.md, entradas 20–21)
     21: 20261112-125257_final-lstm-h21_omen-pc
     63: 20261112-125335_final-gru-h63_omen-pc
     252: 20261112-125438_final-rnn-h252_omen-pc

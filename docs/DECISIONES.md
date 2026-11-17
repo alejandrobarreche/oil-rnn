@@ -24,10 +24,12 @@ Las cuatro redes tienen más error que la persistencia, pero ninguna diferencia 
 
 | h | Red | Mejora RMSE | Cobertura 80 % (red / referencia) | p (error cuadrático) |
 | --- | --- | --- | --- | --- |
-| 5 | GRU | −3,6 % | 78 % / 79 % | 0,22 |
+| 5 | GRU-16 | −1,8 % | 78 % / 79 % | 0,32 |
 | 21 | LSTM | −8,1 % | 86 % / 84 % | 0,46 |
 | 63 | GRU | −61 % | 68 % / 86 % | 0,27 |
 | 252 | RNN | −45 % | 92 % / 92 % | 0,40 |
+
+A 5 días, la GRU-256 publicada antes daba −3,6 % (p = 0,22). El cambio a la GRU-16 se decidió en validación, antes de ver esta cifra.
 
 A 63 y 252 días solo hay unos 15 y 3 pronósticos independientes. «No significativo» no es «igual»: no se puede decir que la red sea peor ni mejor.
 
@@ -40,13 +42,14 @@ A 63 y 252 días solo hay unos 15 y 3 pronósticos independientes. «No signific
 | Limpieza | Cortar la serie en el último Brent publicado | Se pierden hasta 6 días de mercado que ya se conocían. |
 | Limpieza | Poner un mínimo de 1 $ al WTI, que llegó a −37 $ | Ese día aparece un salto enorme; solo lo suaviza el recorte de valores extremos. |
 | Transformación | Añadir la volatilidad del último mes como entrada | No se midió si mejora el intervalo. |
-| Ventanas | Dar a la red los últimos 60 días | No se probó una ventana más larga, como 120. |
+| Ventanas | Dar a la red los últimos 60 días (20 a 5 días) | No se probó una ventana más larga, como 120. Con redes pequeñas, 20 y 60 dan lo mismo. |
 | Validación | Decidir cuándo parar de entrenar con el último año de datos | El modelo a 1 año no aprendió de la pandemia ni de 2022. |
 | Validación | No reentrenar dentro de cada bloque de 2 años | Al final del bloque el modelo tiene 2 años de antigüedad. |
 | Modelo | Entrenar minimizando el error absoluto (pérdida *pinball*) | Los resultados se dan en otra métrica, el RMSE. |
 | Modelo | Entrenar hasta 60 épocas | La red deja de mejorar en la época 1 o 2: aprende poco. |
 | Selección | Elegir cada red por su pérdida *pinball* en validación | No es la métrica de la tabla de resultados. |
 | Selección | Repetir con 3 semillas solo las finalistas | La configuración ganadora se eligió con una sola semilla. |
+| Selección | A 5 días, GRU de 16 unidades en vez de 256 | Empatan en validación (3 semillas; diferencia menor que la variación entre semillas). Se elige por coste. El modelo final se entrenó en el Mac, no en la GPU. |
 | Intervalo | Ajustar el ancho del intervalo con los datos de validación | En 2026 cubre solo el 48–58 % de los casos, en vez del 80 %. |
 
 ## Mejoras pendientes
