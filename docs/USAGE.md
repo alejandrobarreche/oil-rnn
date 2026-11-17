@@ -119,6 +119,18 @@ Compilar:
 make web-build
 ```
 
+### 6.1 Actualizar los datos sin reentrenar
+
+```bash
+make update
+```
+
+- **Qué hace**: descarga las series hasta hoy en `data/live/`, las limpia como `make prepare` (corte en el último Brent publicado y `ffill`) y reescribe `web/public/data/market.json`. La web pasa esas filas por las redes ya entrenadas, así que la previsión de hoy cambia sin tocar los pesos.
+- **Qué no toca**: `data/raw/`, los splits, los runs ni el preprocesado, que sigue ajustado solo con train.
+- **Cada día**: `.github/workflows/update.yml` lo ejecuta a las 22:00 UTC; si hay datos nuevos hace commit en `main` y vuelve a publicar la web. Se lanza a mano en GitHub → Actions → *Actualizar datos* → *Run workflow*.
+- **Volver a los datos de entrenamiento**: `make export-web` reescribe `market.json` desde los splits.
+- **Reentrenar**: sigue siendo `make train`, a mano (sección 4).
+
 ## 7. Publicar: GitHub Pages y Release de modelos
 
 - **Repositorio**: https://alejandrobarreche.github.io/oil-rnn/

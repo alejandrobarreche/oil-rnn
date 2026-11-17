@@ -31,6 +31,7 @@ Haz commit tú solo, sin preguntar, cada vez que termines un cambio sustancial (
 - **Sincronizar**: `git pull --rebase` antes de empezar y antes de cada push.
 - **Fuera de git**: `data/`, `models/`, pesos (`*.pt`, `*.keras`, `*.joblib`, `*.onnx`), bases de MLflow, `.env` y cachés.
 - **CI**: `.github/workflows/ci.yml` ejecuta `make test` y `make lint` en cada push; debe quedar en verde.
+- **Actualización diaria**: `.github/workflows/update.yml` hace commits `chore(data)` de `market.json` en `main`; por eso `git pull --rebase` antes de empezar. No reentrena.
 - **Solo lectura**: puedes ejecutar `git status`, `git diff` y `git log` sin preguntar.
 
 ## Comandos
@@ -55,6 +56,7 @@ make prepare                      # Crea los splits y data/splits.json
 make train NAME=<nombre>          # Entrenamiento (solo en Windows)
 make evaluate SPLIT=test RUN=<id> # Evaluación final con la config guardada en el run
 make export-web                   # Modelo, manifiesto y ejemplos para web/
+make update                       # Datos nuevos en web/public/data/market.json, sin reentrenar
 make explore-install              # Streamlit (grupo opcional explore)
 make explore                      # Explorador local del proceso, solo lectura
 make web-release                  # Publica el modelo como Release de GitHub

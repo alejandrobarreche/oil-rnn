@@ -16,7 +16,7 @@ Sistema de diseño: [Sonda](https://claude.ai/artifact/GJGpkQEKJT4ZGuDxg49E3H).
 | 5. Sonda | Hecha | Publicada en [GitHub Pages](https://alejandrobarreche.github.io/oil-rnn/); la portada pasa a ser la mesa de compras (rama `feat/mesa-de-compras`) |
 | 5b. Documento de decisiones | Hecha | Falta revisar a mano el explorador |
 | 6. Página explicativa | Sin empezar | Definida, sin plan visual aprobado |
-| 7. Actualización diaria | Sin empezar | — |
+| 7. Actualización diaria | Hecha | `make update` y workflow diario; sin reentrenar, como acepta el profesor |
 | 8. Presentación | La prepara el usuario | — |
 
 ## Pendientes
@@ -44,12 +44,11 @@ Recorrido en página web donde contamos:
 
 ## Actualización diaria
 
-La pide el enunciado y está sin empezar.
-
-- [ ] Descargar los datos cada día con GitHub Actions y publicarlos en Sonda.
-- [ ] Reentrenar el modelo elegido, a mano o cada cierto tiempo, y publicar la nueva versión.
-- [ ] Añadir a `CLAUDE.md` la regla de GitHub Actions.
-- [ ] Poner al día `README.md` y `docs/USAGE.md`.
+- [x] Descargar los datos cada día con GitHub Actions y publicarlos en la web (`make update`, `.github/workflows/update.yml`).
+- [x] Reentrenar queda a mano con `make train`: el profesor acepta actualizar los datos sin reentrenar.
+- [x] Añadir a `CLAUDE.md` la regla de GitHub Actions.
+- [x] Poner al día `README.md` y `docs/USAGE.md`.
+- [ ] Lanzar el workflow a mano una vez y comprobar que publica la web.
 
 ## Si falta tiempo
 
