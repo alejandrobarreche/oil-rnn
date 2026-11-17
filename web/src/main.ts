@@ -57,6 +57,7 @@ const restart = (el: HTMLElement, cls: string) => {
   el.classList.add(cls);
 };
 const STEP_NAMES: Record<Step, string> = { dia: "El día", carga: "La carga", entrega: "La entrega", decision: "La decisión" };
+const STEP_SHORT: Record<Step, string> = { dia: "Día", carga: "Carga", entrega: "Entrega", decision: "Decisión" };
 
 async function loadJson<T>(path: string): Promise<T> {
   const res = await fetch(`${base}${path}`);
@@ -118,7 +119,7 @@ async function init() {
   }).length;
   $("verdict").textContent =
     beaten === 0
-      ? `En test (${testYears}), la cifra central de la red falló más que «el precio de hoy» en los tres plazos. Por eso la orden se apoya en la franja.`
+      ? `En test (${testYears}), la cifra central falló más que «el precio de hoy» en los tres plazos; la orden se apoya en la franja.`
       : `En test (${testYears}), la cifra central de la red falló menos que «el precio de hoy» en ${beaten} de los tres plazos.`;
 
   // ── estado ──
@@ -171,7 +172,7 @@ async function init() {
     $("stepBtns").innerHTML = steps()
       .map(
         (k, i) =>
-          `<button type="button" class="stepbtn" data-step="${i}"><span class="mark" aria-hidden="true"></span><span class="num">${i + 1}</span><span>${STEP_NAMES[k].replace(/^(El|La) /, "")}</span></button>`,
+          `<button type="button" class="stepbtn" data-step="${i}"><span class="mark" aria-hidden="true"></span><span class="num">${i + 1}</span><span>${STEP_SHORT[k]}</span></button>`,
       )
       .join("");
     updateNav();
@@ -279,7 +280,7 @@ async function init() {
       <button type="button" class="tile a-rise" data-pick="decision" data-v="esperar" style="animation-delay:470ms">
         <span class="t-dlabel">Esperar a la entrega</span>
         <span class="t-dcost num">${musd(f.p50 * c.m)}</span>
-        <span class="t-sub num">Lo probable. Puede llegar a ${musd(f.p90 * c.m)}.</span></button>
+        <span class="t-sub num">Lo probable; hasta ${musd(f.p90 * c.m)}.</span></button>
     </div>`;
   }
 
@@ -365,13 +366,13 @@ async function init() {
       "Decisión",
       c.dec === "fijar" && c.day ? `Fijar a ${usd(c.day.price)}` : c.dec === "esperar" ? "Esperar a la entrega" : "",
     ]);
-    if (!c.isPast && c.dec === "esperar" && c.f) L.push(["reserva", "Reserva por si sube", musd(c.f.p90 * c.m)]);
+    if (!c.isPast && c.dec === "esperar" && c.f) L.push(["reserva", "Reserva", musd(c.f.p90 * c.m)]);
     const q = c.hz ? qOf(c.hz.h) : undefined;
     if (q)
       L.push([
         "rango",
-        `La franja en test (${testYears})`,
-        `Acertó ${nf(q.metrics.coverage80 * 100)} de cada 100 veces; «el precio de hoy», ${nf(q.baseline.coverage80 * 100)}`,
+        `Franja, test ${testYears}`,
+        `Acierta ${nf(q.metrics.coverage80 * 100)} de cada 100; «precio de hoy», ${nf(q.baseline.coverage80 * 100)}`,
       ]);
     if (c.isPast && S.closed && c.f?.real != null) L.push(["real", "Lo que pasó", `${usd(c.f.real)} el ${longDate(c.f.target)}`]);
     return L;

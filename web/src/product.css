@@ -155,10 +155,11 @@ button {
 .wrap {
   max-width: 1320px;
   margin: 0 auto;
-  padding: 20px clamp(16px, 4vw, 56px) 28px;
+  min-height: 100dvh;
+  padding: 16px clamp(16px, 4vw, 56px) 16px;
   display: flex;
   flex-direction: column;
-  gap: 24px;
+  gap: 14px;
 }
 
 /* ── cabecera ─────────────────────────────────────────── */
@@ -255,7 +256,7 @@ button {
 }
 h1 {
   margin: 0;
-  font: 850 clamp(36px, 4.4vw, 64px) / 0.95 var(--font-display);
+  font: 850 clamp(32px, 3vw, 46px) / 1 var(--font-display);
   font-stretch: 112%;
   letter-spacing: -0.03em;
   text-wrap: balance;
@@ -267,16 +268,17 @@ h1 {
   flex-wrap: wrap;
   gap: 40px;
   align-items: flex-start;
+  flex: 1 0 auto;
 }
 .main {
   flex: 1 1 560px;
   min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: 24px;
+  gap: 16px;
 }
 .side {
-  flex: 0 1 430px;
+  flex: 0 1 450px;
   min-width: 0;
   padding-bottom: 12px;
 }
@@ -351,14 +353,14 @@ h1 {
 .block {
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 14px;
 }
 .block.tight {
   gap: 10px;
 }
 .h2 {
   margin: 0;
-  font: 800 clamp(30px, 3.2vw, 46px) / 1 var(--font-display);
+  font: 800 clamp(28px, 2.6vw, 38px) / 1 var(--font-display);
   font-stretch: 108%;
   letter-spacing: -0.02em;
   text-wrap: balance;
@@ -396,7 +398,7 @@ h1 {
   background: var(--card);
   border: 1px solid var(--card-edge);
   border-radius: 4px;
-  padding: 20px;
+  padding: 16px 18px;
   display: flex;
   flex-direction: column;
   align-items: flex-start;
@@ -452,15 +454,20 @@ h1 {
   font: 800 22px/1.15 var(--font-display);
 }
 .t-dcost {
-  font: 850 44px/1 var(--font-display);
-  font-stretch: 112%;
+  font: 850 34px/1 var(--font-display);
+  font-stretch: 100%;
+  white-space: nowrap;
   letter-spacing: -0.02em;
 }
 
 /* petrolero 3D */
 .shipslot {
-  height: clamp(150px, 19vw, 210px);
-  margin: -8px 0 -4px;
+  height: clamp(150px, 26vh, 230px);
+  margin: -6px 0 -2px;
+  -webkit-mask-image: linear-gradient(to bottom, transparent, #000 38%), linear-gradient(to right, transparent, #000 12%, #000 88%, transparent);
+  mask-image: linear-gradient(to bottom, transparent, #000 38%), linear-gradient(to right, transparent, #000 12%, #000 88%, transparent);
+  -webkit-mask-composite: source-in;
+  mask-composite: intersect;
 }
 .ship3d {
   width: 100%;
@@ -481,7 +488,7 @@ h1 {
 .rulerbox {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 0;
 }
 .rcap {
   margin: 0;
@@ -489,26 +496,26 @@ h1 {
 }
 .ruler {
   position: relative;
-  height: 230px;
+  height: 188px;
   margin: 0 12px;
 }
 .ruler > * {
   position: absolute;
 }
 .r-today-l {
-  top: 46px;
+  top: 30px;
   white-space: nowrap;
   font: 600 18px/1.2 var(--font-display);
 }
 .r-today {
-  top: 76px;
+  top: 56px;
   width: 2px;
-  height: 86px;
+  height: 70px;
   background: var(--ink);
   transform: translateX(-50%);
 }
 .dot {
-  top: 96px;
+  top: 66px;
   width: 12px;
   height: 12px;
   background: var(--accent);
@@ -520,39 +527,39 @@ h1 {
   border: 2px solid var(--ink);
 }
 .r-band {
-  top: 120px;
+  top: 86px;
   height: 30px;
   background: var(--accent-soft);
   border-left: 2px solid var(--accent);
   border-right: 2px solid var(--accent);
 }
 .r-med {
-  top: 110px;
+  top: 78px;
   width: 3px;
-  height: 52px;
+  height: 48px;
   background: var(--accent);
   transform: translateX(-50%);
 }
 .r-axis {
-  top: 160px;
+  top: 124px;
   left: 0;
   right: 0;
   height: 2px;
   background: var(--ink);
 }
 .r-tick {
-  top: 162px;
+  top: 126px;
   width: 1px;
   background: var(--ink);
 }
 .r-lab {
-  top: 178px;
+  top: 140px;
   transform: translateX(-50%);
   font-size: 15px;
   font-weight: 500;
 }
 .r-med-l {
-  top: 202px;
+  top: 162px;
   white-space: nowrap;
   font: 800 19px/1.2 var(--font-display);
   color: var(--accent);
@@ -563,9 +570,9 @@ h1 {
   font: 800 19px/1.2 var(--font-display);
 }
 .r-real {
-  top: 32px;
+  top: 28px;
   width: 5px;
-  height: 130px;
+  height: 98px;
   background: var(--ink);
   transform: translateX(-50%);
 }
@@ -615,10 +622,10 @@ h1 {
 .ticket {
   position: relative;
   background: var(--card);
-  padding: 28px 26px 32px;
+  padding: 24px 24px 28px;
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 12px;
 }
 .ticket::after {
   content: "";
@@ -659,9 +666,9 @@ dl {
 }
 .line {
   display: grid;
-  grid-template-columns: minmax(6.5em, 38%) minmax(0, 1fr);
+  grid-template-columns: minmax(6.5em, 34%) minmax(0, 1fr);
   gap: 12px;
-  padding: 11px 6px;
+  padding: 9px 6px;
   margin: 0 -6px;
   border-bottom: 1px dashed var(--card-edge);
   align-items: baseline;
@@ -730,14 +737,14 @@ dd.hatch {
   align-items: baseline;
   justify-content: space-between;
   border-top: 2px solid var(--ink);
-  padding-top: 18px;
+  padding-top: 12px;
 }
 .foot p {
   margin: 0;
   font-size: 18px;
   line-height: 1.35;
   font-weight: 500;
-  max-width: 70ch;
+  max-width: none;
 }
 .foot a {
   font-size: 19px;
@@ -895,6 +902,31 @@ dd.hatch {
   }
   ::view-transition-new(root) {
     animation: none;
+  }
+}
+/* pantallas bajas de escritorio: todo cabe sin scroll */
+@media (min-width: 900px) and (max-height: 800px) {
+  .wrap {
+    gap: 10px;
+    padding-top: 12px;
+  }
+  h1 {
+    font-size: 32px;
+  }
+  .main {
+    gap: 12px;
+  }
+  .block {
+    gap: 10px;
+  }
+  .t-sub {
+    font-size: 18px;
+  }
+  .t-n {
+    font-size: 60px;
+  }
+  .t-year {
+    font-size: 46px;
   }
 }
 @media (max-width: 560px) {

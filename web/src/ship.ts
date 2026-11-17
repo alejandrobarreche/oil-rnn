@@ -106,8 +106,8 @@ export function createShip(): Ship {
     camera.aspect = w / h;
     // Más lejos cuanto más estrecho, para que el barco más grande quepa entero
     const k = Math.max(1, 2.9 / camera.aspect);
-    camera.position.set(19 * k, 9.5 * k, 30 * k);
-    camera.lookAt(0, 0.4, 0);
+    camera.position.set(15 * k, 8 * k, 24 * k);
+    camera.lookAt(0, 1.2, 0);
     camera.updateProjectionMatrix();
     kick();
     if (!raf) renderer.render(scene, camera);
@@ -205,7 +205,7 @@ export function createShip(): Ship {
       scene = new THREE.Scene();
       const pmrem = new THREE.PMREMGenerator(renderer);
       scene.environment = pmrem.fromScene(new Room(), 0.04).texture;
-      scene.fog = new THREE.Fog(0xffffff, 40, 95);
+      scene.fog = new THREE.Fog(0xffffff, 30, 70);
       const sun = new THREE.DirectionalLight(0xffffff, 1.6);
       sun.position.set(12, 22, 14);
       scene.add(sun);
