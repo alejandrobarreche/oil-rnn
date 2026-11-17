@@ -318,3 +318,12 @@ def test_recorrido_del_estado():
     assert np.abs(xyz).max() == pytest.approx(1.0)
     assert out["explained"] == pytest.approx(1.0)
     assert out["change"] == pytest.approx([1.0] * 10)
+
+
+def test_r2_de_la_persistencia_en_rendimiento_no_es_positivo():
+    y = pd.Series([1.0, 2.0, 3.0, 4.0])
+    exact = explore._fit(y, y)
+    assert exact["r2"] == 1 and exact["mse"] == 0
+    zero = explore._fit(y, 0 * y)  # predecir 0 siempre: R² = −media² / varianza
+    assert zero["r2"] == pytest.approx(1 - np.mean(y**2) / np.var(y))
+    assert zero["r2"] <= 0

@@ -357,6 +357,43 @@ def significance(prefix: str = "final") -> pd.DataFrame:
     return pd.DataFrame(rows)
 
 
+def _fit(y: pd.Series, p: pd.Series) -> dict[str, float]:
+    err = y - p
+    mse = float(np.mean(err**2))
+    return {
+        "mse": mse,
+        "rmse": float(np.sqrt(mse)),
+        "mae": float(np.mean(np.abs(err))),
+        "r2": 1 - mse / float(np.var(y)),
+    }
+
+
+def fit_metrics(prefix: str = "final") -> pd.DataFrame:
+    """MSE, RMSE, MAE y R² en test de cada modelo `prefix` y de la persistencia, sobre sus
+    predicciones (predictions_test.csv). Dos escalas:
+    - precio ($): r2 = 1 - MSE / varianza del precio real en test. La persistencia ya explica casi
+      toda la varianza del precio a h días, así que este R² solo se lee junto al suyo.
+    - rendimiento log(precio real / último conocido): r2_ret mide cuánto de la variación a h días
+      explica la red. La persistencia predice 0 y su r2_ret es −media² / varianza ≤ 0."""
+    rows = []
+    for _, run in runs_table(prefix).sort_values("horizon").iterrows():
+        pred = test_predictions(run["run_id"])
+        last = pred["y_baseline"]  # persistencia = último precio conocido
+        r_true, r_pred = np.log(pred["y_true"] / last), np.log(pred["y_pred"] / last)
+        model, base = _fit(pred["y_true"], pred["y_pred"]), _fit(pred["y_true"], last)
+        rows.append(
+            {
+                "horizon": int(run["horizon"]),
+                "cell": run["cell"],
+                **model,
+                **{f"baseline_{k}": v for k, v in base.items()},
+                "r2_ret": _fit(r_true, r_pred)["r2"],
+                "baseline_r2_ret": _fit(r_true, 0 * r_true)["r2"],
+            }
+        )
+    return pd.DataFrame(rows)
+
+
 def futures_naive(
     cfg: dict, dev: pd.DataFrame | None = None, prefix: str = "final"
 ) -> pd.DataFrame:
@@ -667,12 +704,13 @@ if __name__ == "__main__":
     from .config import load_config
 
     parser = argparse.ArgumentParser(description="Vistas de explore.py en la terminal")
-    parser.add_argument("view", choices=["dm", "naive-futures"])
+    parser.add_argument("view", choices=["dm", "naive-futures", "fit"])
     view = parser.parse_args().view
-    table = (
-        significance().drop(columns="run_id")
-        if view == "dm"
-        else futures_naive(load_config()).drop(columns="cv_run")
-    )
+    if view == "dm":
+        table = significance().drop(columns="run_id")
+    elif view == "fit":
+        table = fit_metrics()
+    else:
+        table = futures_naive(load_config()).drop(columns="cv_run")
     with pd.option_context("display.width", 200, "display.max_columns", None):
         print(table.to_string(index=False, float_format="%.4g"))
