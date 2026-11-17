@@ -43,7 +43,7 @@ make web-build     # Compilación a web/dist (lo ejecuta el usuario)
 | `src/model.ts` | Réplica del preprocesado de `features.py` e inferencia ONNX |
 | `src/icons.ts` | Iconos SVG (tema y flecha) |
 | `src/product.css` | Estilos y temas claro y oscuro del producto |
-| `public/brent/` | «El precio del Brent»: `index.html`, `scrollcraft.css`, `scrollcraft.js` y sus datos |
+| `public/brent/` | «El precio del Brent»: `index.html`, `scrollcraft.css`, `scrollcraft.js` y sus datos; los capítulos se marcan con `data-chapter` y de ahí salen el botón de índice, su panel y el raíl lateral |
 
 ## Convenciones
 

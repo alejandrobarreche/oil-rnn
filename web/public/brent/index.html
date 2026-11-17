@@ -158,6 +158,70 @@
     .scene__viz { margin: var(--sc-6) 0 0; height: 46vh; }
   }
   @media (max-width: 700px) { .scene--hero h1 { font-size: var(--sc-t-2xl); } }
+
+  /* Índice: botón con el capítulo actual, panel con los ocho y raíl lateral en escritorio */
+  .toc-btn { display: inline-flex; align-items: center; gap: .6em; min-height: 44px; max-width: 46vw; padding: 0 1.05em; border-radius: 999px;
+    border: 1px solid var(--hair); background: color-mix(in srgb, var(--sc-surface) 82%, transparent); color: var(--sc-ink);
+    font: 500 var(--sc-t-sm) var(--sc-font-text); cursor: pointer; -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+    transition: transform 140ms var(--sc-ease-out), border-color 160ms ease; }
+  .toc-btn__n { font-family: var(--sc-font-display); font-stretch: 112%; font-weight: 640; color: var(--sc-accent); font-variant-numeric: tabular-nums; }
+  .toc-btn__n:empty { display: none; }
+  .cta__short { display: none; }
+  .toc-btn__l { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .toc-btn__chev { flex: none; color: var(--sc-ink-soft); transition: transform 200ms var(--sc-ease-out); }
+  .toc-btn[aria-expanded="true"] .toc-btn__chev { transform: rotate(180deg); }
+  @media (hover: hover) and (pointer: fine) { .toc-btn:hover { border-color: color-mix(in srgb, var(--sc-ink) 32%, transparent); } }
+  .toc-btn:active { transform: scale(0.97); }
+  .toc-btn:focus-visible, .toc-item:focus-visible, .toc-tick:focus-visible { outline: 2px solid var(--sc-ink); outline-offset: 3px; }
+
+  .toc-panel { position: fixed; z-index: 7; top: 4.6rem; left: 50%; width: min(23rem, calc(100vw - 2rem)); padding: var(--sc-2);
+    border-radius: 16px; border: 1px solid var(--hair); background: var(--sc-surface); box-shadow: 0 18px 48px rgba(0, 0, 0, .45);
+    transform-origin: top center; transform: translateX(-50%) scale(0.97) translateY(-6px); opacity: 0; visibility: hidden;
+    transition: opacity 140ms var(--sc-ease-out), transform 140ms var(--sc-ease-out), visibility 0s linear 140ms; }
+  .toc-panel.is-open { opacity: 1; visibility: visible; transform: translateX(-50%);
+    transition: opacity 200ms var(--sc-ease-out), transform 200ms var(--sc-ease-out), visibility 0s; }
+  .toc-item { position: relative; display: flex; align-items: center; gap: var(--sc-4); min-height: 44px; padding: .5rem .85rem; border-radius: 10px;
+    color: var(--sc-ink-soft); text-decoration: none; font-size: var(--sc-t-base); overflow: hidden; transition: background-color 160ms ease, color 160ms ease; }
+  .toc-item__n { font-family: var(--sc-font-display); font-stretch: 112%; font-weight: 600; font-size: var(--sc-t-sm); font-variant-numeric: tabular-nums; color: var(--sc-ink-soft); min-width: 1.6em; }
+  .toc-item__bar { position: absolute; left: .85rem; right: .85rem; bottom: 4px; height: 2px; border-radius: 2px; background: var(--sc-accent);
+    transform-origin: left; transform: scaleX(0); opacity: 0; }
+  @media (hover: hover) and (pointer: fine) { .toc-item:hover { background: color-mix(in srgb, var(--sc-ink) 7%, transparent); color: var(--sc-ink); } }
+  .toc-item:active { background: color-mix(in srgb, var(--sc-ink) 10%, transparent); }
+  .toc-item[aria-current="true"] { color: var(--sc-ink); }
+  .toc-item[aria-current="true"] .toc-item__n { color: var(--sc-accent); }
+  .toc-item[aria-current="true"] .toc-item__bar { opacity: .7; }
+
+  .toc-rail { display: none; }
+  @media (min-width: 1100px) and (hover: hover) and (pointer: fine) {
+    .toc-rail { display: flex; flex-direction: column; position: fixed; z-index: 5; left: 0; top: 50%; transform: translateY(-50%);
+      padding: var(--sc-4) var(--sc-6) var(--sc-4) 18px; opacity: 0; pointer-events: none; transition: opacity 300ms var(--sc-ease-out); }
+    .toc-rail.is-on { opacity: 1; pointer-events: auto; }
+    .toc-rail::before { content: ""; position: absolute; inset: -40px -120px -40px 0; z-index: -1; pointer-events: none; opacity: 0;
+      background: linear-gradient(to right, var(--sc-canvas) 45%, transparent); transition: opacity 200ms ease; }
+    .toc-rail:hover::before, .toc-rail:focus-within::before { opacity: .92; }
+    .toc-tick { display: flex; align-items: center; gap: var(--sc-3); height: 30px; text-decoration: none; color: var(--sc-ink-soft); }
+    .toc-tick__m { flex: none; width: 14px; height: 2px; border-radius: 2px; background: color-mix(in srgb, var(--sc-ink) 38%, transparent);
+      transform-origin: left; transition: transform 200ms var(--sc-ease-out), background-color 160ms ease; }
+    .toc-tick[aria-current="true"] .toc-tick__m { transform: scaleX(2); background: var(--sc-accent); }
+    .toc-tick__l { font-size: var(--sc-t-sm); white-space: nowrap; opacity: 0; transform: translateX(-4px);
+      transition: opacity 160ms var(--sc-ease-out), transform 160ms var(--sc-ease-out); transition-delay: 0ms; }
+    .toc-tick[aria-current="true"] .toc-tick__l { color: var(--sc-ink); }
+    .toc-rail:hover .toc-tick__l, .toc-rail:focus-within .toc-tick__l { opacity: 1; transform: none; transition-delay: calc(var(--i) * 18ms); }
+    .toc-tick:hover .toc-tick__l { color: var(--sc-ink); }
+    .toc-tick__l { padding-left: 14px; }
+  }
+  @media (max-width: 560px) {
+    .cta__long { display: none; }
+    .cta__short { display: inline; }
+    .site-bar { gap: var(--sc-2); }
+    .site-bar .cta { white-space: nowrap; min-height: 44px; padding: 0 .95em; }
+    .toc-btn { padding: 0 .8em; max-width: 36vw; }
+    .toc-panel { top: 4.4rem; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .toc-panel, .toc-panel.is-open { transform: translateX(-50%); }
+    .toc-btn__chev, .toc-tick__m, .toc-tick__l { transition: none; }
+  }
 </style>
 </head>
 <body>
@@ -170,8 +234,14 @@
 
 <header class="site-bar">
   <a class="mark" href="#top">BRENT<i>.</i></a>
-  <a class="cta" href="../index.html">Abrir la mesa de compras</a>
+  <button class="toc-btn" type="button" aria-expanded="false" aria-controls="toc-panel">
+    <span class="toc-btn__n" aria-hidden="true"></span><span class="toc-btn__l">Índice</span>
+    <svg class="toc-btn__chev" viewBox="0 0 12 12" width="12" height="12" aria-hidden="true"><path d="M2.5 4.5 6 8l3.5-3.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+  </button>
+  <a class="cta" href="../index.html"><span class="cta__long">Abrir la mesa de compras</span><span class="cta__short">Mesa de compras</span></a>
 </header>
+<nav class="toc-panel" id="toc-panel" aria-label="Capítulos"></nav>
+<nav class="toc-rail" aria-label="Capítulos (atajo)"></nav>
 
 <main id="top">
 
@@ -184,7 +254,7 @@
   </section>
 
   <!-- ============ El petróleo ============ -->
-  <section class="scene" data-form="center">
+  <section class="scene" data-form="center" id="petroleo" data-chapter="El petróleo">
     <div class="scene__copy">
       <h2 class="sc-display sc-display--lg">El petróleo</h2>
       <p class="lede">La materia prima más negociada del mundo.</p>
@@ -222,7 +292,7 @@
   </section>
 
   <!-- ============ El Brent: historia ============ -->
-  <section class="story" id="story-brent" data-story="brent">
+  <section class="story" id="story-brent" data-story="brent" data-chapter="El Brent">
     <div class="story__graphic"><div class="graphic" id="g-brent"></div></div>
     <div class="story__steps">
       <div class="step" data-step="0">
@@ -269,7 +339,7 @@
   </section>
 
   <!-- ============ Los datos ============ -->
-  <section class="scene" data-form="ring">
+  <section class="scene" data-form="ring" id="datos" data-chapter="Los datos">
     <div class="scene__copy">
       <h2 class="sc-display sc-display--lg">Los datos</h2>
       <p class="lede">Para predecir el Brent, la red no mira solo el Brent.</p>
@@ -311,7 +381,7 @@
   </section>
 
   <!-- ============ Las soluciones ============ -->
-  <section class="scene" data-form="row">
+  <section class="scene" data-form="row" id="soluciones" data-chapter="Las soluciones">
     <div class="scene__copy">
       <h2 class="sc-display sc-display--lg">Las soluciones</h2>
       <p class="lede">Un modelo solo sirve si gana a la referencia más simple.</p>
@@ -347,7 +417,7 @@
   </section>
 
   <!-- ============ La red ============ -->
-  <section class="scene" data-form="layers">
+  <section class="scene" data-form="layers" id="red" data-chapter="La red">
     <div class="scene__copy">
       <h2 class="sc-display sc-display--lg">La red</h2>
       <p class="lede">Un modelo por plazo, y en cada uno gana una red distinta.</p>
@@ -385,7 +455,7 @@
   </section>
 
   <!-- ============ El resultado ============ -->
-  <section class="scene" data-form="none">
+  <section class="scene" data-form="none" id="resultado" data-chapter="El resultado">
     <div class="scene__copy">
       <h2 class="sc-display sc-display--lg">El resultado</h2>
       <p class="lede">955 días que la red nunca vio.</p>
@@ -398,7 +468,7 @@
     <div class="story__graphic"><div class="graphic" id="g-result"></div></div>
     <div class="story__steps">
       <div class="step" data-step="0"><h3>Cómo leer el gráfico</h3><p>La línea <b>blanca</b> es el precio real. La <b class="a">ámbar</b> es lo que predijo la red y la franja ámbar, su rango del 80&nbsp;%. La <b style="color:var(--persist)">gris discontinua</b> es la persistencia: el precio de hace h días.</p><p>Abajo, el error típico (RMSE) de cada una en los cuatro plazos.</p></div>
-      <div class="step" data-step="1"><span class="when a">5,55 $<small>frente a 5,36 $</small></span><h3>A una semana</h3><p>La red casi empata: falla un <b>3,6&nbsp;%</b> más que repetir el precio. Su rango acierta el 78&nbsp;% de los días, tan bien como los cuantiles históricos.</p></div>
+      <div class="step" data-step="1"><span class="when a">5,46 $<small>frente a 5,36 $</small></span><h3>A una semana</h3><p>La red casi empata: falla un <b>1,8&nbsp;%</b> más que repetir el precio. Su rango acierta el 78&nbsp;% de los días, tan bien como los cuantiles históricos.</p></div>
       <div class="step" data-step="2"><span class="when a">11,56 $<small>frente a 10,69 $</small></span><h3>A un mes</h3><p>La franja se ensancha y la red se queda un <b>8,1&nbsp;%</b> por detrás. El rango acierta el 86&nbsp;% de los días.</p></div>
       <div class="step" data-step="3"><span class="when a">28,24 $<small>frente a 17,54 $</small></span><h3>A tres meses</h3><p>El peor caso: un <b>61&nbsp;%</b> más de error. Fíjate en cómo la línea ámbar exagera cada subida.</p></div>
       <div class="step" data-step="4"><h3>Acierta la dirección, no el tamaño</h3><p>A 3 meses, la red acierta si el precio sube o baja el <b>60&nbsp;%</b> de los días. Pero de media predice una subida del <b>11&nbsp;%</b>, cuando la real fue del 1,7&nbsp;%.</p></div>
@@ -409,7 +479,7 @@
   </section>
 
   <!-- ============ Lecciones ============ -->
-  <section class="lessons" data-sc-act="flow">
+  <section class="lessons" data-sc-act="flow" id="lecciones" data-chapter="Lo que se aprende">
     <h2 class="sc-display sc-display--lg" data-sc-in>Lo que se aprende</h2>
     <div data-sc-in data-sc-stagger="70">
       <div class="lesson"><div class="lesson__n">78 %</div><p>El dato más fiable es el <b>rango a una semana</b>: cubre el 78&nbsp;% de los casos, tan bien como los cuantiles históricos.</p></div>
@@ -428,8 +498,8 @@
     </ul>
   </section>
 
-  <!-- ============ Sonda ============ -->
-  <section class="scene" data-form="sonda" style="min-height:110svh">
+  <!-- ============ La mesa de compras ============ -->
+  <section class="scene" data-form="sonda" style="min-height:110svh" id="mesa" data-chapter="La mesa de compras">
     <div class="scene__copy" data-sc-in data-sc-stagger="70">
       <h2 class="sc-display sc-display--xl">La mesa de compras</h2>
       <p class="sub">Una orden de compra de crudo en tres clics: carga, entrega y decisión. La red calcula la franja en el navegador, sin servidor.</p>
@@ -442,6 +512,85 @@
 
 <script src="scrollcraft.js"></script>
 <script>ScrollCraft.mount(document.body);</script>
+<script>
+// Índice: el botón dice en qué capítulo estás; el panel y el raíl saltan a cualquiera.
+(() => {
+  const chapters = [...document.querySelectorAll("[data-chapter]")];
+  const btn = document.querySelector(".toc-btn"), panel = document.getElementById("toc-panel"), rail = document.querySelector(".toc-rail");
+  const num = btn.querySelector(".toc-btn__n"), label = btn.querySelector(".toc-btn__l");
+  const pad = (i) => String(i + 1).padStart(2, "0");
+  const items = chapters.map((c, i) => {
+    const a = document.createElement("a");
+    a.className = "toc-item"; a.href = "#" + c.id;
+    a.innerHTML = `<span class="toc-item__n">${pad(i)}</span><span>${c.dataset.chapter}</span><span class="toc-item__bar"></span>`;
+    panel.append(a); return a;
+  });
+  const ticks = chapters.map((c, i) => {
+    const a = document.createElement("a");
+    a.className = "toc-tick"; a.href = "#" + c.id; a.style.setProperty("--i", i);
+    a.innerHTML = `<span class="toc-tick__m"></span><span class="toc-tick__l">${c.dataset.chapter}</span>`;
+    rail.append(a); return a;
+  });
+
+  // Capítulo actual: el último cuyo comienzo ha pasado el 40 % de la pantalla.
+  let last = -2;
+  function update() {
+    const line = innerHeight * 0.4, tops = chapters.map((c) => c.getBoundingClientRect().top);
+    let k = -1;
+    tops.forEach((t, i) => { if (t <= line) k = i; });
+    if (k !== last) {
+      last = k;
+      items.forEach((a, i) => a.setAttribute("aria-current", String(i === k)));
+      ticks.forEach((a, i) => a.setAttribute("aria-current", String(i === k)));
+      num.textContent = k < 0 ? "" : pad(k);
+      label.textContent = k < 0 ? "Índice" : chapters[k].dataset.chapter;
+      rail.classList.toggle("is-on", k >= 0);
+    }
+    if (k >= 0) {
+      const end = k + 1 < chapters.length ? tops[k + 1] : document.documentElement.scrollHeight - scrollY;
+      const f = Math.min(1, Math.max(0, (line - tops[k]) / Math.max(1, end - tops[k])));
+      items[k].querySelector(".toc-item__bar").style.transform = `scaleX(${f})`;
+    }
+  }
+  let ticking = false;
+  addEventListener("scroll", () => { if (!ticking) { ticking = true; requestAnimationFrame(() => { update(); ticking = false; }); } }, { passive: true });
+  addEventListener("resize", update);
+  update();
+
+  function setOpen(open, focusBack) {
+    panel.classList.toggle("is-open", open);
+    btn.setAttribute("aria-expanded", String(open));
+    if (!open && focusBack) btn.focus();
+  }
+  btn.addEventListener("click", (e) => {
+    const open = btn.getAttribute("aria-expanded") !== "true";
+    setOpen(open, false);
+    if (open && e.detail === 0) (items[Math.max(0, last)]).focus(); // abierto con teclado
+  });
+  document.addEventListener("click", (e) => {
+    if (!panel.contains(e.target) && !btn.contains(e.target)) setOpen(false, false);
+  });
+  document.addEventListener("keydown", (e) => {
+    if (btn.getAttribute("aria-expanded") !== "true") return;
+    if (e.key === "Escape") { setOpen(false, true); return; }
+    if (e.key === "ArrowDown" || e.key === "ArrowUp") {
+      e.preventDefault();
+      const i = items.indexOf(document.activeElement), d = e.key === "ArrowDown" ? 1 : -1;
+      items[(i + d + items.length) % items.length].focus();
+    }
+  });
+
+  // Salto directo, sin deslizar por todas las escenas intermedias.
+  [...items, ...ticks].forEach((a) => a.addEventListener("click", (e) => {
+    e.preventDefault();
+    const target = document.getElementById(a.hash.slice(1));
+    setOpen(false, false);
+    target.scrollIntoView({ block: "start", behavior: "instant" });
+    history.replaceState(null, "", a.hash);
+    update();
+  }));
+})();
+</script>
 <script src="https://cdn.jsdelivr.net/npm/d3@7.9.0/dist/d3.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
 
