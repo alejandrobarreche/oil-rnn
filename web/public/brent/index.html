@@ -1349,9 +1349,10 @@ const vizFns = {};
   {
     const W3 = 820, H3 = 540, cw = W3 / 2, ch = (H3 - 30) / 2;
     const s3 = d3.select("#g-curves").append("svg").attr("viewBox", `0 0 ${W3} ${H3}`).attr("preserveAspectRatio", "xMidYMid meet");
-    [["5", "1 semana · GRU"], ["21", "1 mes · LSTM"], ["63", "3 meses · GRU"], ["252", "1 año · RNN"]].forEach(([h, t], i) => {
+    [["5", "1 semana, GRU"], ["21", "1 mes, LSTM"], ["63", "3 meses, GRU"], ["252", "1 año, RNN"]].forEach(([h, t], i) => {
       const c = DATA.curves[h], g = s3.append("g").attr("transform", `translate(${(i % 2) * cw},${Math.floor(i / 2) * ch})`);
-      const x = d3.scaleLinear().domain([1, 30]).range([16, cw - 30]);
+      // Escala propia: la GRU de 1 semana entrena cientos de épocas y las demás unas decenas.
+      const n = Math.max(c.train.length, c.val.length), x = d3.scaleLinear().domain([1, Math.max(n, 2)]).range([16, cw - 30]);
       const y = d3.scaleLinear().domain(d3.extent([...c.train, ...c.val])).nice().range([ch - 40, 60]);
       g.append("text").attr("class", "evt-label").attr("x", 16).attr("y", 26).text(t);
       g.append("text").attr("class", "evt-sub").attr("x", 16).attr("y", 45).text(`mejor época: ${c.best}`);
@@ -1359,7 +1360,8 @@ const vizFns = {};
       g.append("path").attr("d", d3.line().x((_, j) => x(j + 1)).y((v) => y(v))(c.val)).attr("fill", "none").attr("stroke", ACCENT).attr("stroke-width", 2);
       g.append("circle").attr("cx", x(c.best)).attr("cy", y(c.val[c.best - 1])).attr("r", 5).attr("fill", ACCENT).attr("stroke", "#1c1c1f").attr("stroke-width", 2);
       g.append("line").attr("x1", 16).attr("x2", cw - 30).attr("y1", ch - 40).attr("y2", ch - 40).attr("stroke", "rgba(238,240,242,.12)");
-      g.append("text").attr("class", "lbl").attr("x", cw - 30).attr("y", ch - 22).attr("text-anchor", "end").text("épocas →");
+      g.append("text").attr("class", "lbl").attr("x", 16).attr("y", ch - 22).text("1");
+      g.append("text").attr("class", "lbl").attr("x", cw - 30).attr("y", ch - 22).attr("text-anchor", "end").text(`${n} épocas`);
     });
     const lg = s3.append("g").attr("transform", `translate(16,${H3 - 6})`);
     lg.append("line").attr("x2", 22).attr("stroke", ACCENT).attr("stroke-width", 2).attr("y1", -4).attr("y2", -4);
