@@ -61,9 +61,11 @@
   @media (hover: hover) and (pointer: fine) { .fig:hover i { color: var(--sc-ink); } .fig:hover i svg { transform: translateX(3px); } }
   .fig:active { transform: scale(0.98); }
 
-  /* Pestañas con scroll corto: gráfico fijo a la derecha, pasos a la izquierda */
-  .story { position: relative; display: grid; grid-template-columns: minmax(0, 0.72fr) minmax(0, 1.28fr); gap: var(--sc-7); padding-inline: var(--sc-gutter); }
-  .story__graphic { position: sticky; top: 64px; height: calc(100svh - 64px); grid-column: 2; grid-row: 1; display: flex; padding: 3vh 0 4vh; }
+  /* Cada pestaña cabe en una pantalla: pasos a la izquierda (índice y paso abierto), gráfico a la derecha.
+     Los pasos se cambian con botones, flechas o pulsando su nombre; cada cambio lanza su animación. */
+  .story { position: relative; display: grid; grid-template-columns: minmax(0, 0.72fr) minmax(0, 1.28fr); gap: var(--sc-7); padding-inline: var(--sc-gutter);
+    height: calc(100dvh - 64px); }
+  .story__graphic { grid-column: 2; grid-row: 1; display: flex; min-height: 0; padding: 3vh 0 4vh; }
   .stage { position: relative; flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 14px; }
   .stage::before { content: ""; position: absolute; inset: -12px -18px; z-index: -1; pointer-events: none; border-radius: 16px;
     background-image: radial-gradient(color-mix(in srgb, var(--sc-ink) 9%, transparent) 1px, transparent 1.2px); background-size: 22px 22px;
@@ -76,12 +78,25 @@
   .layer.is-on { opacity: 1; visibility: visible; transition: opacity 360ms var(--ease-out), visibility 0s; }
   .fill { width: 100%; flex: 1; min-height: 0; }
   .fill svg { width: 100%; height: 100%; display: block; overflow: visible; }
-  .story__steps { grid-column: 1; grid-row: 1; padding: 26vh 0 38vh; }
-  .step { min-height: 70vh; display: flex; flex-direction: column; justify-content: center; gap: 14px; opacity: .2; transition: opacity 320ms var(--ease-out); }
-  .step.is-active { opacity: 1; }
-  .key { margin: 0; font-family: var(--sc-font-display); font-stretch: 108%; font-weight: 600; font-size: clamp(1.55rem, 1.1rem + 1.3vw, 2.15rem); line-height: 1.08; letter-spacing: -0.015em; text-wrap: balance; max-width: 18ch; }
-  .key small { display: block; margin-top: 6px; font-family: var(--sc-font-text); font-stretch: 100%; font-weight: 450; font-size: 15px; letter-spacing: 0; color: var(--sc-ink-soft); }
-  .step p:not(.key) { margin: 0; font-size: 18px; line-height: 1.55; color: color-mix(in srgb, var(--sc-ink) 86%, var(--sc-ink-soft)); max-width: 34ch; text-wrap: pretty; }
+  .story__steps { grid-column: 1; grid-row: 1; display: flex; flex-direction: column; justify-content: center; gap: 2px; min-height: 0; padding: 3vh 0; }
+  .step { display: flex; flex-direction: column; gap: 10px; padding: 9px 0 9px 18px; border-left: 2px solid var(--hair); cursor: pointer; border-radius: 0 6px 6px 0;
+    transition: border-color 200ms ease, background-color 160ms ease; -webkit-tap-highlight-color: transparent; }
+  .key { margin: 0; font-family: var(--sc-font-display); font-stretch: 106%; font-weight: 560; font-size: 16px; line-height: 1.3; color: var(--sc-ink-soft);
+    max-width: 30ch; text-wrap: balance; transition: color 160ms ease; }
+  .key small, .step p:not(.key) { display: none; }
+  .step.is-active { cursor: default; padding: 14px 0 16px 18px; border-left-color: var(--sheen); }
+  .step.is-active .key { font-weight: 600; font-size: clamp(1.55rem, 1.1rem + 1.3vw, 2.15rem); line-height: 1.08; letter-spacing: -0.015em; color: var(--sc-ink); max-width: 18ch; }
+  .step.is-active .key small { display: block; margin-top: 6px; font-family: var(--sc-font-text); font-stretch: 100%; font-weight: 450; font-size: 15px; line-height: 1.4; letter-spacing: 0; color: var(--sc-ink-soft); }
+  .step.is-active p:not(.key) { display: block; margin: 0; font-size: 18px; line-height: 1.55; color: color-mix(in srgb, var(--sc-ink) 86%, var(--sc-ink-soft)); max-width: 34ch; text-wrap: pretty; }
+  .step.is-active > * { animation: rise 340ms var(--ease-out) both; }
+  .step.is-active > p:not(.key) { animation-delay: 60ms; }
+  @keyframes rise { from { opacity: 0; transform: translateY(6px); } }
+  @media (hover: hover) and (pointer: fine) { .step:not(.is-active):hover { background: color-mix(in srgb, var(--sc-ink) 4%, transparent); } .step:not(.is-active):hover .key { color: var(--sc-ink); } }
+  .step:focus-visible { outline: 2px solid var(--sc-ink); outline-offset: 2px; }
+  .stepper { display: flex; align-items: center; gap: 10px; margin-top: 20px; }
+  .stepper .count { min-width: 4.2em; font: 600 14px var(--sc-font-display); font-variant-numeric: tabular-nums; color: var(--sc-ink-soft); text-align: center; }
+  .stepper .btn[data-d="-1"] { padding: 0 12px; }
+  .stepper .btn:disabled { opacity: .35; cursor: default; }
 
   /* Herramientas encima del gráfico */
   .stage > .tools { flex: none; min-height: 44px; }
@@ -160,16 +175,16 @@
   .table .net { color: var(--sc-accent); font-weight: 600; }
 
   /* Lo que se aprende, al final del resultado */
-  .lessons { padding: 8vh var(--sc-gutter) 6vh; max-width: 64rem; }
-  .sect { margin: 0 0 var(--sc-5); font: 640 22px var(--sc-font-display); font-stretch: 110%; }
-  .lesson { display: grid; grid-template-columns: minmax(0, 9rem) minmax(0, 1fr); gap: var(--sc-5); padding: var(--sc-5) 0; border-top: 1px solid var(--hair); align-items: baseline; }
-  .lesson__n { font-family: var(--sc-font-display); font-weight: 400; font-size: 34px; line-height: 1; letter-spacing: -0.02em; color: var(--sheen); font-variant-numeric: tabular-nums; white-space: nowrap; }
-  .lesson p { margin: 0; font-size: 18px; line-height: 1.5; max-width: 52ch; }
+  .lessons { justify-content: flex-start; overflow: auto; padding-right: 6px; }
+  .sect { margin: 0 0 var(--sc-3); font: 640 22px var(--sc-font-display); font-stretch: 110%; }
+  .lesson { display: grid; grid-template-columns: minmax(0, 7.5rem) minmax(0, 1fr); gap: var(--sc-5); padding: 12px 0; border-top: 1px solid var(--hair); align-items: baseline; }
+  .lesson__n { font-family: var(--sc-font-display); font-weight: 400; font-size: 28px; line-height: 1; letter-spacing: -0.02em; color: var(--sheen); font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .lesson p { margin: 0; font-size: 16px; line-height: 1.5; max-width: 52ch; }
   .improve { list-style: none; padding: 0; margin: 0; }
-  .improve li { padding: 14px 0; border-top: 1px solid var(--hair); font-size: 17px; display: flex; gap: var(--sc-4); align-items: baseline; }
+  .improve li { padding: 9px 0; border-top: 1px solid var(--hair); font-size: 15px; display: flex; gap: var(--sc-4); align-items: baseline; }
   .improve li::before { content: ""; flex: none; width: .5rem; height: .5rem; border-radius: 50%; background: var(--sc-accent); transform: translateY(-.1em); }
-  .sect + .improve, .lesson + .sect { margin-top: var(--sc-7); }
-  .foot { margin-top: 8vh; padding-top: 18px; border-top: 1px solid var(--hair); font-size: 15px; color: var(--sc-ink-soft); }
+  .lesson + .sect { margin-top: var(--sc-5); }
+  .foot { margin: 16px 0 0; padding-top: 18px; border-top: 1px solid var(--hair); font-size: 15px; color: var(--sc-ink-soft); }
 
   @media (max-width: 860px) {
     main { padding-top: 56px; padding-bottom: 72px; }
@@ -177,13 +192,17 @@
     .figs { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     .fig:nth-child(3) { padding-left: 0; border-left: 0; }
     .fig:nth-child(n+3) { border-top: 1px solid var(--hair); }
-    .story { grid-template-columns: 1fr; gap: 0; }
-    .story__graphic { grid-column: 1; top: 56px; height: 56svh; padding: 10px 0; z-index: 4; background: var(--sc-canvas);
-      box-shadow: 0 14px 18px -6px var(--sc-canvas); }
-    .story__steps { grid-column: 1; grid-row: 2; padding: 2vh 0 30vh; position: relative; z-index: 3; }
-    .step { min-height: 64vh; justify-content: flex-end; }
-    .step > * { background: color-mix(in srgb, var(--sc-canvas) 90%, transparent); box-shadow: 0 0 0 10px color-mix(in srgb, var(--sc-canvas) 90%, transparent); border-radius: 2px; }
-    .mapcard { width: 62%; padding: 10px 12px; }
+    .story { grid-template-columns: 1fr; grid-template-rows: minmax(0, 1.25fr) minmax(0, 1fr); gap: 6px; height: calc(100dvh - 56px - 72px); }
+    .story__graphic { grid-column: 1; grid-row: 1; padding: 8px 0 0; }
+    .story__steps { grid-column: 1; grid-row: 2; justify-content: space-between; padding: 0 0 8px; }
+    .step:not(.is-active) { display: none; }
+    .step.is-active { padding: 6px 0 6px 14px; overflow: auto; }
+    .step.is-active .key { font-size: 22px; }
+    .step.is-active p:not(.key) { font-size: 16px; }
+    .stepper { margin-top: 8px; }
+    .stepper .btn.primary { flex: 1; }
+    .mapcard { width: auto; max-width: 70%; padding: 8px 12px; bottom: 0; }
+    .mc-row { display: none; }
     .lesson { grid-template-columns: 1fr; gap: var(--sc-2); }
   }
   @media (prefers-reduced-motion: reduce) {
@@ -376,18 +395,9 @@
           <div class="seg" id="res-h" role="group" aria-label="Plazo"><button type="button" data-h="0" aria-pressed="true">1 semana</button><button type="button" data-h="1" aria-pressed="false">1 mes</button><button type="button" data-h="2" aria-pressed="false">3 meses</button><button type="button" data-h="3" aria-pressed="false">1 año</button></div>
           <div class="seg" id="res-v" role="group" aria-label="Vista"><button type="button" data-v="serie" aria-pressed="true">Serie</button><button type="button" data-v="anos" aria-pressed="false">Año a año</button></div>
         </div>
-        <div class="graphic"><div id="g-result" class="fill" style="height:100%"></div></div>
-      </div></div>
-      <div class="story__steps">
-        <div class="step" data-step="0"><p class="key">0 de 4 plazos<small>Error típico (RMSE) en test, 2023 a 2026</small></p><p>La red no bate a la persistencia en ningún plazo. Tampoco es peor con seguridad: Diebold-Mariano, p &gt; 0,05.</p></div>
-        <div class="step" data-step="1"><p class="key">5,46 $ frente a 5,36 $<small>A 1 semana, red y persistencia</small></p><p>Casi empata: un 1,8 % más de error. Su rango acierta el 78 % de los días, como los cuantiles históricos.</p></div>
-        <div class="step" data-step="2"><p class="key">+61 % de error a 3 meses<small>28,24 $ frente a 17,54 $</small></p><p>Acierta si sube o baja el 60 % de los días, pero predice de media un +11 % cuando fue un +1,7 %.</p></div>
-        <div class="step" data-step="3"><p class="key">Del 48 al 58 % en 2026</p><p>Con la subida de 2026, el rango de los tres plazos cortos cubrió mucho menos del 80 %. El modelo no predice sucesos.</p></div>
-        <div class="step" data-step="4"><p class="key">2 de 16 casillas</p><p>Por años, solo gana a la persistencia a 1 mes en 2024, el año más tranquilo, y a 1 año en 2026.</p></div>
-      </div>
-    </div>
-
-    <section class="lessons" aria-labelledby="lec">
+        <div class="graphic">
+          <div class="layer is-on" data-layer="serie"><div id="g-result" class="fill"></div></div>
+          <div class="layer lessons" data-layer="lessons">
       <h2 class="sect" id="lec">Lo que se aprende</h2>
       <div class="lesson"><div class="lesson__n">78 %</div><p>El dato más fiable es el <b>rango a una semana</b>: cubre el 78 % de los casos en test, tan bien como los cuantiles históricos.</p></div>
       <div class="lesson"><div class="lesson__n">+8,5 %</div><p>Buena parte de la dificultad a una semana es el <b>retraso de publicación</b> del precio: corregirlo con el futuro del Brent gana a la persistencia en validación.</p></div>
@@ -403,7 +413,19 @@
         <li>Evaluar el periodo de prueba con varias semillas.</li>
       </ul>
       <p class="foot">Aprendizaje Automático, caso 2. Datos de la EIA (serie DCOILBRENTEU), FRED y Yahoo Finance.</p>
-    </section>
+</div>
+        </div>
+      </div></div>
+      <div class="story__steps">
+        <div class="step" data-step="0"><p class="key">0 de 4 plazos<small>Error típico (RMSE) en test, 2023 a 2026</small></p><p>La red no bate a la persistencia en ningún plazo. Tampoco es peor con seguridad: Diebold-Mariano, p &gt; 0,05.</p></div>
+        <div class="step" data-step="1"><p class="key">5,46 $ frente a 5,36 $<small>A 1 semana, red y persistencia</small></p><p>Casi empata: un 1,8 % más de error. Su rango acierta el 78 % de los días, como los cuantiles históricos.</p></div>
+        <div class="step" data-step="2"><p class="key">+61 % de error a 3 meses<small>28,24 $ frente a 17,54 $</small></p><p>Acierta si sube o baja el 60 % de los días, pero predice de media un +11 % cuando fue un +1,7 %.</p></div>
+        <div class="step" data-step="3"><p class="key">Del 48 al 58 % en 2026</p><p>Con la subida de 2026, el rango de los tres plazos cortos cubrió mucho menos del 80 %. El modelo no predice sucesos.</p></div>
+        <div class="step" data-step="4"><p class="key">2 de 16 casillas</p><p>Por años, solo gana a la persistencia a 1 mes en 2024, el año más tranquilo, y a 1 año en 2026.</p></div>
+        <div class="step" data-step="5"><p class="key">Lo que se aprende</p><p>El rango a 1 semana es lo más fiable y el retraso de publicación pesa más que la red. Y seis ideas para mejorarlo.</p></div>
+      </div>
+    </div>
+
   </section>
 
 </main>
@@ -451,16 +473,54 @@ tex("f-fut", String.raw`\hat{P}_{\text{hoy}} \;=\; P_{t}\cdot\frac{F_{\text{hoy}
 tex("f-pinball", String.raw`L_\tau(y, q) = \begin{cases} \tau\,(y - q) & \text{si } y \ge q \\ (1-\tau)\,(q - y) & \text{si } y < q \end{cases}`);
 
 /* ================= Pasos: qué paso está activo ================= */
-const stories = {};
+// Sin scroll: cada pestaña tiene un paso abierto. Se cambia con «Anterior» y «Siguiente», con las
+// flechas del teclado o pulsando su nombre en el índice; cada cambio vuelve a lanzar su animación.
+const stories = {}, curStep = {};
 function onStep(name, fn) { stories[name] = fn; }
-const stepIO = new IntersectionObserver((ents) => {
-  for (const e of ents) {
-    if (!e.isIntersecting) continue;
-    const step = e.target, story = step.closest("[data-story]");
-    $$(".step", story).forEach((s) => s.classList.toggle("is-active", s === step));
-    stories[story.dataset.story]?.(+step.dataset.step);
-  }
-}, { rootMargin: "-46% 0px -46% 0px" });
+const TAB_ORDER = $$(".tab").map((t) => [t.getAttribute("href").slice(2), t.textContent.trim()]);
+function setStep(name, k) {
+  const root = $(`[data-story="${name}"]`), steps = $$(".step", root), n = steps.length;
+  k = Math.max(0, Math.min(n - 1, k)); curStep[name] = k;
+  steps.forEach((s, i) => { const on = i === k; s.classList.toggle("is-active", on); s.setAttribute("aria-current", on ? "step" : "false"); s.tabIndex = on ? -1 : 0; });
+  const st = root.querySelector(".stepper");
+  st.querySelector(".count").textContent = `${k + 1} de ${n}`;
+  st.querySelector('[data-d="-1"]').disabled = k === 0;
+  const next = st.querySelector('[data-d="1"]'), ti = TAB_ORDER.findIndex(([id]) => id === name), nt = TAB_ORDER[ti + 1];
+  next.querySelector("span").textContent = k < n - 1 ? "Siguiente" : nt ? nt[1] : "Previsión";
+  stories[name]?.(k);
+}
+$$("[data-story]").forEach((root) => {
+  const name = root.dataset.story, list = root.querySelector(".story__steps");
+  list.insertAdjacentHTML("beforeend", `<div class="stepper"><button type="button" class="btn" data-d="-1" aria-label="Paso anterior"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg></button><span class="count" aria-live="polite"></span><button type="button" class="btn primary" data-d="1"><span>Siguiente</span><svg class="go" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button></div>`);
+  list.addEventListener("click", (e) => {
+    const b = e.target.closest(".stepper button");
+    if (b) {
+      const d = +b.dataset.d, n = $$(".step", root).length, k = curStep[name] ?? 0;
+      if (d > 0 && k === n - 1) {
+        const ti = TAB_ORDER.findIndex(([id]) => id === name), nt = TAB_ORDER[ti + 1];
+        if (nt) location.hash = `#/${nt[0]}`; else location.href = "../index.html";
+        return;
+      }
+      return setStep(name, k + d);
+    }
+    const s = e.target.closest(".step");
+    if (s && !s.classList.contains("is-active")) setStep(name, +s.dataset.step);
+  });
+  list.addEventListener("keydown", (e) => {
+    const s = e.target.closest(".step");
+    if (s && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); setStep(name, +s.dataset.step); }
+  });
+});
+document.addEventListener("keydown", (e) => {
+  const name = document.documentElement.dataset.tab;
+  if (!stories[name] || e.target.closest(".tabs, .seg, .tools, .chips, .pin, input")) return;
+  const d = { ArrowDown: 1, ArrowRight: 1, PageDown: 1, ArrowUp: -1, ArrowLeft: -1, PageUp: -1 }[e.key];
+  if (!d) return;
+  e.preventDefault();
+  setStep(name, (curStep[name] ?? 0) + d);
+});
+// Al entrar en una pestaña se repite la animación de su paso abierto
+addEventListener("tabchange", (e) => { if (stories[e.detail]) setStep(e.detail, curStep[e.detail] ?? 0); });
 function showLayer(root, name) { $$(".layer", root).forEach((l) => l.classList.toggle("is-on", l.dataset.layer === name)); }
 
 /* ================= Gráfico: historia del Brent ================= */
@@ -811,12 +871,8 @@ const GL = (svg, x1, x2, ys, y) => svg.append("g").selectAll("line").data(ys).jo
     [-20, -15, -10, -5, 0, 5].forEach((v) => ftext(svg, "lbl", x(v), H - m.b + 24, v === -20 ? "≤ −20 %" : (v > 0 ? "+" : v < 0 ? "−" : "") + Math.abs(v) + " %", "middle"));
     ftext(svg, "evt-sub", m.l, H - 12, "← peor que repetir el precio");
     ftext(svg, "evt-sub", W - m.r, H - 12, "mejor →", "end");
-    const leg = svg.append("g").attr("transform", "translate(0,26)");
-    ["rnn", "lstm", "gru"].forEach((k, i) => {
-      leg.append("circle").attr("cx", 6 + i * 110).attr("cy", -5).attr("r", 5).attr("fill", NC[k]);
-      ftext(leg, "spark-name", 18 + i * 110, 0, NN[k]);
-    });
-    ftext(leg, "evt-sub", 340, 0, "cada punto, un entrenamiento evaluado en validación");
+    // La leyenda de colores son los interruptores RNN, LSTM y GRU de encima
+    ftext(svg, "evt-sub", 0, 26, "cada punto, un entrenamiento evaluado en validación");
     const dots = svg.append("g").selectAll("circle").data(nodes).join("circle").attr("cx", (d) => d.x).attr("cy", (d) => d.y).attr("r", 3.7).attr("fill", (d) => NC[d.net]).attr("opacity", 0.92);
   DV.gridFilter = (on) => dots.interrupt().transition().duration(reduced ? 0 : 300).attr("opacity", (d) => (on.has(d.net) ? 0.92 : 0.06));
     let shown = false;
@@ -1190,10 +1246,9 @@ onStep("mercado", (k) => {
 // Datos: una etapa por paso; la tubería de arriba salta a cualquiera
 {
   const pipe = $("#pipe"), items = $$("li", pipe);
-  const steps = $$('[data-story="datos"] .step');
   pipe.addEventListener("click", (e) => {
     const b = e.target.closest("button");
-    if (b) steps[+b.dataset.k].scrollIntoView({ block: "center", behavior: reduced ? "auto" : "smooth" });
+    if (b) setStep("datos", +b.dataset.k);
   });
   const seg = $("#scale-seg");
   const setZ = (z) => { DV.hist(z); seg.querySelectorAll("button").forEach((b) => b.setAttribute("aria-pressed", String(!!+b.dataset.z === z))); };
@@ -1245,6 +1300,9 @@ onStep("validacion", (k) => {
   hSeg.addEventListener("click", (e) => { const b = e.target.closest("button"); if (b && !b.disabled) setH(+b.dataset.h); });
   vSeg.addEventListener("click", (e) => { const b = e.target.closest("button"); if (b) setV(b.dataset.v); });
   onStep("resultado", (k) => {
+    showLayer($('[data-story="resultado"]'), k === 5 ? "lessons" : "serie");
+    $("#res-tools").style.visibility = k === 5 ? "hidden" : "";
+    if (k === 5) return;
     setV(k === 4 ? "anos" : "serie");
     if (k <= 1) setH(0);
     if (k === 2) setH(2);
@@ -1253,7 +1311,7 @@ onStep("validacion", (k) => {
   });
 }
 
-$$(".step").forEach((s) => stepIO.observe(s));
+Object.keys(stories).forEach((name) => setStep(name, 0));
 
 /* ================= La gota: personaje en 3D ================= */
 const canvas = $("#gl");

@@ -1,6 +1,6 @@
 # web
 
-Web del proyecto en dos partes: el producto (previsión del Brent a 4 plazos en una pantalla y un clic, Vite + TypeScript + ONNX Runtime Web) y el estudio, «El precio del Brent» (desarrollo del trabajo en seis pestañas con scroll corto, Three.js, D3 y KaTeX). Las reglas generales están en el `CLAUDE.md` de la raíz.
+Web del proyecto en dos partes: el producto (previsión del Brent a 4 plazos en una pantalla y un clic, Vite + TypeScript + ONNX Runtime Web) y el estudio, «El precio del Brent» (desarrollo del trabajo en seis pestañas sin scroll, Three.js, D3 y KaTeX). Las reglas generales están en el `CLAUDE.md` de la raíz.
 
 ## Reglas clave
 
@@ -43,7 +43,7 @@ make web-build     # Compilación a web/dist (lo ejecuta el usuario)
 | `src/model.ts` | Réplica del preprocesado de `features.py` e inferencia ONNX |
 | `src/icons.ts` | Iconos SVG (flecha) |
 | `src/product.css` | Estilos del producto, solo tema claro |
-| `public/brent/` | «El precio del Brent»: seis pestañas (`section[data-tab]`: Inicio, Mercado, Datos, Redes, Validación, Resultado), cada una con 4 a 6 pasos y el gráfico fijo; `nav.js` (rutas `#/pestaña` y transición entre vistas), `ui.css` (pestañas, botones, control segmentado y fondo de ambiente), `map.js` (mapa de los mercados de entrada), `arch.js` (celda RNN, LSTM y GRU interactiva), `scrollcraft.css` (tokens) y sus datos |
+| `public/brent/` | «El precio del Brent»: seis pestañas (`section[data-tab]`: Inicio, Mercado, Datos, Redes, Validación, Resultado), cada una cabe en una pantalla: índice de 4 a 6 pasos con «Anterior» y «Siguiente» (también flechas del teclado) y el gráfico al lado; cada cambio de paso o de pestaña relanza su animación; `nav.js` (rutas `#/pestaña` y transición entre vistas), `ui.css` (pestañas, botones, control segmentado y fondo de ambiente), `map.js` (mapa de los mercados de entrada), `arch.js` (celda RNN, LSTM y GRU interactiva), `scrollcraft.css` (tokens) y sus datos |
 
 ## Convenciones
 
