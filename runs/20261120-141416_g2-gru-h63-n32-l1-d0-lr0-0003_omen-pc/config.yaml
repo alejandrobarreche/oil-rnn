@@ -1,0 +1,199 @@
+seed: 42
+task: regression
+data_kind: time_series
+data:
+  source:
+    type: code
+    filename: dataset.csv
+    start: '2000-01-01'
+    end: '2026-11-11'
+    calendar: brent
+    fred:
+      brent: DCOILBRENTEU
+      wti: DCOILWTICO
+      henry_hub: DHHNGSP
+      ecb_deposit_rate: ECBDFR
+      usd_per_eur: DEXUSEU
+      cny_per_usd: DEXCHUS
+      vix: VIXCLS
+    yahoo_ohlcv:
+      brent_fut: BZ=F
+      wti_fut: CL=F
+    yahoo_close:
+      copper: HG=F
+      gold: GC=F
+      dollar_index: DX-Y.NYB
+  na_values: []
+  target: brent
+  features:
+  - brent
+  - wti
+  - henry_hub
+  - ecb_deposit_rate
+  - usd_per_eur
+  - cny_per_usd
+  - vix
+  - wti_fut_open
+  - wti_fut_high
+  - wti_fut_low
+  - wti_fut_close
+  - wti_fut_volume
+  - copper
+  - gold
+  - dollar_index
+  time_column: date
+  fill_missing: ffill
+  window: 20
+  horizon: 63
+  inputs:
+    transform: returns
+    diff:
+    - ecb_deposit_rate
+    log1p_diff:
+    - wti_fut_volume
+    floor:
+      wti: 1.0
+      wti_fut_open: 1.0
+      wti_fut_high: 1.0
+      wti_fut_low: 1.0
+      wti_fut_close: 1.0
+    volatility: 21
+    clip: 5
+  target_mode: log_return
+  val_size: 0.15
+  test_size: 0.15
+model:
+  quantiles:
+  - 0.1
+  - 0.5
+  - 0.9
+  cell: gru
+  hidden_size: 32
+  num_layers: 1
+  dropout: 0.0
+  ensemble: 5
+  shrink_grid:
+  - 0.0
+  - 0.1
+  - 0.2
+  - 0.3
+  - 0.4
+  - 0.5
+  - 0.6
+  - 0.7
+  - 0.8
+  - 0.9
+  - 1.0
+train:
+  epochs: 60
+  batch_size: 64
+  learning_rate: 0.0003
+  patience: 10
+  min_epochs: 10
+cv:
+  folds: 4
+  block: 504
+  holdout: 252
+  naive_futures:
+    column: brent_fut_close
+    lags:
+    - 1
+    - 2
+    - 3
+    - 5
+    - 7
+sweep:
+  prefix: g1
+  cells:
+  - rnn
+  - lstm
+  - gru
+  horizons:
+  - 5
+  - 21
+  - 63
+  - 252
+  hidden_size:
+  - 32
+  - 64
+  - 128
+  - 256
+  depth:
+  - - 1
+    - 0.0
+  - - 2
+    - 0.0
+  - - 2
+    - 0.3
+  learning_rate:
+  - 0.001
+  - 0.0003
+  - 0.0001
+  select_by: pinball
+grids:
+  g2:
+    cells:
+    - rnn
+    - lstm
+    - gru
+    horizons:
+    - 63
+    - 252
+    hidden_size:
+    - 16
+    - 32
+    - 64
+    depth:
+    - - 1
+      - 0.0
+    - - 2
+      - 0.2
+    learning_rate:
+    - 0.001
+    - 0.0003
+    fixed:
+      data.window: 20
+      model.ensemble: 5
+    select_by: rmse_shrunk
+web:
+  models:
+    5: 20261117-094043_final-gru16-h5_mac
+    21: 20261112-125257_final-lstm-h21_omen-pc
+    63: 20261112-125335_final-gru-h63_omen-pc
+    252: 20261112-125438_final-rnn-h252_omen-pc
+  events:
+  - start: '2008-01-01'
+    end: '2008-12-31'
+    kind: max
+    label: Máximo de 2008
+    text: Máximo de toda la serie, al final de la expansión previa a la crisis financiera.
+  - start: '2008-07-01'
+    end: '2009-06-30'
+    kind: min
+    label: Crisis financiera
+    text: Desplome posterior por la crisis financiera, que llevó a la economía mundial
+      a una recesión.
+  - start: '2015-01-01'
+    end: '2016-12-31'
+    kind: min
+    label: Exceso de oferta
+    text: Final de la caída de 2014–2016, provocada por un exceso de oferta de crudo.
+  - start: '2020-01-01'
+    end: '2020-12-31'
+    kind: min
+    label: Pandemia
+    text: Desplome por la pandemia, que frenó la actividad y la demanda mundiales.
+  - start: '2022-01-01'
+    end: '2022-12-31'
+    kind: max
+    label: Invasión de Ucrania
+    text: Subida tras la invasión de Ucrania.
+  - start: '2026-01-01'
+    end: '2026-12-31'
+    kind: max
+    label: Subida de 2026
+    text: Movimiento más reciente de la serie. Su causa no se documenta en este proyecto.
+mlflow:
+  experiment: oil-rnn
+  tracking_uri: local
+  log_models: true
