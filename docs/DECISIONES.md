@@ -29,6 +29,16 @@ Las cuatro redes tienen más error que la persistencia, pero ninguna diferencia 
 | 63 | GRU | −61 % | 68 % / 86 % | 0,27 |
 | 252 | RNN | −45 % | 92 % / 92 % | 0,40 |
 
+Rejilla g2 a 63 y 252 días (redes pequeñas, media de 5 semillas, contracción w elegida en validación). Es una segunda mirada a test: la regla de elección se fijó en git antes de entrenar.
+
+| h | Red | w | Mejora RMSE validación (pliegues 2–4) | Mejora RMSE test | Cobertura 80 % (red / referencia) | p (error cuadrático) |
+| --- | --- | --- | --- | --- | --- | --- |
+| 63 | GRU-64, 2 capas | 0,6 | +3,1 % | −11,6 % | 83 % / 86 % | 0,39 |
+| 252 | RNN-16 | 0 | 0,0 % | 0,0 % | 97 % / 92 % | — |
+
+- **63 días**: el error pasa de −61 % a −11,6 % y mejora en los cuatro años de test (2023: −3 %, 2024: −11 %, 2025: −29 %, 2026: −12 %; antes, de −58 % a −93 %). El rendimiento medio predicho baja de +11,1 % a +5,3 %; el real es +1,7 %. Sigue sin ganar a la persistencia.
+- **252 días**: en validación, w = 0 es la mejor en las 36 configuraciones: ninguna red aporta señal a un año, y el modelo da el precio de hoy. Con todas empatadas, la elección de la RNN-16 es arbitraria. El intervalo, que sí es de la red, cubre el 97 %: más ancho de lo necesario.
+
 A 5 días, la GRU-256 publicada antes daba −3,6 % (p = 0,22). El cambio a la GRU-16 se decidió en validación, antes de ver esta cifra.
 
 A 63 y 252 días solo hay unos 15 y 3 pronósticos independientes. «No significativo» no es «igual»: no se puede decir que la red sea peor ni mejor.
