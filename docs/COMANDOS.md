@@ -673,7 +673,7 @@ make web-dev
 - **Qué pasarle a Claude**: un aviso cuando termine, y la previsión a 3 meses y 1 año que da la web (precio y franja). Claude hace el commit de `market.json`, `explain.json` y las figuras, y completa la diapositiva de la demostración.
 - **Resultado (20/11)**: lo hizo Claude a petición del usuario. ONNX de `model-v3` descargados (los cuatro coinciden con el hash del manifiesto); `market.json` recuperado de `c957cd6` (datos hasta el 17/11) en lugar de `make update`; `explain.json`, figuras del README y `web/public/brent/data.json` regenerados. Previsión del 17/11: 3 meses 114,3 $ (92–140 $), 1 año 92,9 $ (55–154 $).
 
-## 29. Mac y Windows GPU · 20/11/2026 · ⏳: publicar los modelos en Hugging Face
+## 29. Mac y Windows GPU · 20/11/2026 · ✅: publicar los modelos en Hugging Face
 
 - **Por qué**: subir los cuatro modelos de `web.models` (ONNX y pesos PyTorch) a un repositorio público `alejandrobarreche/oil-rnn`. Los pesos de h = 5 están en el Mac; los de 21, 63 y 252, en el Windows, así que cada máquina sube los suyos.
 - **Comprobado por Claude**: `make test` y `make lint` pasan; `--dry-run` en el Mac con `HORIZONS=5` arma 8 archivos (README, `onnx/h5.onnx`, `manifest.json` y `pytorch/h5/`). No se ha subido nada.
@@ -703,3 +703,4 @@ make hub-upload HF_REPO=alejandrobarreche/oil-rnn HORIZONS=21,63,252
 - **No hagas `git push` antes de que `poetry.lock` esté en un commit**: `pyproject.toml` ya tiene el grupo `hub` y la CI fallaría con el lock antiguo.
 - **Qué pasarle a Claude**: la salida de `make lock` (Claude hace commit de `poetry.lock`), la de cada `make hub-upload` y la URL del repositorio en Hugging Face, para enlazarlo en el README.
 - **Resultado Mac (20/11)**: `make lock` y `make hub-install` sin errores (huggingface-hub 2.4.0); repositorio `alejandrobarreche/oil-rnn` creado y h = 5 subido (8 archivos, commit `20f1303` en Hugging Face). Falta el Windows.
+- **Resultado Windows (20/11)**: subidos h = 21, 63 y 252 según el usuario. Claude comprobó con la API de Hugging Face los 26 archivos: los hashes de los cuatro ONNX y el `manifest.json` coinciden con `web/public/model/`, y cada `model_card.json` con su run de `web.models`.
