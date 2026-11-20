@@ -613,7 +613,8 @@ def cell_paths(cfg: dict, manifest: dict, market: dict) -> tuple[list[dict], dic
 def cell_comparison(cfg: dict) -> pd.DataFrame:
     """Validación (make cv) de las tres celdas por horizonte: la mejor configuración de la
     rejilla (menor cv_<sweep.select_by> con semilla 42) y su mejora de RMSE frente a la
-    persistencia (cv_skill_vs_baseline) en todas las semillas con esa configuración. En la celda
+    persistencia (cv_skill_shrunk si el run tiene contracción; si no, cv_skill_vs_baseline) en
+    todas las semillas con esa configuración. En la celda
     elegida, la configuración es la del modelo publicado, aunque venga de otra rejilla (m1…)."""
     prefix, key = cfg["sweep"]["prefix"], f"cv_{cfg['sweep']['select_by']}"
     table = runs_table()
@@ -628,6 +629,8 @@ def cell_comparison(cfg: dict) -> pd.DataFrame:
         else:
             same = same_config(runs, group.loc[group[key].idxmin()])
         skill = same["cv_skill_vs_baseline"]
+        if "cv_skill_shrunk" in same:  # con contracción hacia la persistencia, la que se usa
+            skill = same["cv_skill_shrunk"].fillna(skill)
         rows.append(
             {
                 "horizon": int(h),

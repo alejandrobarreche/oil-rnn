@@ -64,7 +64,7 @@ A 63 y 252 días solo hay unos 15 y 3 pronósticos independientes. «No signific
 | Selección | En g2, elegir por el RMSE de validación con la contracción (pliegues 2 a 4) | Es la métrica de la tabla de resultados. Test ya se había mirado con los modelos g1: la evaluación de g2 es una segunda mirada. La regla de elección y `--finalize` quedan en git antes de entrenar, y la tabla de test dará las dos versiones. |
 | Selección | A 5 días, GRU de 16 unidades en vez de 256 | Empatan en validación (3 semillas; diferencia menor que la variación entre semillas). Se elige por coste. El modelo final se entrenó en el Mac, no en la GPU. |
 | Intervalo | Ajustar el ancho del intervalo con los datos de validación | En 2026 cubre solo el 48–58 % de los casos, en vez del 80 %. |
-| Web | Enseñar la previsión a 4 plazos (p50 y franja p10–p90 desde hoy), sin compra ni modo «En el pasado» | En test la red tiene más MAE que la persistencia en los 4 plazos, así que no se puede vender ahorro; cada plazo muestra su cobertura de test junto a la de la persistencia. No se enseñan días pasados concretos. |
+| Web | Enseñar la previsión a 4 plazos (p50 y franja p10–p90 desde hoy), sin compra ni modo «En el pasado» | En test la red tiene más MAE que la persistencia en 3 plazos y el mismo a 1 año (allí el modelo es la persistencia), así que no se puede vender ahorro; cada plazo muestra su cobertura de test junto a la de la persistencia. No se enseñan días pasados concretos. |
 | Actualización | Renovar cada día los datos de la web (`make update`) sin reentrenar | Las redes no aprenden de los datos nuevos; el preprocesado sigue siendo el de train. Reentrenar es `make train`, a mano. |
 
 ## Mejoras pendientes

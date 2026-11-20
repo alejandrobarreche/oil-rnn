@@ -3,7 +3,7 @@
 **Finalidad**: registro de los comandos que el usuario ejecuta en cada máquina, con su resultado.
 **Cuándo usarlo**: cada vez que Claude da un comando al usuario y cuando el usuario devuelve la salida.
 **Resultado**: mensajes en orden cronológico, cada uno con máquina, estado, bloques para copiar y resultado.
-**Estado**: ⏳ la 27.
+**Estado**: ⏳ la 28.
 
 ## 0. Antes de empezar: cómo se lee y se escribe este chat
 
@@ -624,7 +624,7 @@ git push
 - **Qué pasarle a Claude**: la salida de `make compare ARGS="--grid g2"` y las métricas que imprime el paso 2.
 - **Resultado (20/11)**: 72 runs g2 y 2 finales, subidos en `597ba82`. 63 días: GRU-64 de 2 capas, w = 0,6, +3,1 % en validación y −11,6 % en test (antes −61 %), cobertura 83 %. 252 días: w = 0 en todas las configuraciones, el modelo es la persistencia (0,0 % en test, antes −45 %).
 
-## 27. Windows GPU · 20/11/2026 · ⏳: publicar los modelos g2 a 63 y 252 días en la web (Release `model-v3`)
+## 27. Windows GPU · 20/11/2026 · ✅: publicar los modelos g2 a 63 y 252 días en la web (Release `model-v3`)
 
 - **Qué hace**: descarga los ONNX de `model-v2` (5 y 21 días, que no cambian, para que coincidan con el hash del manifiesto), exporta solo 63 y 252 días con los pesos de esta máquina, regenera los datos de la web y de la página explicativa, comprueba la paridad Python ↔ TypeScript y publica los cuatro ONNX como Release `model-v3`.
 - **Comprobado por Claude**: `web.models` apunta a los dos runs `g2final`; `make test` y `make lint` pasan; una red de 5 miembros con contracción se exporta a ONNX igual que PyTorch. La exportación no se ha ejecutado.
@@ -653,4 +653,22 @@ git push
 
 - **Si `gh auth status` dice que no hay sesión**: `gh auth login` y repite.
 - **Qué pasarle a Claude**: la salida de `make export-web` y `make web-test`, y un aviso cuando esté subido.
+- **Resultado (20/11)**: subido en `5c5c99b` según el usuario: Release `model-v3` con los cuatro ONNX, y `manifest.json` y `quality.json` con los modelos g2. Efecto no buscado: `market.json` se regeneró con los datos de Windows y quedó hasta el 03/11 (antes, 17/11).
+
+## 28. Mac · 20/11/2026 · ⏳: ONNX de `model-v3`, datos al día y figuras de validación
+
+- **Por qué**: el Mac tiene los ONNX antiguos de 63 y 252 días, así que `make export-explain` falla (ventana 60 frente a 20). Además, `market.json` quedó hasta el 03/11, y la figura de validación del README debe mostrar la mejora con contracción, la que usa el modelo (commit de `explore.py`).
+- **Comprobado por Claude**: `make test` y `make lint` pasan. Estos comandos no se han ejecutado.
+
+```bash
+git pull --rebase
+conda activate oil-rnn
+gh release download model-v3 --repo alejandrobarreche/oil-rnn --pattern "h*.onnx" --dir web/public/model --clobber
+make update
+make export-explain
+make readme-figures
+make web-dev
+```
+
+- **Qué pasarle a Claude**: un aviso cuando termine, y la previsión a 3 meses y 1 año que da la web (precio y franja). Claude hace el commit de `market.json`, `explain.json` y las figuras, y completa la diapositiva de la demostración.
 
