@@ -1,5 +1,7 @@
 """Pliegues walk-forward y purga (sin data/)."""
 
+import json
+
 import numpy as np
 import pandas as pd
 import pytest
@@ -99,3 +101,49 @@ def test_rejilla_de_la_comparativa():
     assert len(combos) == n * len(s["learning_rate"])
     assert len({name for name, _ in combos}) == len(combos)  # el nombre identifica la combinación
     assert all(name.startswith(f"{s['prefix']}-") for name, _ in combos)
+
+
+def test_contraccion_por_pliegues_solo_con_el_pasado(tmp_path):
+    from oil_rnn import shrink
+    from oil_rnn.config import load_config
+    from oil_rnn.cv import _shrink
+
+    class _Run:
+        dir, logged = tmp_path, {}
+
+        def log_metrics(self, m, step=None):
+            self.logged.update(m)
+
+    def frame(seed, scale):  # la red predice `scale` veces el rendimiento real más ruido
+        rng = np.random.default_rng(seed)
+        r = rng.normal(0, 0.1, 400)
+        pred = 100 * np.exp(scale * r + rng.normal(0, 0.1, 400))
+        return pd.DataFrame(
+            {"y_true": 100 * np.exp(r), "y_pred": pred, "y_baseline": 100.0, "y_lo": pred * 0.9}
+        ).assign(y_hi=lambda d: d["y_pred"] * 1.1)
+
+    cfg = load_config(overrides=["data.horizon=5"])
+    frames = [frame(k, 3.0) for k in range(4)]  # exagera el movimiento: w < 1
+    weights, out = _shrink(cfg, frames, _Run())
+    grid = cfg["model"]["shrink_grid"]
+    assert weights[1] == shrink.choose(frames[:1], grid, "log_return")  # pliegue 2: solo el 1
+    assert weights[-1] == out["cv_shrink"] == shrink.choose(frames, grid, "log_return")
+    assert 0 < out["cv_shrink"] < 1
+    assert json.loads((tmp_path / "shrink.json").read_text())["w"] == out["cv_shrink"]
+    assert out["cv_skill_shrunk"] > 0  # contraer gana a la persistencia aquí
+    # Sin señal (predicción = ruido), la mejor w es 0: la persistencia
+    noise = [frame(k, 0.0) for k in range(4)]
+    assert shrink.choose(noise, grid, "log_return") == 0.0
+
+
+def test_rejilla_g2():
+    from oil_rnn.config import load_config
+    from oil_rnn.sweep import combinations, select_grid
+
+    cfg = select_grid(load_config(), "g2")
+    combos = combinations(cfg)
+    assert all(name.startswith("g2-") for name, _ in combos)
+    assert len(combos) == 3 * 2 * 3 * 2 * 2
+    assert all("model.ensemble=5" in sets and "data.window=20" in sets for _, sets in combos)
+    with pytest.raises(KeyError):
+        select_grid(load_config(), "no-existe")

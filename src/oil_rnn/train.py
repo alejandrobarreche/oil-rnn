@@ -1,7 +1,8 @@
 """Entrena el modelo final (train + val) y lo registra como un run. Se evalúa con make evaluate.
 La comparación de modelos se hace con make cv (pliegues walk-forward).
 
-make train NAME=baseline CALIB=<run de make cv con la misma configuración>
+make train NAME=baseline CALIB=<run de make cv>   # usa la config, la contracción y la
+                                                   # corrección del intervalo de ese run
 make train NAME=prueba ARGS="--set train.learning_rate=0.0005"
 """
 
@@ -15,7 +16,7 @@ from .config import add_config_args, load_config, require
 from .data import load_train_val, training_segments
 from .features import REQUIRED, Preprocessor
 from .metrics import compute_metrics, save_eval_plots
-from .model import Predictor, save_model, set_seed, train_model
+from .model import Predictor, save_model, set_seed, set_shrink, train_model
 from .paths import relative, run_paths
 from .run import Run, finish_process
 
@@ -31,14 +32,27 @@ def load_calibration(cv_run: str, cfg: dict) -> dict:
     path = folder / "conformal.json"
     if not path.exists():
         raise FileNotFoundError(f"No existe {relative(path)}: ¿es un run de make cv con cuantiles?")
-    cv_cfg = load_config(folder / "config.yaml")
+    check_same_config(cv_run, cfg)
+    return {**json.loads(path.read_text(encoding="utf-8")), "source_run": cv_run}
+
+
+def load_shrink(cv_run: str, cfg: dict) -> dict | None:
+    """shrink.json del run de make cv (contracción hacia la persistencia), o None si no tiene."""
+    path = run_paths(cv_run)["run"] / "shrink.json"
+    if not path.exists():
+        return None
+    check_same_config(cv_run, cfg)
+    return {**json.loads(path.read_text(encoding="utf-8")), "source_run": cv_run}
+
+
+def check_same_config(cv_run: str, cfg: dict) -> None:
+    cv_cfg = load_config(run_paths(cv_run)["run"] / "config.yaml")
     different = [k for k in SAME_AS_CV if cv_cfg.get(k) != cfg.get(k)]
     if different:
         raise ValueError(
             f"La configuración de {cv_run} no coincide con la de este entrenamiento en "
             f"{different}: la corrección del intervalo no sería válida para este modelo."
         )
-    return {**json.loads(path.read_text(encoding="utf-8")), "source_run": cv_run}
 
 
 def run_training(argv: list[str] | None = None) -> str:
@@ -49,10 +63,15 @@ def run_training(argv: list[str] | None = None) -> str:
         "--calibration", default=None, help="run de make cv cuya corrección del intervalo se usa"
     )
     args = parser.parse_args(argv)
+    # Con CALIB y sin --config, la configuración es la del run de cv: así el modelo final no
+    # puede diferir de lo que se validó (las --set se aplican encima y se comprueban).
+    if args.calibration and not args.config:
+        args.config = run_paths(args.calibration)["run"] / "config.yaml"
     cfg = load_config(args.config, args.overrides)
     require(cfg, *REQUIRED)
     set_seed(cfg.get("seed", 42))
     conf = load_calibration(args.calibration, cfg) if args.calibration else None
+    shrunk = load_shrink(args.calibration, cfg) if args.calibration else None
     if conf is None and cfg["model"].get("quantiles"):
         log.warning("Sin CALIB=<run de make cv>: el intervalo queda sin calibrar.")
 
@@ -65,7 +84,10 @@ def run_training(argv: list[str] | None = None) -> str:
 
     with Run(cfg, name=args.name) as run:
         fitted = train_model(cfg, fit_df, stop_df, run)
-        save_model({**fitted, "conformal": conf}, run.model_dir, cfg)
+        if shrunk:
+            set_shrink(fitted, shrunk["w"])
+            run.log_metrics({"shrink": shrunk["w"]})
+        save_model({**fitted, "conformal": conf, "shrink": shrunk}, run.model_dir, cfg)
 
         # Se recarga desde disco: así se comprueba que lo guardado sirve para inferencia.
         # El tramo de parada decidió la época: sus métricas son optimistas, solo de control.

@@ -40,7 +40,7 @@ data:
   features: [brent, wti, henry_hub, ecb_deposit_rate, usd_per_eur, cny_per_usd, vix, wti_fut_open, wti_fut_high, wti_fut_low, wti_fut_close, wti_fut_volume, copper, gold, dollar_index]
   time_column: date              # columna de fecha; los datos se ordenan por ella
   fill_missing: ffill            # PROVISIONAL · ffill = repetir el último valor conocido · null = no rellenar
-  window: 60                     # PROVISIONAL · pasos de historia que ve la red; 60 frente a 120 se decide en validación
+  window: 20                     # pasos de historia que ve la red (≈ 1 mes): con redes pequeñas, 20 y 60 dan lo mismo en validación
   horizon: 5                     # días hábiles por delante. Un modelo por horizonte: 5, 21, 63 y 252 (--set data.horizon=N)
   inputs:                        # cómo entra cada feature en la red (antes de estandarizar)
     transform: returns           # returns = cambio diario, log(x[t]/x[t-1]) salvo las listas de abajo · level = el valor
@@ -59,6 +59,8 @@ model:
   hidden_size: 64                # PROVISIONAL
   num_layers: 2                  # PROVISIONAL
   dropout: 0.1                   # PROVISIONAL
+  ensemble: 5                    # redes con semillas seed, seed+1…; la predicción es su media · 1 = una sola red
+  shrink_grid: [0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]  # contracción w hacia la persistencia (shrink.py), elegida en make cv · null = no
 
 train:
   epochs: 60
@@ -83,6 +85,16 @@ sweep:                           # comparativa de la fase 3 (make sweep · make 
   depth: [[1, 0.0], [2, 0.0], [2, 0.3]]   # [num_layers, dropout]: con 1 capa PyTorch no aplica dropout
   learning_rate: [0.001, 0.0003, 0.0001]
   select_by: pinball             # métrica cv_<select_by> (media de pliegues) que elige la mejor; menor = mejor
+
+grids:                           # otras rejillas: make sweep ARGS="--grid g2" · make compare ARGS="--grid g2"
+  g2:                            # 3 meses y 1 año: redes pequeñas, conjunto de 5 semillas y contracción
+    cells: [rnn, lstm, gru]
+    horizons: [63, 252]
+    hidden_size: [16, 32, 64]
+    depth: [[1, 0.0], [2, 0.2]]
+    learning_rate: [0.001, 0.0003]
+    fixed: {data.window: 20, model.ensemble: 5}
+    select_by: rmse_shrunk       # RMSE de los pliegues 2..4 con la w elegida solo con los anteriores
 
 web:                             # make export-web: modelo de cada horizonte (decisión de la fase 4, docs/PLAN.md)
   models:

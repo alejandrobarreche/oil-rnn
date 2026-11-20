@@ -7,6 +7,7 @@ Cada pliegue entrena con todo lo anterior a su bloque (purgado, con el último a
 stopping) y predice el bloque, que solo se usa para medir. Test no interviene.
 
 runs/<id>/metrics.json        fold<k>_<métrica> por pliegue y cv_<métrica> = media de pliegues
+runs/<id>/shrink.json         contracción hacia la persistencia para make train CALIB=<id>
 runs/<id>/conformal.json      corrección del intervalo para make train CALIB=<id>
 artifacts/<id>/cv_predictions.csv   predicciones de cada bloque
 """
@@ -19,7 +20,7 @@ import json
 import numpy as np
 import pandas as pd
 
-from . import conformal
+from . import conformal, shrink
 from .config import add_config_args, load_config, require
 from .data import fold_boundaries, load_train_val, segment, training_segments
 from .features import REQUIRED, Preprocessor
@@ -39,15 +40,55 @@ class _FoldRun:
         self.run.log_metrics({self.prefix + k: v for k, v in metrics.items()}, step=step)
 
 
-def _calibrate(cfg: dict, frames: list[pd.DataFrame], run: Run) -> dict[str, float]:
+def _shrink(cfg: dict, frames: list[pd.DataFrame], run: Run) -> tuple[list[float], dict]:
+    """Contracción hacia la persistencia (shrink.py) elegida con los bloques.
+
+    Para medirla sin mirar el futuro, el pliegue k se contrae con la w elegida solo con los
+    anteriores (el 1 no tiene con qué). La w que se guarda (shrink.json, la usa make train
+    CALIB=<este run>) sale de todos los bloques. Devuelve la w de cada pliegue (la del 1 es la
+    final, solo para calibrar) seguida de la final, y las métricas."""
+    grid = [float(w) for w in cfg["model"]["shrink_grid"]]
+    mode = cfg["data"]["target_mode"]
+    weights, rows = [], []
+    for k in range(1, len(frames)):
+        w = shrink.choose(frames[:k], grid, mode)
+        f = shrink.apply(frames[k], w, mode)
+        rmse = float(np.sqrt(shrink.mse(f)))
+        base = float(np.sqrt(np.mean((f["y_true"] - f["y_baseline"]) ** 2)))
+        rows.append({"rmse": rmse, "baseline_rmse": base, "skill": 1 - rmse / base, "w": w})
+        weights.append(w)
+        run.log_metrics({f"fold{k + 1}_{m}_shrunk": v for m, v in rows[-1].items()})
+    final = shrink.choose(frames, grid, mode)
+    (run.dir / "shrink.json").write_text(
+        json.dumps({"w": final, "grid": grid, "mode": mode, "folds": len(frames)}, indent=2),
+        encoding="utf-8",
+    )
+    summary = {
+        "cv_rmse_shrunk": float(np.mean([r["rmse"] for r in rows])),  # media de los pliegues 2..k
+        "cv_baseline_rmse_shrunk": float(np.mean([r["baseline_rmse"] for r in rows])),
+        "cv_skill_shrunk": float(np.mean([r["skill"] for r in rows])),
+        "cv_shrink": final,
+    }
+    return [final, *weights, final], summary
+
+
+def _calibrate(
+    cfg: dict, frames: list[pd.DataFrame], run: Run, weights: list[float] | None = None
+) -> dict[str, float]:
     """Calibración conforme del intervalo con las predicciones de los bloques.
 
     Para medirla sin mirar el futuro, el pliegue k se corrige solo con los pliegues anteriores
     (el 1 no tiene con qué). La corrección que se guarda (conformal.json, la usa make train
-    CALIB=<este run>) sale de los cuatro bloques, todos anteriores a test."""
+    CALIB=<este run>) sale de los cuatro bloques, todos anteriores a test.
+
+    Con `weights` (de _shrink) se calibra sobre las predicciones contraídas: en el pliegue k,
+    con la w de ese pliegue, y la corrección final con la w final, como hará el modelo final."""
     q = cfg["model"]["quantiles"]
     coverage = max(q) - min(q)
     mode, h = cfg["data"]["target_mode"], int(cfg["data"]["horizon"])
+
+    def shrunk(parts: list[pd.DataFrame], w: float | None) -> list[pd.DataFrame]:
+        return parts if w is None else [shrink.apply(f, w, mode) for f in parts]
 
     def fit(parts: list[pd.DataFrame]) -> dict:
         d = pd.concat(parts)
@@ -55,13 +96,14 @@ def _calibrate(cfg: dict, frames: list[pd.DataFrame], run: Run) -> dict[str, flo
 
     cov, width = [], []
     for k in range(1, len(frames)):
-        conf, f = fit(frames[:k]), frames[k]
+        parts = shrunk(frames[: k + 1], weights[k] if weights else None)
+        conf, f = fit(parts[:k]), parts[k]
         lo, hi = conformal.apply(f["y_lo"], f["y_pred"], f["y_hi"], conf["correction"], mode)
         cov.append(float(np.mean((lo <= f["y_true"]) & (f["y_true"] <= hi))))
         width.append(float(np.mean(hi - lo)))
         run.log_metrics({f"fold{k + 1}_coverage_cqr": cov[-1], f"fold{k + 1}_width_cqr": width[-1]})
 
-    final = fit(frames)
+    final = fit(shrunk(frames, weights[-1] if weights else None))
     (run.dir / "conformal.json").write_text(json.dumps(final, indent=2), encoding="utf-8")
     return {
         "cv_coverage_cqr": float(np.mean(cov)),  # media de los pliegues 2..k
@@ -98,8 +140,12 @@ def run_cv(argv: list[str] | None = None) -> str:
             frames.append(predictions_frame(out).assign(fold=k))
 
         summary = {f"cv_{m}": float(np.mean([f[m] for f in per_fold])) for m in per_fold[0]}
+        weights = None
+        if cfg["model"].get("shrink_grid"):
+            weights, shrunk_summary = _shrink(cfg, frames, run)
+            summary |= shrunk_summary
         if fitted["quantiles"]:
-            summary |= _calibrate(cfg, frames, run)
+            summary |= _calibrate(cfg, frames, run, weights)
         run.log_metrics(summary)
         pd.concat(frames).to_csv(run.artifacts_dir / "cv_predictions.csv", index=False)
 

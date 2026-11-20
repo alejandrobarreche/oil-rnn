@@ -4,6 +4,9 @@ make sweep                          lanza las combinaciones de `sweep` que falte
 make sweep ARGS="--dry-run"         solo las lista
 make compare                        mejor configuración por red y horizonte (sweep.select_by)
 make compare ARGS="--all"           todas las combinaciones terminadas
+make sweep ARGS="--grid g2"         otra rejilla de `grids` (sus claves mandan sobre `sweep`)
+make sweep ARGS="--grid g2 --finalize"   entrena el modelo final de la mejor por horizonte
+make sweep ARGS="--grid g2 --finalize --evaluate"   y lo evalúa en test (make evaluate)
 
 Cada combinación es un `make cv` independiente (un proceso por run: en Windows+CUDA el proceso
 termina con TerminateProcess, ver run.finish_process). Su nombre la identifica, así que una
@@ -25,7 +28,7 @@ import numpy as np
 import yaml
 
 from .config import add_config_args, load_config, require
-from .paths import RUNS_DIR
+from .paths import RUNS_DIR, latest_run_id
 
 
 def combinations(cfg: dict) -> list[tuple[str, list[str]]]:
@@ -38,6 +41,7 @@ def combinations(cfg: dict) -> list[tuple[str, list[str]]]:
     for cell, h, hidden, (layers, dropout), lr in grid:
         name = f"{s['prefix']}-{cell}-h{h}-n{hidden}-l{layers}-d{dropout:g}-lr{lr:g}"
         sets = {
+            **(s.get("fixed") or {}),  # valores fijos de la rejilla (ventana, conjunto…)
             "model.cell": cell,
             "data.horizon": h,
             "model.hidden_size": hidden,
@@ -129,6 +133,51 @@ def collect(cfg: dict) -> list[dict]:
     return rows
 
 
+def select_grid(cfg: dict, name: str | None) -> dict:
+    """cfg con `sweep` sustituido por la rejilla `grids.<name>` (sobre los valores de `sweep`)."""
+    if not name:
+        return cfg
+    grids = cfg.get("grids") or {}
+    if name not in grids:
+        raise KeyError(f"No existe la rejilla '{name}' en grids: {sorted(grids)}")
+    return {**cfg, "sweep": {**cfg["sweep"], "prefix": name, **grids[name]}}
+
+
+def best_per_horizon(cfg: dict) -> dict[int, dict]:
+    """Mejor run de la rejilla por horizonte (entre todas las redes) según sweep.select_by."""
+    key = cfg["sweep"]["select_by"]
+    best: dict[int, dict] = {}
+    for r in sorted(collect(cfg), key=lambda r: r[key]):
+        best.setdefault(r["h"], r)
+    return dict(sorted(best.items()))
+
+
+def finalize(cfg: dict, evaluate: bool) -> None:
+    """make train CALIB=<mejor run> por horizonte: misma config, contracción y calibración.
+    Con `evaluate`, después make evaluate SPLIT=test del modelo recién entrenado: la elección
+    ya está hecha solo con validación (sweep.select_by) antes de mirar test."""
+    best = best_per_horizon(cfg)
+    if not best:
+        print(f"No hay runs terminados de la rejilla {cfg['sweep']['prefix']}.")
+        sys.exit(1)
+    failed = []
+    for h, r in best.items():
+        name = f"{cfg['sweep']['prefix']}final-{r['cell']}-h{h}"
+        print(f"\n{name}  ←  {r['run']}", flush=True)
+        cmd = [sys.executable, "-m", "oil_rnn.train", "--name", name, "--calibration", r["run"]]
+        if subprocess.run(cmd, check=False).returncode != 0:
+            failed.append(name)
+            continue
+        if evaluate:
+            run_id = latest_run_id()
+            cmd = [sys.executable, "-m", "oil_rnn.evaluate", "--split", "test", "--run", run_id]
+            if subprocess.run(cmd, check=False).returncode != 0:
+                failed.append(f"{name} (evaluación de {run_id})")
+    if failed:
+        print("Fallidos:", *failed, sep="\n  ")
+        sys.exit(1)
+
+
 def print_table(rows: list[dict], key: str) -> None:
     cols = [
         ("cell", "red", "{:<5}"),
@@ -150,6 +199,8 @@ def print_table(rows: list[dict], key: str) -> None:
         ("params", "params", "{:>8}"),
         ("seconds", "seg", "{:>6.0f}"),
     ]
+    if "shrink" in rows[0]:  # rejillas con contracción hacia la persistencia
+        cols[7:7] = [("skill_shrunk", "skill_w", "{:>+8.4f}"), ("shrink", "w", "{:>4.1f}")]
     print("  ".join(f"{title:>{len(fmt.format(rows[0][c]))}}" for c, title, fmt in cols))
     for r in rows:
         print("  ".join(fmt.format(r[c]) for c, _, fmt in cols))
@@ -190,11 +241,20 @@ def main() -> None:
     parser.add_argument("--compare", action="store_true", help="Tabla de resultados")
     parser.add_argument("--all", action="store_true", help="Con --compare: todas las filas")
     parser.add_argument("--dry-run", action="store_true", help="Lista las combinaciones pendientes")
+    parser.add_argument("--grid", default=None, help="Rejilla de `grids` en lugar de `sweep`")
+    parser.add_argument(
+        "--finalize", action="store_true", help="Entrena el modelo final de la mejor por horizonte"
+    )
+    parser.add_argument(
+        "--evaluate", action="store_true", help="Con --finalize: evalúa cada modelo final en test"
+    )
     args = parser.parse_args()
-    cfg = load_config(args.config, args.overrides)
+    cfg = select_grid(load_config(args.config, args.overrides), args.grid)
     require(cfg, "sweep.prefix", "sweep.select_by")
     if args.compare:
         compare(cfg, args.all)
+    elif args.finalize:
+        finalize(cfg, args.evaluate)
     else:
         run_sweep(cfg, args.overrides, args.dry_run)
 

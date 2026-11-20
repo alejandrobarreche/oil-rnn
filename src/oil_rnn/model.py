@@ -85,6 +85,43 @@ class RNNRegressor(nn.Module):
         return torch.cumsum(steps, dim=1)
 
 
+class ForecastNet(nn.Module):
+    """Conjunto de `n_members` redes iguales entrenadas con semillas distintas: su salida es la
+    media de las salidas (los cuantiles medios siguen ordenados). Reduce la varianza que añade
+    la inicialización.
+
+    `shrink` = w en [0, 1] contrae la predicción hacia la persistencia: el rendimiento
+    predicho (en unidades reales, no escaladas) pasa a ser w·r. Con cuantiles, todos se
+    desplazan lo mismo que la mediana, así que el ancho del intervalo no cambia. w = 0 es la
+    persistencia y w = 1 la red sin tocar. Va dentro de la red para que el ONNX de la web lo
+    aplique igual que Python."""
+
+    def __init__(
+        self,
+        n_members: int = 1,
+        shrink: float = 1.0,
+        y_mean: float = 0.0,
+        y_scale: float = 1.0,
+        median_index: int = 0,
+        **net: object,
+    ):
+        super().__init__()
+        self.members = nn.ModuleList(RNNRegressor(**net) for _ in range(n_members))
+        self.shrink, self.median_index = float(shrink), int(median_index)
+        self.y_mean, self.y_scale = float(y_mean), float(y_scale)
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        z = torch.stack([m(x) for m in self.members]).mean(dim=0)
+        if self.shrink == 1.0:
+            return z
+        r = z * self.y_scale + self.y_mean  # rendimiento real predicho
+        if r.ndim == 1:
+            r = self.shrink * r
+        else:
+            r = r - (1.0 - self.shrink) * r[:, self.median_index : self.median_index + 1]
+        return (r - self.y_mean) / self.y_scale
+
+
 def pinball_loss(pred: torch.Tensor, y: torch.Tensor, quantiles: torch.Tensor) -> torch.Tensor:
     """Pérdida cuantílica media: para el cuantil q, q·e si e = y - pred >= 0 y (q-1)·e si no.
     Su mínimo en esperanza está en el cuantil q de la distribución condicional."""
@@ -104,7 +141,8 @@ def _quantiles(cfg: dict) -> list[float] | None:
 
 
 def build_net(init: dict) -> nn.Module:
-    return RNNRegressor(**init)
+    """Modelos con conjunto (n_members en init) o, los anteriores, una sola red."""
+    return ForecastNet(**init) if "n_members" in init else RNNRegressor(**init)
 
 
 def _net_init(cfg: dict, prep: Preprocessor) -> dict:
@@ -124,26 +162,22 @@ def _arrays(prep: Preprocessor, df: pd.DataFrame) -> tuple[np.ndarray, np.ndarra
     return w["X"], w["y"]
 
 
-def train_model(cfg: dict, train_df: pd.DataFrame, val_df: pd.DataFrame, run) -> dict:
+class _MemberRun:
+    """Registra las métricas del miembro k > 0 del conjunto con el prefijo m<k>_."""
+
+    def __init__(self, run, k: int):
+        self.run, self.prefix = run, f"m{k}_" if k else ""
+
+    def log_metrics(self, metrics: dict[str, float], step: int | None = None) -> None:
+        self.run.log_metrics({self.prefix + k: v for k, v in metrics.items()}, step=step)
+
+
+def _fit_member(cfg: dict, init: dict, train_dl, val_dl, run, device) -> RNNRegressor:
+    """Una red con early stopping sobre la pérdida de validación; devuelve la mejor época."""
     tcfg = cfg["train"]
-    clf = cfg["task"] == "classification"
-    prep = Preprocessor(cfg).fit(train_df)
-    Xt, yt = _arrays(prep, train_df)
-    Xv, yv = _arrays(prep, val_df)
-
-    def loader(X, y, shuffle):
-        ds = TensorDataset(
-            torch.as_tensor(X, dtype=torch.float32),
-            torch.as_tensor(y, dtype=torch.long if clf else torch.float32),
-        )
-        return DataLoader(ds, batch_size=tcfg["batch_size"], shuffle=shuffle)
-
-    train_dl, val_dl = loader(Xt, yt, True), loader(Xv, yv, False)
-    device = get_device()
-    init = _net_init(cfg, prep)
-    net = build_net(init).to(device)
+    net = RNNRegressor(**init).to(device)
     quantiles = _quantiles(cfg)
-    if clf:
+    if cfg["task"] == "classification":
         loss_fn = nn.CrossEntropyLoss()
     elif quantiles:
         q = torch.tensor(quantiles, dtype=torch.float32, device=device)
@@ -151,16 +185,6 @@ def train_model(cfg: dict, train_df: pd.DataFrame, val_df: pd.DataFrame, run) ->
     else:
         loss_fn = nn.MSELoss()
     optimizer = torch.optim.Adam(net.parameters(), lr=tcfg["learning_rate"])
-    n_params = sum(p.numel() for p in net.parameters())
-    log.info(
-        "Entrenando %s (%s, %d parámetros) en %s · %d ejemplos de train, %d de val",
-        type(net).__name__,
-        init["cell"],
-        n_params,
-        device,
-        len(Xt),
-        len(Xv),
-    )
 
     def epoch_loss(dl, train: bool) -> float:
         net.train(train)
@@ -195,13 +219,72 @@ def train_model(cfg: dict, train_df: pd.DataFrame, val_df: pd.DataFrame, run) ->
     net.load_state_dict(best_state)
     run.log_metrics(
         {
-            "n_params": n_params,
+            "n_params": sum(p.numel() for p in net.parameters()),
             "train_seconds": time.perf_counter() - start,
             "epochs_run": epoch,
             "best_epoch": best_epoch,
         }
     )
-    return {"net": net.cpu(), "init": init, "preprocessor": prep, "quantiles": quantiles}
+    return net.cpu()
+
+
+def train_model(cfg: dict, train_df: pd.DataFrame, val_df: pd.DataFrame, run) -> dict:
+    """Entrena model.ensemble redes (semillas seed, seed+1…) y las une en un ForecastNet.
+    Las métricas del primer miembro van sin prefijo; las del miembro k, con m<k>_."""
+    tcfg = cfg["train"]
+    clf = cfg["task"] == "classification"
+    prep = Preprocessor(cfg).fit(train_df)
+    Xt, yt = _arrays(prep, train_df)
+    Xv, yv = _arrays(prep, val_df)
+
+    def loader(X, y, shuffle):
+        ds = TensorDataset(
+            torch.as_tensor(X, dtype=torch.float32),
+            torch.as_tensor(y, dtype=torch.long if clf else torch.float32),
+        )
+        return DataLoader(ds, batch_size=tcfg["batch_size"], shuffle=shuffle)
+
+    device = get_device()
+    net_init = _net_init(cfg, prep)
+    quantiles = _quantiles(cfg)
+    n_members = int(cfg["model"].get("ensemble") or 1)
+    seed = int(cfg.get("seed", 42))
+    log.info(
+        "Entrenando %d × %s en %s · %d ejemplos de train, %d de val",
+        n_members,
+        net_init["cell"],
+        device,
+        len(Xt),
+        len(Xv),
+    )
+    members = []
+    for k in range(n_members):
+        set_seed(seed + k)  # misma semilla que antes para el primer miembro
+        train_dl, val_dl = loader(Xt, yt, True), loader(Xv, yv, False)
+        members.append(_fit_member(cfg, net_init, train_dl, val_dl, _MemberRun(run, k), device))
+
+    init = {
+        **net_init,
+        "n_members": n_members,
+        "shrink": 1.0,
+        "y_mean": prep.y_mean,
+        "y_scale": prep.y_scale,
+        "median_index": quantiles.index(0.5) if quantiles else 0,
+    }
+    net = build_net(init)
+    for slot, member in zip(net.members, members, strict=True):
+        slot.load_state_dict(member.state_dict())
+    run.log_metrics({"n_params_total": sum(p.numel() for p in net.parameters())})
+    return {"net": net.eval(), "init": init, "preprocessor": prep, "quantiles": quantiles}
+
+
+def set_shrink(fitted: dict, w: float) -> dict:
+    """Fija la contracción hacia la persistencia (ForecastNet.shrink) del modelo entrenado."""
+    if not 0.0 <= w <= 1.0:
+        raise ValueError(f"La contracción debe estar en [0, 1]: {w}")
+    fitted["net"].shrink = float(w)
+    fitted["init"] = {**fitted["init"], "shrink": float(w)}
+    return fitted
 
 
 def save_model(fitted: dict, model_dir: Path, cfg: dict) -> None:
@@ -209,7 +292,12 @@ def save_model(fitted: dict, model_dir: Path, cfg: dict) -> None:
         {"state_dict": fitted["net"].state_dict(), "init": fitted["init"]}, model_dir / "model.pt"
     )
     _save_common(
-        fitted["preprocessor"], model_dir, cfg, fitted.get("quantiles"), fitted.get("conformal")
+        fitted["preprocessor"],
+        model_dir,
+        cfg,
+        fitted.get("quantiles"),
+        fitted.get("conformal"),
+        fitted.get("shrink"),
     )
 
 
@@ -262,6 +350,7 @@ def _save_common(
     cfg: dict,
     quantiles: list[float] | None = None,
     conformal: dict | None = None,
+    shrink: dict | None = None,
 ) -> None:
     joblib.dump(prep, model_dir / "preprocessor.joblib")
     card = {
@@ -278,6 +367,7 @@ def _save_common(
         "target_mode": prep.target_mode,
         "quantiles": quantiles,
         "conformal": conformal,  # corrección del intervalo (conformal.py), o None
+        "shrink": shrink,  # contracción hacia la persistencia (shrink.py), ya dentro de la red
         "saved_at": datetime.now(UTC).isoformat(timespec="seconds"),
     }
     (model_dir / "model_card.json").write_text(

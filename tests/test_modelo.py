@@ -7,7 +7,15 @@ import torch
 
 from oil_rnn.config import load_config
 from oil_rnn.metrics import compute_metrics
-from oil_rnn.model import Predictor, RNNRegressor, pinball_loss, save_model, train_model
+from oil_rnn.model import (
+    Predictor,
+    RNNRegressor,
+    build_net,
+    pinball_loss,
+    save_model,
+    set_shrink,
+    train_model,
+)
 
 
 class _Run:
@@ -62,6 +70,7 @@ def _cfg(**train):
         "model.hidden_size=4",
         "model.num_layers=1",
         "train.batch_size=16",
+        "model.ensemble=1",
     ]
     overrides += [f"train.{k}={v}" for k, v in train.items()]
     return load_config(overrides=overrides)
@@ -81,7 +90,7 @@ def test_min_epochs_y_registro(tmp_path, monkeypatch):
     fitted = train_model(cfg, df.iloc[:80], df.iloc[80:], run)
     epochs = [s for s, _ in run.logged if s is not None]
     assert epochs == [1, 2, 3, 4]  # sin min_epochs pararía en la 2
-    summary = run.logged[-1][1]
+    summary = run.logged[-2][1]
     assert {"n_params", "train_seconds", "epochs_run", "best_epoch"} <= summary.keys()
     assert summary["n_params"] == sum(p.numel() for p in fitted["net"].parameters())
 
@@ -98,3 +107,55 @@ def test_min_epochs_y_registro(tmp_path, monkeypatch):
     m = compute_metrics("regression", out, prefix="val_")
     keys = {"val_coverage", "val_baseline_coverage", "val_pinball_skill", "val_direction_accuracy"}
     assert keys <= m.keys()
+
+
+def test_conjunto_promedia_y_se_guarda(tmp_path, monkeypatch):
+    monkeypatch.setattr("oil_rnn.model.get_device", lambda: torch.device("cpu"))
+    df = _prices()
+    cfg = _cfg(epochs=2, patience=1, min_epochs=0)
+    cfg["model"]["ensemble"] = 3
+    run = _Run()
+    fitted = train_model(cfg, df.iloc[:80], df.iloc[80:], run)
+    net = fitted["net"]
+    assert len(net.members) == 3
+    keys = {k for _, m in run.logged for k in m}
+    assert {"m1_train_loss", "m2_best_epoch", "n_params_total"} <= keys
+    x = torch.randn(4, 5, 1)
+    expected = torch.stack([m(x) for m in net.members]).mean(dim=0)
+    torch.testing.assert_close(net(x), expected)
+    assert not torch.equal(net.members[0](x), net.members[1](x))  # semillas distintas
+
+    save_model(set_shrink(fitted, 0.3), tmp_path, cfg)
+    loaded = Predictor.load(tmp_path)
+    assert loaded.net.shrink == 0.3
+    torch.testing.assert_close(loaded.net(x), net(x))
+
+
+def test_contraccion_en_la_red_igual_que_en_precios():
+    """ForecastNet.shrink (dentro del ONNX) y shrink.apply (en cv) son la misma operación."""
+    from oil_rnn import shrink
+
+    torch.manual_seed(0)
+    init = {"n_features": 2, "hidden_size": 4, "num_layers": 1, "dropout": 0.0, "cell": "gru"}
+    init |= {"n_outputs": 3, "n_members": 2, "y_mean": 0.01, "y_scale": 0.1, "median_index": 1}
+    net = build_net(init).eval()
+    x = torch.randn(6, 5, 2)
+    last = np.full(6, 80.0)
+
+    def prices(z):  # salida escalada → precio, como Preprocessor.inverse_target (log_return)
+        return last[:, None] * np.exp(z.detach().numpy() * 0.1 + 0.01)
+
+    raw = prices(net(x))
+    net.shrink = 0.4
+    shrunk = prices(net(x))
+    frame = pd.DataFrame({"y_lo": raw[:, 0], "y_pred": raw[:, 1], "y_hi": raw[:, 2]})
+    frame["y_baseline"] = last
+    out = shrink.apply(frame, 0.4, "log_return")
+    np.testing.assert_allclose(out[["y_lo", "y_pred", "y_hi"]].to_numpy(), shrunk, rtol=1e-5)
+    np.testing.assert_allclose(np.log(shrunk[:, 1] / last), 0.4 * np.log(raw[:, 1] / last), 1e-5)
+    # El ancho en log no cambia y w = 0 es la persistencia
+    np.testing.assert_allclose(
+        np.log(shrunk[:, 2] / shrunk[:, 0]), np.log(raw[:, 2] / raw[:, 0]), rtol=1e-5
+    )
+    net.shrink = 0.0
+    np.testing.assert_allclose(prices(net(x))[:, 1], last, rtol=1e-5)
