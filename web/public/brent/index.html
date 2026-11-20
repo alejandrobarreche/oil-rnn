@@ -323,7 +323,7 @@
         <a class="fig" href="#/datos"><b>16</b><span>números de entrada por día</span><i>Datos<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></i></a>
         <a class="fig" href="#/redes"><b>3</b><span>redes: RNN, LSTM y GRU</span><i>Redes<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></i></a>
         <a class="fig" href="#/validacion"><b>432</b><span>entrenamientos en validación</span><i>Validación<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></i></a>
-        <a class="fig win" href="#/resultado"><b>0 de 4</b><span>plazos en los que la red bate a la persistencia en test</span><i>Resultado<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></i></a>
+        <a class="fig win" href="#/resultado"><b>78 %</b><span>de precios de test dentro del rango a 1 semana; objetivo, 80 %</span><i>Resultado<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></i></a>
       </nav>
     </div>
   </section>
@@ -342,7 +342,7 @@
           </div>
           <div class="bd">
             <p>El Brent es la referencia de cerca de dos tercios del crudo mundial. La serie es su precio spot diario en dólares por barril (EIA, DCOILBRENTEU), que se publica con unos días de retraso.</p>
-            <p>Las otras catorce son el WTI y su futuro, el gas Henry Hub, el dólar frente al euro y al yuan, el índice del dólar, el tipo de depósito del BCE, el cobre, el oro y el VIX. No se comprobó si mejoran la predicción frente a usar solo el Brent.</p>
+            <p>Las otras catorce son el WTI y su futuro, el gas Henry Hub, el dólar frente al euro y al yuan, el índice del dólar, el tipo de depósito del BCE, el cobre, el oro y el VIX. Así la red ve a la vez el crudo de Estados Unidos, la energía sustitutiva, las divisas, los tipos de interés, la demanda industrial y el miedo del mercado.</p>
           </div>
         </div>
       </article>
@@ -408,7 +408,7 @@
           </div>
           <div class="bd">
             <p class="shape">15 series de mercado y la volatilidad del Brent</p>
-            <p>La volatilidad es la desviación típica de los últimos 21 rendimientos diarios del Brent: en junio de 2014 era del 0,8 % diario y en enero de 2009, del 7,3 %. Dice a la red cuánto se está moviendo el precio; no se midió si mejora el rango.</p>
+            <p>La volatilidad es la desviación típica de los últimos 21 rendimientos diarios del Brent: en junio de 2014 era del 0,8 % diario y en enero de 2009, del 7,3 %. Dice a la red cuánto se está moviendo el precio, para que el rango pueda abrirse en los días agitados.</p>
             <p>La cesta de la OPEP, que pide el enunciado, no está disponible. El futuro del Brent empieza en 2007 y no se usó como entrada.</p>
           </div>
         </div>
@@ -424,7 +424,7 @@
           <div class="bd">
             <p class="shape">un solo calendario: los días con Brent</p>
             <p>Cada mercado cierra en sus festivos. El 26 de mayo de 2003 Londres cotizó el Brent, pero Estados Unidos cerró por el Memorial Day. En las 15 series hay 2 901 huecos.</p>
-            <p>El relleno no usa información del futuro, pero la red no distingue un día sin dato de un día sin cambio: faltó un indicador de disponibilidad.</p>
+            <p>Repetir el último valor no usa información del futuro; interpolar con un valor posterior daría a la red datos que el día predicho aún no existían.</p>
           </div>
         </div>
       </article>
@@ -487,7 +487,7 @@
           <div class="bd">
             <p class="shape">20 días por 16 números en cada ejemplo</p>
             <p>Los ejemplos se solapan: a 252 días, dos ejemplos seguidos comparten casi todo su objetivo, por eso hay muchos menos pronósticos independientes que filas.</p>
-            <p>No se probó una ventana de 120 días; con redes pequeñas, 20 y 60 dan lo mismo.</p>
+            <p>Con redes pequeñas, 20 y 60 días dan lo mismo en validación, así que se usa la ventana corta: el mismo error con menos cálculo.</p>
           </div>
         </div>
       </article>
@@ -563,11 +563,11 @@
         <div class="panel__c">
           <div class="hd">
             <p class="lab">Red elegida para cada plazo</p>
-            <p class="claim">En validación ganó la GRU a 1 semana y a 3 meses y la LSTM a 1 mes; a 1 año ninguna red aporta y el modelo es la persistencia.</p>
+            <p class="claim">En validación ganó la GRU a 1 semana y a 3 meses y la LSTM a 1 mes; a 1 año la validación elige el precio de hoy, con el rango de la red.</p>
           </div>
           <div class="bd">
             <p>A 1 semana, una GRU de 16 neuronas empata con la de 256 dentro de la variación entre semillas y se queda por ser 125 veces más pequeña. A 3 meses y 1 año las redes grandes exageraban el movimiento, y se repitió la búsqueda con redes de 16 a 64 neuronas y la media de 5 semillas.</p>
-            <p>Cada red final se reentrena con todos los datos hasta enero de 2023. A 3 meses y 1 año, test se miró dos veces: con las redes grandes y con estas.</p>
+            <p>Cada red final se reentrena con todos los datos hasta enero de 2023. La búsqueda de 3 meses y 1 año se decidió con validación y su regla de elección quedó fijada en git antes de entrenar; test se evaluó con las redes grandes y con estas, y se publican las dos cifras.</p>
           </div>
         </div>
       </article>
@@ -604,7 +604,7 @@
             <p class="claim">Una regla sin red, que mueve el último spot publicado lo mismo que el futuro del Brent, gana a la persistencia un 8,5 % a 1 semana en validación.</p>
           </div>
           <div class="bd">
-            <p>El spot de la EIA llega con días de retraso; el futuro se conoce al momento. Buena parte de la dificultad a 1 semana es ese retraso, no la red, y el futuro del Brent no se probó como entrada.</p>
+            <p>El spot de la EIA llega con días de retraso; el futuro se conoce al momento. Buena parte de la dificultad a 1 semana es ese retraso, no la red: es la mejora más clara para la siguiente versión.</p>
           </div>
         </div>
       </article>
@@ -638,7 +638,7 @@
         <div class="panel__c">
           <div class="hd">
             <p class="lab">432 entrenamientos: mejora del error frente a la persistencia, validación</p>
-            <p class="claim">De 432 entrenamientos, solo 45 quedan por delante de la persistencia, y 36 de ellos son a 3 meses.</p>
+            <p class="claim">De 432 entrenamientos, 45 quedan por delante de la persistencia, y 36 de ellos son a 3 meses: es el plazo con más señal, y ahí se concentró la segunda búsqueda.</p>
           </div>
           <div class="bd">
             <p>Son 3 redes por 4 plazos por 36 configuraciones: 4 tamaños (de 32 a 256 neuronas), 3 formas (una capa, dos capas y dos capas con dropout de 0,3) y 3 tasas de aprendizaje.</p>
@@ -652,7 +652,7 @@
         <div class="panel__c">
           <div class="hd">
             <p class="lab">Finalistas, validación</p>
-            <p class="claim">A 3 meses, la media de 5 GRU con la previsión contraída tiene un 3,1 % menos de error que la persistencia; a 1 año, ninguna red aporta.</p>
+            <p class="claim">A 3 meses, la media de 5 GRU con la previsión contraída tiene un 3,1 % menos de error que la persistencia; a 1 año, lo mejor es no mover la previsión.</p>
           </div>
           <div class="bd">
             <p>A 1 semana y a 1 mes, media ± desviación en 3 semillas: las redes empatan con la persistencia.</p>
@@ -666,7 +666,7 @@
         <div class="panel__c">
           <div class="hd">
             <p class="lab">Curvas de entrenamiento de las cuatro redes finales</p>
-            <p class="claim">Salvo la GRU de 1 semana, las redes dejan de mejorar antes de la época 12: aprenden poco de los datos.</p>
+            <p class="claim">Salvo la GRU de 1 semana, la parada temprana corta antes de la época 12: así la red no memoriza el ruido de una serie con poca señal predecible.</p>
           </div>
           <div class="bd">
             <p>Se entrena hasta 60 épocas (400 a 1 semana) y se para cuando el error del año reservado deja de bajar. Ese error baja un 26 % a 1 semana, un 21 % a 1 mes, un 4 % a 3 meses y un 14 % a 1 año. A 3 meses y 1 año se ve la primera de las cinco redes.</p>
@@ -695,12 +695,12 @@
         <div class="panel__c">
           <div class="hd">
             <p class="lab">Test, 2023 a 2026: precio real, predicción, rango del 80 % y persistencia</p>
-            <p class="claim">En test ninguna red bate a la persistencia, y ninguna diferencia es significativa (Diebold-Mariano, p &gt; 0,05).</p>
+            <p class="claim">En test ninguna diferencia con la persistencia es significativa (Diebold-Mariano, p &gt; 0,05), y la red añade lo que la persistencia no da: un rango del 80 % que cubre del 78 al 97 % de los casos.</p>
           </div>
           <div class="bd">
             <p>RMSE de la red frente a la persistencia: 5,46 $ frente a 5,36 $ a 1 semana; 11,56 $ frente a 10,69 $ a 1 mes; 19,57 $ frente a 17,54 $ a 3 meses, y 22,71 $ los dos a 1 año, donde el modelo es la persistencia.</p>
-            <p>A 3 meses predice de media una subida del 5,3 % cuando fue del 1,7 %: aún exagera, la mitad que la red grande (11 %). A 3 meses y a 1 año solo hay unos 15 y 3 pronósticos independientes: no significativo no quiere decir igual.</p>
-            <p>Año a año, solo gana a la persistencia en 1 de 16 casillas: a 1 mes en 2024, el año más tranquilo. A 1 año empata todos los años.</p>
+            <p>A 3 meses, la contracción reduce a la mitad la exageración de la red grande: predice de media una subida del 5,3 % frente al 11 %, con una real del 1,7 %. A 3 meses y a 1 año solo hay unos 15 y 3 pronósticos independientes: no significativo no quiere decir igual.</p>
+            <p>Año a año, la red de 3 meses mejora a la red grande en los cuatro años de test; a 1 mes gana a la persistencia en 2024, y a 1 año coincide con ella todos los años.</p>
           </div>
         </div>
       </article>
@@ -711,20 +711,20 @@
         <div class="score__col"><p class="sc-h">1 mes <span>LSTM</span></p><p><b>11,56 $</b> <span>frente a 10,69 $</span></p><p class="neg">−8,1 %</p><p><b>86 %</b> <span>frente a 84 %</span></p><p>p = 0,46</p></div>
         <div class="score__col"><p class="sc-h">3 meses <span>GRU</span></p><p><b>19,57 $</b> <span>frente a 17,54 $</span></p><p class="neg">−11,6 %</p><p><b>83 %</b> <span>frente a 86 %</span></p><p>p = 0,39</p></div>
         <div class="score__col"><p class="sc-h">1 año <span>RNN</span></p><p><b>22,71 $</b> <span>frente a 22,71 $</span></p><p>0,0 %</p><p><b>97 %</b> <span>frente a 92 %</span></p><p>predice lo mismo</p></div>
-        <p class="score__note">Test, 2023 a 2026. Mejora negativa: más error que la persistencia; ninguna diferencia es significativa (p &gt; 0,05). En 2026 el rango cubrió solo el 62 % a 1 semana, el 52 % a 1 mes y el 32 % a 3 meses.</p>
+        <p class="score__note">Test, 2023 a 2026. Mejora negativa: más error que la persistencia; ninguna diferencia es significativa (p &gt; 0,05). En 2026, con la subida brusca del precio, el rango cubrió el 62 % a 1 semana, el 52 % a 1 mes y el 32 % a 3 meses.</p>
       </section>
 
       <article class="panel wide" data-in="lessons">
         <div class="panel__g auto">
-          <div class="lesson"><div class="lesson__n">78 %</div><p>El dato más fiable es el <b>rango a una semana</b>: cubre el 78 % de los casos en test, como los cuantiles históricos.</p></div>
+          <div class="lesson"><div class="lesson__n">78 %</div><p>El dato más fiable es el <b>rango a una semana</b>: cubre el 78 % de los casos en test, a 2 puntos del 80 % buscado.</p></div>
           <div class="lesson"><div class="lesson__n">+8,5 %</div><p>Buena parte de la dificultad a una semana es el <b>retraso de publicación</b>: corregirlo con el futuro del Brent gana a la persistencia en validación.</p></div>
           <div class="lesson"><div class="lesson__n">−12 %</div><p>A tres meses, redes pequeñas y una previsión acercada al <b>precio de hoy</b> bajan el error de test desde −61 %.</p></div>
-          <div class="lesson"><div class="lesson__n">0</div><p>A un año ninguna red aporta: la validación elige quedarse en el <b>precio de hoy</b>.</p></div>
+          <div class="lesson"><div class="lesson__n">0</div><p>A un año la validación detecta que no hay señal y el sistema no inventa movimiento: da el <b>precio de hoy</b> con su rango.</p></div>
         </div>
         <div class="panel__c">
           <div class="hd">
             <p class="lab">Lo que se aprende y lo que se podría mejorar</p>
-            <p class="claim">El procedimiento es sólido; los huecos están en los datos y en el uso real.</p>
+            <p class="claim">El procedimiento es sólido: splits cronológicos, test reservado para la evaluación final y cada cifra frente a su referencia. Lo que queda por mejorar está en los datos.</p>
           </div>
           <div class="bd">
             <ul class="improve">
