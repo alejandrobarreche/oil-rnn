@@ -8,7 +8,7 @@ const TYPES = {
     name: "RNN simple",
     keep: 0.7, // cuánto pesa el día anterior en el resumen: con una mezcla simple se diluye rápido
     tex: String.raw`h_t = \tanh\left(W x_t + U h_{t-1} + b\right)`,
-    info: "En el proyecto, la red de 1 año: 2 capas de 256 neuronas, 202 499 parámetros.",
+    info: "En el proyecto, la red de 1 año: 1 capa de 16 neuronas, 595 parámetros, media de 5; la validación la deja en el precio de hoy.",
     gates: [{ x: 410, y: 280, sym: "tanh", t: "mezcla", a: 0.5, b: 0.2 }],
   },
   lstm: {
@@ -26,7 +26,7 @@ const TYPES = {
     name: "GRU",
     keep: 0.93,
     tex: String.raw`h_t = (1 - z_t) \odot h_{t-1} + z_t \odot \tilde h_t`,
-    info: "En el proyecto, las redes de 1 semana y 3 meses; la de 3 meses, 2 capas de 128, 155 523 parámetros.",
+    info: "En el proyecto, las redes de 1 semana y 3 meses; la de 3 meses, 2 capas de 64, 40 899 parámetros, media de 5.",
     gates: [
       { x: 360, y: 280, sym: "σ", t: "reiniciar", a: 0.6, b: 0 },
       { x: 460, y: 280, sym: "σ", t: "actualizar", a: 0.9, b: -0.8 },

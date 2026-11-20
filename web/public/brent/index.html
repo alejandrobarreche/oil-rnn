@@ -482,10 +482,10 @@
         <div class="panel__c">
           <div class="hd">
             <p class="lab">Ventana sobre los 16 números, desde septiembre de 2008</p>
-            <p class="claim">Cada ejemplo son los 60 días anteriores en orden, 20 en la red de 1 semana, y la ventana avanza un día cada vez.</p>
+            <p class="claim">Cada ejemplo son los 20 días anteriores en orden, 60 en la red de 1 mes, y la ventana avanza un día cada vez.</p>
           </div>
           <div class="bd">
-            <p class="shape">60 días por 16 números en cada ejemplo</p>
+            <p class="shape">20 días por 16 números en cada ejemplo</p>
             <p>Los ejemplos se solapan: a 252 días, dos ejemplos seguidos comparten casi todo su objetivo, por eso hay muchos menos pronósticos independientes que filas.</p>
             <p>No se probó una ventana de 120 días; con redes pequeñas, 20 y 60 dan lo mismo.</p>
           </div>
@@ -532,10 +532,11 @@
         <div class="panel__c">
           <div class="hd">
             <p class="lab">GRU de 3 meses: entrada, capas y salida</p>
-            <p class="claim">Dos capas de 128 neuronas leen los 60 días y, del último estado, una capa lineal saca tres números: los cuantiles 10, 50 y 90 % del rendimiento.</p>
+            <p class="claim">Dos capas de 64 neuronas leen los 20 días y, del último estado, una capa lineal saca tres números: los cuantiles 10, 50 y 90 % del rendimiento.</p>
           </div>
           <div class="bd">
-            <p>Los cuantiles se convierten en precios a partir del último Brent publicado. En la web, la misma red exportada a ONNX corre en el navegador con el preprocesado replicado en TypeScript.</p>
+            <p>Son cinco redes iguales con semillas distintas: se usa la media de sus salidas y el rendimiento se multiplica por 0,6, un factor elegido en validación que lo acerca al precio de hoy. Los cuantiles se convierten en precios a partir del último Brent publicado.</p>
+            <p>En la web, las cinco redes exportadas a ONNX corren en el navegador con el preprocesado replicado en TypeScript.</p>
           </div>
         </div>
       </article>
@@ -549,7 +550,7 @@
           </div>
           <div class="bd">
             <p>Para τ = 0,9, quedarse corto cuesta nueve veces más que pasarse, así que la salida se coloca donde solo el 10 % de los casos queda por encima. Para τ = 0,5 es el error absoluto.</p>
-            <p>Las redes se entrenan y se eligen con esta pérdida, pero los resultados se dan en RMSE, que no es la métrica de entrenamiento.</p>
+            <p>Las redes se entrenan con esta pérdida. A 1 semana y 1 mes también se eligen con ella; a 3 meses y 1 año, con el RMSE, la métrica de los resultados.</p>
           </div>
         </div>
       </article>
@@ -557,15 +558,16 @@
 
       <article class="panel wide" data-in="table">
         <div class="panel__g auto">
-          <div class="nets"><div class="net-col"><p class="nc-h">1 semana</p><p class="nc-net">GRU</p><p>16 neuronas, 1 capa</p><p><b>1 683</b> parámetros</p><p>66 s de entrenamiento</p></div><div class="net-col"><p class="nc-h">1 mes</p><p class="nc-net">LSTM</p><p>64 neuronas, 1 capa</p><p><b>21 187</b> parámetros</p><p>11 s de entrenamiento</p></div><div class="net-col"><p class="nc-h">3 meses</p><p class="nc-net">GRU</p><p>128 neuronas, 2 capas</p><p><b>155 523</b> parámetros</p><p>29 s de entrenamiento</p></div><div class="net-col"><p class="nc-h">1 año</p><p class="nc-net">RNN</p><p>256 neuronas, 2 capas</p><p><b>202 499</b> parámetros</p><p>10 s de entrenamiento</p></div></div>
+          <div class="nets"><div class="net-col"><p class="nc-h">1 semana</p><p class="nc-net">GRU</p><p>16 neuronas, 1 capa</p><p><b>1 683</b> parámetros</p><p>66 s de entrenamiento</p></div><div class="net-col"><p class="nc-h">1 mes</p><p class="nc-net">LSTM</p><p>64 neuronas, 1 capa</p><p><b>21 187</b> parámetros</p><p>11 s de entrenamiento</p></div><div class="net-col"><p class="nc-h">3 meses</p><p class="nc-net">GRU</p><p>64 neuronas, 2 capas, media de 5</p><p><b>204 495</b> parámetros</p><p>22 s de entrenamiento</p></div><div class="net-col"><p class="nc-h">1 año</p><p class="nc-net">RNN</p><p>16 neuronas, 1 capa, media de 5</p><p><b>2 975</b> parámetros</p><p>25 s de entrenamiento</p></div></div>
         </div>
         <div class="panel__c">
           <div class="hd">
             <p class="lab">Red elegida para cada plazo</p>
-            <p class="claim">En validación ganó la GRU a 1 semana y a 3 meses, la LSTM a 1 mes y la RNN simple a 1 año.</p>
+            <p class="claim">En validación ganó la GRU a 1 semana y a 3 meses y la LSTM a 1 mes; a 1 año ninguna red aporta y el modelo es la persistencia.</p>
           </div>
           <div class="bd">
-            <p>A 1 semana, una GRU de 16 neuronas empata con la de 256 dentro de la variación entre semillas y se queda por ser 125 veces más pequeña. Cada red final se reentrena con todos los datos hasta enero de 2023 y se examina una sola vez en test.</p>
+            <p>A 1 semana, una GRU de 16 neuronas empata con la de 256 dentro de la variación entre semillas y se queda por ser 125 veces más pequeña. A 3 meses y 1 año las redes grandes exageraban el movimiento, y se repitió la búsqueda con redes de 16 a 64 neuronas y la media de 5 semillas.</p>
+            <p>Cada red final se reentrena con todos los datos hasta enero de 2023. A 3 meses y 1 año, test se miró dos veces: con las redes grandes y con estas.</p>
           </div>
         </div>
       </article>
@@ -649,12 +651,12 @@
         <div class="panel__g"><div id="g-val" class="fill"></div></div>
         <div class="panel__c">
           <div class="hd">
-            <p class="lab">Finalistas con tres semillas, validación</p>
-            <p class="claim">Solo la GRU a 3 meses ganaba con claridad: un 4,8 % menos de error que la persistencia.</p>
+            <p class="lab">Finalistas, validación</p>
+            <p class="claim">A 3 meses, la media de 5 GRU con la previsión contraída tiene un 3,1 % menos de error que la persistencia; a 1 año, ninguna red aporta.</p>
           </div>
           <div class="bd">
-            <p>A 1 semana y a 1 mes las redes empatan con la persistencia; a 1 año, todas pierden.</p>
-            <p>La mejora a 3 meses venía casi entera de un solo bloque, de 2021 a 2023. Elegir entre muchas configuraciones encuentra la que tuvo suerte.</p>
+            <p>A 1 semana y a 1 mes, media ± desviación en 3 semillas: las redes empatan con la persistencia.</p>
+            <p>A 3 meses y 1 año, la mejor de cada red en 72 entrenamientos de 5 redes. El factor que acerca la previsión al precio de hoy se elige en cada bloque solo con los anteriores; a 1 año sale 0 en todas, que es la persistencia.</p>
           </div>
         </div>
       </article>
@@ -664,10 +666,10 @@
         <div class="panel__c">
           <div class="hd">
             <p class="lab">Curvas de entrenamiento de las cuatro redes finales</p>
-            <p class="claim">A 1 año la mejor época es la primera: la red casi no aprende de los datos.</p>
+            <p class="claim">Salvo la GRU de 1 semana, las redes dejan de mejorar antes de la época 12: aprenden poco de los datos.</p>
           </div>
           <div class="bd">
-            <p>Se entrena hasta 60 épocas (400 a 1 semana) y se para cuando el error del año reservado deja de bajar. A 1 semana, 1 mes y 3 meses ese error baja un 26, un 21 y un 23 %.</p>
+            <p>Se entrena hasta 60 épocas (400 a 1 semana) y se para cuando el error del año reservado deja de bajar. Ese error baja un 26 % a 1 semana, un 21 % a 1 mes, un 4 % a 3 meses y un 14 % a 1 año. A 3 meses y 1 año se ve la primera de las cinco redes.</p>
           </div>
         </div>
       </article>
@@ -696,9 +698,9 @@
             <p class="claim">En test ninguna red bate a la persistencia, y ninguna diferencia es significativa (Diebold-Mariano, p &gt; 0,05).</p>
           </div>
           <div class="bd">
-            <p>RMSE de la red frente a la persistencia: 5,46 $ frente a 5,36 $ a 1 semana; 11,56 $ frente a 10,69 $ a 1 mes; 28,24 $ frente a 17,54 $ a 3 meses, y 33,03 $ frente a 22,71 $ a 1 año.</p>
-            <p>A 3 meses acierta si el precio sube o baja el 60 % de los días, pero predice de media una subida del 11 % cuando fue del 1,7 %. A 3 meses y a 1 año solo hay unos 15 y 3 pronósticos independientes: no significativo no quiere decir igual.</p>
-            <p>Año a año, solo gana a la persistencia en 2 de 16 casillas: a 1 mes en 2024, el año más tranquilo, y a 1 año en 2026.</p>
+            <p>RMSE de la red frente a la persistencia: 5,46 $ frente a 5,36 $ a 1 semana; 11,56 $ frente a 10,69 $ a 1 mes; 19,57 $ frente a 17,54 $ a 3 meses, y 22,71 $ los dos a 1 año, donde el modelo es la persistencia.</p>
+            <p>A 3 meses predice de media una subida del 5,3 % cuando fue del 1,7 %: aún exagera, la mitad que la red grande (11 %). A 3 meses y a 1 año solo hay unos 15 y 3 pronósticos independientes: no significativo no quiere decir igual.</p>
+            <p>Año a año, solo gana a la persistencia en 1 de 16 casillas: a 1 mes en 2024, el año más tranquilo. A 1 año empata todos los años.</p>
           </div>
         </div>
       </article>
@@ -707,17 +709,17 @@
         <div class="score__rows"><p></p><p>Error típico (RMSE), red frente a persistencia</p><p>Mejora del error</p><p>Rango del 80 %, red frente a cuantiles históricos</p><p>Diebold-Mariano</p></div>
         <div class="score__col"><p class="sc-h">1 semana <span>GRU</span></p><p><b>5,46 $</b> <span>frente a 5,36 $</span></p><p class="neg">−1,8 %</p><p><b>78 %</b> <span>frente a 79 %</span></p><p>p = 0,32</p></div>
         <div class="score__col"><p class="sc-h">1 mes <span>LSTM</span></p><p><b>11,56 $</b> <span>frente a 10,69 $</span></p><p class="neg">−8,1 %</p><p><b>86 %</b> <span>frente a 84 %</span></p><p>p = 0,46</p></div>
-        <div class="score__col"><p class="sc-h">3 meses <span>GRU</span></p><p><b>28,24 $</b> <span>frente a 17,54 $</span></p><p class="neg">−61 %</p><p><b>68 %</b> <span>frente a 86 %</span></p><p>p = 0,27</p></div>
-        <div class="score__col"><p class="sc-h">1 año <span>RNN</span></p><p><b>33,03 $</b> <span>frente a 22,71 $</span></p><p class="neg">−45 %</p><p><b>92 %</b> <span>frente a 92 %</span></p><p>p = 0,40</p></div>
-        <p class="score__note">Test, 2023 a 2026. Mejora negativa: más error que la persistencia; ninguna diferencia es significativa (p &gt; 0,05). En 2026 el rango de los tres plazos cortos cubrió solo entre el 48 y el 58 %.</p>
+        <div class="score__col"><p class="sc-h">3 meses <span>GRU</span></p><p><b>19,57 $</b> <span>frente a 17,54 $</span></p><p class="neg">−11,6 %</p><p><b>83 %</b> <span>frente a 86 %</span></p><p>p = 0,39</p></div>
+        <div class="score__col"><p class="sc-h">1 año <span>RNN</span></p><p><b>22,71 $</b> <span>frente a 22,71 $</span></p><p>0,0 %</p><p><b>97 %</b> <span>frente a 92 %</span></p><p>predice lo mismo</p></div>
+        <p class="score__note">Test, 2023 a 2026. Mejora negativa: más error que la persistencia; ninguna diferencia es significativa (p &gt; 0,05). En 2026 el rango cubrió solo el 62 % a 1 semana, el 52 % a 1 mes y el 32 % a 3 meses.</p>
       </section>
 
       <article class="panel wide" data-in="lessons">
         <div class="panel__g auto">
           <div class="lesson"><div class="lesson__n">78 %</div><p>El dato más fiable es el <b>rango a una semana</b>: cubre el 78 % de los casos en test, como los cuantiles históricos.</p></div>
           <div class="lesson"><div class="lesson__n">+8,5 %</div><p>Buena parte de la dificultad a una semana es el <b>retraso de publicación</b>: corregirlo con el futuro del Brent gana a la persistencia en validación.</p></div>
-          <div class="lesson"><div class="lesson__n">1 de 4</div><p>La mejora de validación a tres meses venía de <b>un solo bloque</b> (2021 a 2023).</p></div>
-          <div class="lesson"><div class="lesson__n">60 %</div><p>A tres meses la dirección del cambio lleva algo de información; lo que falla es la <b>magnitud</b>.</p></div>
+          <div class="lesson"><div class="lesson__n">−12 %</div><p>A tres meses, redes pequeñas y una previsión acercada al <b>precio de hoy</b> bajan el error de test desde −61 %.</p></div>
+          <div class="lesson"><div class="lesson__n">0</div><p>A un año ninguna red aporta: la validación elige quedarse en el <b>precio de hoy</b>.</p></div>
         </div>
         <div class="panel__c">
           <div class="hd">
@@ -731,7 +733,7 @@
               <li>Marcar los datos que faltan en vez de repetir el último valor.</li>
               <li>Añadir la cesta de la OPEP.</li>
               <li>Entrenar con una ventana deslizante.</li>
-              <li>Evaluar el test con varias semillas.</li>
+              <li>Usar la media de varias semillas también a 1 semana y 1 mes.</li>
             </ul>
           </div>
         </div>
@@ -1194,10 +1196,10 @@ const GL = (svg, x1, x2, ys, y) => svg.append("g").selectAll("line").data(ys).jo
     });
   }
 
-  /* Lo que prometía la validación: mejora del RMSE, media ± desviación en 3 semillas (README) */
+  /* Lo que prometía la validación: mejora del RMSE (README). 5 y 21 días: media ± desviación en 3 semillas; 63 y 252: rejilla g2, con contracción */
   {
     const V = { 5: [["gru", -1.1, 0.9, 1], ["rnn", -0.7, 0.6], ["lstm", -2.0, 2.1]], 21: [["lstm", 0.0, 1.0, 1], ["rnn", -3.2, 0.1], ["gru", -4.0, 2.6]],
-      63: [["gru", 4.8, 0.6, 1], ["rnn", 1.4, 1.0], ["lstm", 0.1, 0.3]], 252: [["rnn", -4.3, 3.4, 1], ["gru", -5.3, 3.6], ["lstm", -5.0, 2.4]] };
+      63: [["gru", 3.1, 0, 1], ["lstm", 2.0, 0], ["rnn", 0.9, 0]], 252: [["rnn", 0.0, 0, 1], ["gru", 0.0, 0], ["lstm", 0.0, 0]] };
     const NC = { rnn: CORAL, lstm: SHEEN, gru: ACCENT }, NN = { rnn: "RNN", lstm: "LSTM", gru: "GRU" };
     const W = 820, H = 580, m = { l: 150, r: 40, t: 110, b: 70 };
     const svg = mk("#g-val", W, H);
@@ -1210,7 +1212,7 @@ const GL = (svg, x1, x2, ys, y) => svg.append("g").selectAll("line").data(ys).jo
     });
     leg.append("circle").attr("cx", 346).attr("cy", -5).attr("r", 7).attr("fill", "none").attr("stroke", INK).attr("stroke-width", 2);
     ftext(leg, "spark-name", 360, 0, "elegida para la prueba");
-    ftext(svg, "evt-sub", 0, 58, "Menos error que la persistencia en validación. Media ± desviación en 3 semillas");
+    ftext(svg, "evt-sub", 0, 58, "Menos error que la persistencia en validación. 1 semana y 1 mes: media ± desviación en 3 semillas");
     svg.append("line").attr("x1", x(0)).attr("x2", x(0)).attr("y1", m.t - 16).attr("y2", H - m.b).attr("stroke", INK).attr("stroke-opacity", 0.5).attr("stroke-dasharray", "3 4");
     ftext(svg, "cap", x(0), m.t - 24, "persistencia", "middle");
     [-10, -5, 0, 5, 10].forEach((v) => ftext(svg, "lbl", x(v), H - m.b + 24, (v > 0 ? "+" : v < 0 ? "−" : "") + Math.abs(v) + " %", "middle"));
@@ -1317,18 +1319,18 @@ const vizFns = {};
   svg.append("defs").append("marker").attr("id", "arr").attr("viewBox", "0 0 10 10").attr("refX", 9).attr("refY", 5).attr("markerWidth", 7).attr("markerHeight", 7).attr("orient", "auto")
     .append("path").attr("d", "M0,0 L10,5 L0,10 z").attr("fill", SOFT);
   const inp = svg.append("g"), mid = svg.append("g"), out = svg.append("g"), wires = svg.append("g");
-  const cs = 4.2, gx = 20, gy = 100;
-  for (let d = 0; d < 60; d++) for (let s = 0; s < 16; s++)
+  const DAYS = 20, cs = 12.6, gx = 20, gy = 100;
+  for (let d = 0; d < DAYS; d++) for (let s = 0; s < 16; s++)
     inp.append("rect").attr("x", gx + d * cs).attr("y", gy + s * 16.5).attr("width", cs - 1).attr("height", 14).attr("rx", 1)
       .attr("fill", s === 15 ? INK : SHEEN).attr("opacity", 0.25 + 0.6 * Math.abs(Math.sin(d * 0.37 + s * 1.7)));
-  inp.append("text").attr("class", "evt-label").attr("x", gx).attr("y", gy - 32).text("60 días × 16 números");
+  inp.append("text").attr("class", "evt-label").attr("x", gx).attr("y", gy - 32).text("20 días × 16 números");
   inp.append("text").attr("class", "evt-sub").attr("x", gx).attr("y", gy - 13).text("del más antiguo al más reciente →");
   [{ x: 330, t: "Capa 1" }, { x: 480, t: "Capa 2" }].forEach((l) => {
     const g = mid.append("g").attr("transform", `translate(${l.x},${gy - 10})`);
     g.append("rect").attr("width", 110).attr("height", 280).attr("rx", 18).attr("fill", "#232327").attr("stroke", SHEEN).attr("stroke-opacity", 0.6);
     for (let i = 0; i < 9; i++) g.append("circle").attr("cx", 55).attr("cy", 30 + i * 28).attr("r", 8).attr("fill", "#34343a").attr("stroke", SHEEN).attr("stroke-opacity", 0.5);
     g.append("text").attr("class", "evt-label").attr("x", 55).attr("y", -14).attr("text-anchor", "middle").text(l.t);
-    g.append("text").attr("class", "evt-sub").attr("x", 55).attr("y", 304).attr("text-anchor", "middle").text("128 neuronas GRU");
+    g.append("text").attr("class", "evt-sub").attr("x", 55).attr("y", 304).attr("text-anchor", "middle").text("64 neuronas GRU");
   });
   mid.append("text").attr("class", "evt-sub").attr("x", 465).attr("y", gy + 336).attr("text-anchor", "middle").text("puertas de actualización y de reinicio en cada día");
   [["10 %", "suelo"], ["50 %", "central"], ["90 %", "techo"]].forEach(([q, t], i) => {
@@ -1337,7 +1339,7 @@ const vizFns = {};
     g.append("text").attr("class", "evt-label").attr("x", 34).attr("y", -2).text(q);
     g.append("text").attr("class", "evt-sub").attr("x", 34).attr("y", 15).text(t);
   });
-  [[gx + 60 * cs + 8, 322], [442, 478], [592, 670]].forEach(([a, b]) =>
+  [[gx + DAYS * cs + 8, 322], [442, 478], [592, 670]].forEach(([a, b]) =>
     wires.append("path").attr("d", `M${a},${gy + 130} L${b},${gy + 130}`).attr("stroke", SOFT).attr("stroke-width", 1.4).attr("marker-end", "url(#arr)"));
 
   {
@@ -1474,9 +1476,9 @@ const vizFns = {};
   setH(0);
 }
 
-/* ================= Ventana de 60 días que avanza ================= */
+/* ================= Ventana de 20 días que avanza ================= */
 {
-  const R = D2.ret, s0 = R.t.findIndex((d) => d >= "2008-09-01"), N = 120, WIN = 60;
+  const R = D2.ret, s0 = R.t.findIndex((d) => d >= "2008-09-01"), N = 120, WIN = 20;
   const days = R.r.slice(s0, s0 + N);
   const W = 820, H = 420, x0 = 120, cw = (W - x0 - 10) / N, y0 = 70, rh = 15;
   const svg = mk("#g-window", W, H);
@@ -1492,7 +1494,7 @@ const vizFns = {};
   const win = svg.append("g").attr("class", reduced ? "" : "slide").style("--dx", `${(N - WIN) * cw}px`);
   win.append("rect").attr("x", x0 - 3).attr("y", y0 - 8).attr("width", WIN * cw + 5).attr("height", rh * 16 + 14).attr("rx", 8)
     .attr("fill", ACCENT).attr("fill-opacity", 0.08).attr("stroke", ACCENT).attr("stroke-width", 2);
-  ftext(win, "cap", x0 + (WIN * cw) / 2, y0 - 20, "60 días × 16 números", "middle").style("fill", ACCENT);
+  ftext(win, "cap", x0 + (WIN * cw) / 2, y0 - 20, "20 días × 16 números", "middle").style("fill", ACCENT);
   win.append("path").attr("d", `M${x0 + (WIN * cw) / 2},${y0 + rh * 16 + 12} v40`).attr("stroke", ACCENT).attr("stroke-width", 2).attr("marker-end", "url(#arrW)");
   ftext(win, "cap", x0 + (WIN * cw) / 2, y0 + rh * 16 + 78, "a la red", "middle").style("fill", ACCENT);
   svg.append("defs").append("marker").attr("id", "arrW").attr("viewBox", "0 0 10 10").attr("refX", 8).attr("refY", 5).attr("markerWidth", 6).attr("markerHeight", 6).attr("orient", "auto")
