@@ -166,7 +166,7 @@ hub-install: check-env
 	$(POETRY) install --with $(POETRY_GROUPS),hub
 
 hub-upload: check-env
-	@test -n "$(HF_REPO)" || (echo "ERROR: indica el repositorio: make hub-upload HF_REPO=<usuario>/oil-rnn" && exit 1)
+	$(if $(HF_REPO),,$(error Indica el repositorio: make hub-upload HF_REPO=<usuario>/oil-rnn))
 	$(PYTHON) -m $(PKG).hub --repo $(HF_REPO) --github $(GH_REPO) $(if $(HORIZONS),--horizons $(HORIZONS),) $(ARGS)
 
 
