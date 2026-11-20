@@ -14,8 +14,8 @@ Sistema de diseño: [Sonda](https://claude.ai/artifact/GJGpkQEKJT4ZGuDxg49E3H).
 | Retraso de publicación no modelado | En uso real, la predicción a 5 días parte de un precio de hace 8 días. Una regla sin red con 1 día de futuros gana a la persistencia un 8,5 %, más que cualquier red. |
 | Huecos rellenados con el último valor | La red no distingue un día sin dato de un día sin cambio. Faltó un indicador de si el dato existe. |
 | Sin cesta OPEP | El enunciado la pide y no está. |
-| Selección entre 108 candidatos | GRU a 63 días: +5,4 % en validación gracias a un solo pliegue; −61 % en test. |
-| Test con una sola semilla | El resultado puede depender de la inicialización. Faltó promediar varias semillas. |
+| Selección entre 108 candidatos | GRU a 63 días: +5,4 % en validación gracias a un solo pliegue; −61 % en test. La red predecía movimientos muchas veces mayores que los reales (+11 % frente a +1,7 % de media). |
+| Test con una sola semilla | El resultado puede depender de la inicialización. En la rejilla g2 (63 y 252 días) cada modelo es la media de 5 semillas. |
 | Sin actualización diaria | Lo pide el enunciado. La fase 7 está sin empezar. |
 
 ## Resultado en test
@@ -42,13 +42,16 @@ A 63 y 252 días solo hay unos 15 y 3 pronósticos independientes. «No signific
 | Limpieza | Cortar la serie en el último Brent publicado | Se pierden hasta 6 días de mercado que ya se conocían. |
 | Limpieza | Poner un mínimo de 1 $ al WTI, que llegó a −37 $ | Ese día aparece un salto enorme; solo lo suaviza el recorte de valores extremos. |
 | Transformación | Añadir la volatilidad del último mes como entrada | No se midió si mejora el intervalo. |
-| Ventanas | Dar a la red los últimos 60 días (20 a 5 días) | No se probó una ventana más larga, como 120. Con redes pequeñas, 20 y 60 dan lo mismo. |
+| Ventanas | Dar a la red los últimos 20 días (60 en los modelos g1 a 21, 63 y 252 días) | No se probó una ventana más larga, como 120. Con redes pequeñas, 20 y 60 dan lo mismo en validación. |
 | Validación | Decidir cuándo parar de entrenar con el último año de datos | El modelo a 1 año no aprendió de la pandemia ni de 2022. |
 | Validación | No reentrenar dentro de cada bloque de 2 años | Al final del bloque el modelo tiene 2 años de antigüedad. |
 | Modelo | Entrenar minimizando el error absoluto (pérdida *pinball*) | Los resultados se dan en otra métrica, el RMSE. |
 | Modelo | Entrenar hasta 60 épocas | La red deja de mejorar en la época 1 o 2: aprende poco. |
 | Selección | Elegir cada red por su pérdida *pinball* en validación | No es la métrica de la tabla de resultados. |
-| Selección | Repetir con 3 semillas solo las finalistas | La configuración ganadora se eligió con una sola semilla. |
+| Selección | Repetir con 3 semillas solo las finalistas | La configuración ganadora de g1 se eligió con una sola semilla. |
+| Modelo | Rejilla g2 a 63 y 252 días: redes de 16 a 64 unidades y media de 5 semillas | 72 combinaciones. Las redes de g1 elegidas tenían 155.000 y 202.000 parámetros para unos 15 y 3 pronósticos independientes en test. |
+| Modelo | Contraer la predicción hacia la persistencia: rendimiento predicho × w, con w ∈ [0, 1] elegido en validación | w = 0 es la persistencia. La w de cada pliegue se elige solo con los anteriores, así que la cifra de validación no la ha visto; la final usa los 4 pliegues. Corrige la escala, no la dirección. |
+| Selección | En g2, elegir por el RMSE de validación con la contracción (pliegues 2 a 4) | Es la métrica de la tabla de resultados. Test ya se había mirado con los modelos g1: la evaluación de g2 es una segunda mirada. La regla de elección y `--finalize` quedan en git antes de entrenar, y la tabla de test dará las dos versiones. |
 | Selección | A 5 días, GRU de 16 unidades en vez de 256 | Empatan en validación (3 semillas; diferencia menor que la variación entre semillas). Se elige por coste. El modelo final se entrenó en el Mac, no en la GPU. |
 | Intervalo | Ajustar el ancho del intervalo con los datos de validación | En 2026 cubre solo el 48–58 % de los casos, en vez del 80 %. |
 | Web | Enseñar la previsión a 4 plazos (p50 y franja p10–p90 desde hoy), sin compra ni modo «En el pasado» | En test la red tiene más MAE que la persistencia en los 4 plazos, así que no se puede vender ahorro; cada plazo muestra su cobertura de test junto a la de la persistencia. No se enseñan días pasados concretos. |

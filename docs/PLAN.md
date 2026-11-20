@@ -19,6 +19,7 @@ Entrega el 20/11/2026: repositorio, aplicación y 5 diapositivas. Están hechas 
 
 ## Pendientes
 
+- [ ] Rejilla g2 a 63 y 252 días (redes pequeñas, 5 semillas, contracción hacia la persistencia): `make sweep ARGS="--grid g2"` y modelos finales con `--finalize --evaluate` (`docs/COMANDOS.md`, entrada 26).
 - [ ] Presentación: 5 diapositivas sin portada (problema y oportunidad, solución, comparativa de las tres redes, demostración con los tres horizontes y propuesta de valor) y su guion.
 - [ ] Ver en Actions la primera actualización automática con datos nuevos: commit `chore(data)` y nueva publicación de la web.
 - [ ] Averiguar cómo se puntúa «Resultados» en la rúbrica.

@@ -3,7 +3,7 @@
 **Finalidad**: registro de los comandos que el usuario ejecuta en cada máquina, con su resultado.
 **Cuándo usarlo**: cada vez que Claude da un comando al usuario y cuando el usuario devuelve la salida.
 **Resultado**: mensajes en orden cronológico, cada uno con máquina, estado, bloques para copiar y resultado.
-**Estado**: todos ✅.
+**Estado**: ⏳ la 26.
 
 ## 0. Antes de empezar: cómo se lee y se escribe este chat
 
@@ -590,3 +590,36 @@ make web-dev
 - **2. En GitHub**, después de hacer `git push`: Actions → *Actualizar datos* → *Run workflow*. Si hay datos nuevos, el workflow hace un commit `chore(data)` y lanza *Publicar web*.
 - **Qué pasarle a Claude**: la salida de `make update` (fecha de los datos y precio), si la web muestra la nueva fecha en «Datos de la EIA y FRED hasta el…», y si el workflow terminó en verde o con qué error.
 - **Resultado (17/11)**: `make update` en el Mac, datos hasta el 11/11 (antes 03/11): 6 días nuevos, ninguno de los anteriores revisado; Brent a 92,14 $. Workflow lanzado a mano en GitHub: verde en 29 s, «Sin datos nuevos» (la descarga desde GitHub funciona) y sin publicar la web, como se esperaba. Solo avisos de Node.js 20 obsoleto en las acciones.
+
+## 26. Windows GPU · 20/11/2026 · ⏳: rejilla g2 a 3 meses y 1 año, modelos finales y test
+
+- **Por qué**: a 63 y 252 días las redes de g1 (155.000 y 202.000 parámetros, una semilla) exageran el movimiento y pierden contra la persistencia en test (−61 % y −45 %). La rejilla g2 prueba redes de 16 a 64 unidades, ventana de 20 días, media de 5 semillas y contracción hacia la persistencia elegida en validación.
+- **Comprobado por Claude**: `make test` (83 tests) y `make lint` pasan. Una red de 5 miembros con contracción se exporta a ONNX y da lo mismo que PyTorch (diferencia 1·10⁻⁷). No se ha entrenado nada.
+- **Duración**: sin medir. Estimación: 72 combinaciones a 1–2 min cada una, entre 1 y 2,5 h.
+
+1. Rejilla (reanudable: si se corta, se repite el mismo comando):
+
+```powershell
+git pull --rebase
+conda activate oil-rnn
+make sweep ARGS="--grid g2"
+make compare ARGS="--grid g2"
+```
+
+2. Modelo final de la mejor combinación por horizonte (según validación) y su evaluación en test:
+
+```powershell
+make sweep ARGS="--grid g2 --finalize --evaluate"
+```
+
+3. Subir los runs (solo `runs/` y `artifacts/`):
+
+```powershell
+git add "runs/*_g2-*" "artifacts/*_g2-*" "runs/*_g2final-*" "artifacts/*_g2final-*"
+git commit -m "chore(runs): rejilla g2 y modelos finales a 63 y 252 días"
+git pull --rebase
+git push
+```
+
+- **Qué pasarle a Claude**: la salida de `make compare ARGS="--grid g2"` y las métricas que imprime el paso 2.
+

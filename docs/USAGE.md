@@ -85,7 +85,7 @@ make train NAME=<nombre> CALIB=<run_id de make cv>
 ```
 
 - **`make cv`**: valida con 4 pliegues walk-forward (2015–2023). Guarda las métricas por pliegue y su media.
-- **`make train`**: entrena el modelo final con train + val. Con CALIB=<run de make cv> aplica esa corrección, siempre que la configuración coincida.
+- **`make train`**: entrena el modelo final con train + val. Con CALIB=<run de make cv> usa la configuración de ese run y aplica su contracción hacia la persistencia (`shrink.json`) y su corrección del intervalo (`conformal.json`).
 
 ## 5. Evaluar y comparar: test, tabla de runs y MLflow
 
@@ -205,6 +205,7 @@ make compare
 - **`make sweep`**: lanza un `make cv` por combinación. Si se corta, se repite y salta las terminadas.
 - **`make compare`**: muestra la mejor configuración por red y horizonte según `cv_<sweep.select_by>`. Con `ARGS="--all"`, todas.
 - **Otra rejilla**: con otro prefijo, por ejemplo `make sweep ARGS="--set seed=7 --set sweep.prefix=g1s7"`.
+- **Rejillas de `grids`**: `make sweep ARGS="--grid g2"` y `make compare ARGS="--grid g2"`. Con `ARGS="--grid g2 --finalize --evaluate"`, entrena el modelo final de la mejor combinación de cada horizonte (con su config, contracción y calibración) y lo evalúa en test.
 
 Comparar con referencias:
 
