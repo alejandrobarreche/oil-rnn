@@ -3,7 +3,7 @@
 **Finalidad**: registro de los comandos que el usuario ejecuta en cada máquina, con su resultado.
 **Cuándo usarlo**: cada vez que Claude da un comando al usuario y cuando el usuario devuelve la salida.
 **Resultado**: mensajes en orden cronológico, cada uno con máquina, estado, bloques para copiar y resultado.
-**Estado**: ⏳ la 28.
+**Estado**: todos ✅.
 
 ## 0. Antes de empezar: cómo se lee y se escribe este chat
 
@@ -655,7 +655,7 @@ git push
 - **Qué pasarle a Claude**: la salida de `make export-web` y `make web-test`, y un aviso cuando esté subido.
 - **Resultado (20/11)**: subido en `5c5c99b` según el usuario: Release `model-v3` con los cuatro ONNX, y `manifest.json` y `quality.json` con los modelos g2. Efecto no buscado: `market.json` se regeneró con los datos de Windows y quedó hasta el 03/11 (antes, 17/11).
 
-## 28. Mac · 20/11/2026 · ⏳: ONNX de `model-v3`, datos al día y figuras de validación
+## 28. Mac · 20/11/2026 · ✅: ONNX de `model-v3`, datos al día y figuras de validación
 
 - **Por qué**: el Mac tiene los ONNX antiguos de 63 y 252 días, así que `make export-explain` falla (ventana 60 frente a 20). Además, `market.json` quedó hasta el 03/11, y la figura de validación del README debe mostrar la mejora con contracción, la que usa el modelo (commit de `explore.py`).
 - **Comprobado por Claude**: `make test` y `make lint` pasan. Estos comandos no se han ejecutado.
@@ -671,4 +671,4 @@ make web-dev
 ```
 
 - **Qué pasarle a Claude**: un aviso cuando termine, y la previsión a 3 meses y 1 año que da la web (precio y franja). Claude hace el commit de `market.json`, `explain.json` y las figuras, y completa la diapositiva de la demostración.
-
+- **Resultado (20/11)**: lo hizo Claude a petición del usuario. ONNX de `model-v3` descargados (los cuatro coinciden con el hash del manifiesto); `market.json` recuperado de `c957cd6` (datos hasta el 17/11) en lugar de `make update`; `explain.json`, figuras del README y `web/public/brent/data.json` regenerados. Previsión del 17/11: 3 meses 114,3 $ (92–140 $), 1 año 92,9 $ (55–154 $).

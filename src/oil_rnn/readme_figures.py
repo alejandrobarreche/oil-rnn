@@ -338,7 +338,7 @@ def skill(theme: dict, cv: list[dict], test: list[dict]) -> Figure:
         ),
         Line2D([], [], marker="o", linestyle="", color=theme["test"], markersize=8),
     ]
-    _legend(fig, theme, handles, ["Validación, media de 3 semillas", "Test"])
+    _legend(fig, theme, handles, ["Validación", "Test"])
     return fig
 
 

@@ -80,7 +80,7 @@ make web-dev
 <summary><b>Selección de modelos</b>: rejilla y validación walk-forward</summary>
 
 - **Rejilla**: 36 configuraciones (tamaño oculto 32–256, 1 o 2 capas, dropout 0 o 0,3, tasa de aprendizaje 1e‑4 a 1e‑3) para las tres celdas y los cuatro horizontes: 432 validaciones walk-forward.
-- **Criterio**: en cada horizonte, la red con menor pérdida pinball media en 3 semillas.
+- **Criterio**: a 1 semana y 1 mes, la red con menor pérdida pinball media en 3 semillas; a 3 meses y 1 año, la de menor RMSE con contracción (rejilla g2, abajo).
 - **3 meses y 1 año (rejilla g2)**: las redes de la rejilla anterior exageraban el movimiento. Se repitió la búsqueda con redes de 16 a 64 unidades, ventana de 20 días y la media de 5 semillas, y se contrae el rendimiento predicho hacia la persistencia: rendimiento × w, con w ∈ [0, 1] elegido en validación (w = 0 es la persistencia). La w de cada pliegue sale solo de los anteriores. Criterio: RMSE de validación con la contracción.
 - **1 semana**: una GRU de 16 unidades (rejilla aparte de redes pequeñas, ventana de 20 días) empata con la de 256 dentro de la variación entre semillas y se elige por coste: 125 veces menos parámetros.
 - **Test**: la elección se fijó antes de evaluar en test. A 3 meses y 1 año, test se evaluó dos veces: primero con la rejilla anterior (−61 % y −45 %) y después con la g2, cuya regla de elección quedó en git antes de entrenar.
