@@ -47,6 +47,13 @@ optional = true
 [tool.poetry.group.explore.dependencies]
 streamlit = ">=1.40"
 
+# Publicar los modelos en Hugging Face (make hub-upload). Opcional: no lo instala make install.
+[tool.poetry.group.hub]
+optional = true
+
+[tool.poetry.group.hub.dependencies]
+huggingface-hub = ">=0.34"  # trae el CLI hf (hf auth login)
+
 [tool.ruff]
 line-length = 100
 target-version = "py312"

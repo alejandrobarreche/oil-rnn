@@ -151,6 +151,21 @@ git push
 - **`make web-release`**: necesita el CLI `gh` autenticado (`gh auth login`).
 - **`HORIZONS=5`**: si en esta máquina solo están los pesos de algunos modelos, exporta esos y reutiliza los demás ONNX de `web/public/model/` (comprueba run e hash).
 
+### 7.2 Publicar los modelos en Hugging Face
+
+```bash
+make hub-install
+hf auth login
+make hub-upload HF_REPO=<usuario>/oil-rnn ARGS=--dry-run
+make hub-upload HF_REPO=<usuario>/oil-rnn
+```
+
+- **Qué sube**: por cada horizonte de `web.models`, `onnx/h<h>.onnx` (comprueba el hash del manifiesto) y `pytorch/h<h>/` con `models/<run_id>/` y la `config.yaml` y `meta.json` del run; además, `onnx/manifest.json` y un `README.md` (model card) con las métricas de `web/public/data/quality.json`.
+- **`hf auth login`**: pide un token con permiso de escritura (huggingface.co/settings/tokens). También vale `HF_TOKEN` en `.env`.
+- **`ARGS=--dry-run`**: lista los archivos sin subir nada.
+- **`HORIZONS=5`**: sube solo esos; los demás se quedan como estén en Hugging Face. Sirve cuando cada máquina tiene los pesos de unos modelos.
+- **`ARGS=--private`**: crea el repositorio privado (por defecto, público).
+
 ## 8. Calidad: tests, lint, formato y bloqueo
 
 ```bash

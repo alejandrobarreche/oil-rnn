@@ -29,11 +29,14 @@ ZIP ?=
 RELEASE ?= model-v1
 # Repositorio explícito: el remoto SSH usa un alias de host que gh no reconoce.
 GH_REPO ?= alejandrobarreche/oil-rnn
+# Repositorio de modelos en Hugging Face (<usuario>/<nombre>); se pasa en make hub-upload.
+HF_REPO ?=
 CALIB ?=
 
 .PHONY: help setup pending check-env install install-mac install-cpu install-cuda install-rocm \
         backend-mac backend-cpu backend-cuda backend-rocm lock test lint format device \
-        data prepare cv sweep compare dm naive-futures train evaluate runs pack unpack mlflow-ui explore-install explore update export-web export-explain readme-figures web-install web-dev web-test web-build web-release
+        data prepare cv sweep compare dm naive-futures train evaluate runs pack unpack mlflow-ui explore-install explore update export-web export-explain readme-figures web-install web-dev web-test web-build web-release \
+        hub-install hub-upload
 
 
 help:
@@ -67,6 +70,9 @@ help:
 	@echo "  make web-test         paridad TypeScript frente a Python"
 	@echo "  make web-build        compila web/dist"
 	@echo "  make web-release      sube los h<h>.onnx a la Release RELEASE=model-v1 para GitHub Pages"
+	@echo "== Hugging Face =="
+	@echo "  make hub-install      instala huggingface_hub (grupo opcional hub)"
+	@echo "  make hub-upload HF_REPO=<usuario>/oil-rnn   sube ONNX y pesos de web.models; HORIZONS=5 solo esos"
 	@echo "== Explorador =="
 	@echo "  make explore-install  instala Streamlit (grupo opcional explore)"
 	@echo "  make explore          abre el explorador del proceso en http://localhost:8501"
@@ -154,6 +160,14 @@ unpack: check-env
 
 mlflow-ui: check-env
 	$(PYTHON) -m $(PKG).runs_cli --mlflow-ui
+
+# ── Hugging Face ───────────────────────────────────────────
+hub-install: check-env
+	$(POETRY) install --with $(POETRY_GROUPS),hub
+
+hub-upload: check-env
+	@test -n "$(HF_REPO)" || (echo "ERROR: indica el repositorio: make hub-upload HF_REPO=<usuario>/oil-rnn" && exit 1)
+	$(PYTHON) -m $(PKG).hub --repo $(HF_REPO) --github $(GH_REPO) $(if $(HORIZONS),--horizons $(HORIZONS),) $(ARGS)
 
 
 # ── Explorador (Streamlit, local) ──────────────────────────
