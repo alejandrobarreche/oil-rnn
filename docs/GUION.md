@@ -167,7 +167,7 @@ Borrador de trabajo para la fase 6 del PLAN. Dirección visual: **A · Estratos 
 └──────────────────────────────────────────────────────────────┘
 ```
 
-**Datos**: series en `configs/config.yaml` (`data.source`, `data.features`, `data.inputs`); huecos en `data/splits.json` (`missing_before_fill`); exclusiones en `docs/DECISIONES.md` (Fallos). Descripción de cada grupo («activo refugio», «actividad industrial») en `ENUNCIADO.md`.
+**Datos**: series en `configs/config.yaml` (`data.source`, `data.features`, `data.inputs`); huecos en `data/splits.json` (`missing_before_fill`); exclusiones en `docs/DECISIONES.md` (Mejoras pendientes). Descripción de cada grupo («activo refugio», «actividad industrial») en `ENUNCIADO.md`.
 
 ---
 
@@ -383,7 +383,7 @@ Borrador de trabajo para la fase 6 del PLAN. Dirección visual: **A · Estratos 
 └──────────────────────────────────────────────────────────────┘
 ```
 
-**Datos**: tabla de test, Diebold-Mariano y conclusiones en `README.md` (Evaluación en test, Contraste de Diebold-Mariano, Conclusión por horizonte); fallos y mejoras en `docs/DECISIONES.md` (Fallos del proyecto, Mejoras pendientes). Cita: Diebold y Mariano (1995) y Harvey, Leybourne y Newbold (1997), en `docs/references.bib`.
+**Datos**: tabla de test, Diebold-Mariano y conclusiones en `README.md` (Evaluación en test, Contraste de Diebold-Mariano, Conclusión por horizonte); mejoras en `docs/DECISIONES.md` (Mejoras pendientes). Cita: Diebold y Mariano (1995) y Harvey, Leybourne y Newbold (1997), en `docs/references.bib`.
 
 ---
 

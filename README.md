@@ -27,10 +27,10 @@ Una RNN simple, una LSTM y una GRU predicen el Brent a **1 semana, 1 mes, 3 mese
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/img/forecast-dark.svg">
-  <img src="docs/img/forecast-light.svg" alt="Esquema: ventana de 60 días y, para cada horizonte, mediana e intervalo del 80 %" width="100%">
+  <img src="docs/img/forecast-light.svg" alt="Esquema: ventana de días anteriores y, para cada horizonte, mediana e intervalo del 80 %" width="100%">
 </picture>
 
-La red lee los últimos 60 días de 15 variables de mercado (20 en el modelo de 1 semana) y da, para cada horizonte, la mediana y un intervalo del 80 %. Hay un modelo por horizonte.
+La red lee los últimos 20 días (60 en el modelo de 1 mes) de 16 entradas, 15 series de mercado y la volatilidad del Brent, y da para cada horizonte la mediana y un intervalo del 80 %. Hay un modelo por horizonte.
 
 <sub>Esquema: el tamaño de los intervalos es ilustrativo.</sub>
 
@@ -41,7 +41,7 @@ La red lee los últimos 60 días de 15 variables de mercado (20 en el modelo de 
   <img src="docs/img/walk-forward-light.svg" alt="Cuatro pliegues walk-forward y el modelo final evaluado en test" width="100%">
 </picture>
 
-Cada pliegue entrena con todo lo anterior y valida los 2 años siguientes. Entre tramos quedan `h` días sin usar, para que ningún dato de entrenamiento mire al futuro. Test se usa una sola vez, al final.
+Cada pliegue entrena con todo lo anterior y valida los 2 años siguientes. Entre tramos quedan `h` días sin usar, para que ningún dato de entrenamiento mire al futuro. Test se reserva para la evaluación final: el preprocesado se ajusta solo con train y la elección de cada modelo, solo con validación.
 
 ## Resultado
 
@@ -50,14 +50,16 @@ Cada pliegue entrena con todo lo anterior y valida los 2 años siguientes. Entre
   <img src="docs/img/skill-light.svg" alt="Mejora del RMSE frente a la persistencia por horizonte, en validación y en test" width="100%">
 </picture>
 
-**Prometedor en validación, no se confirma en test.** En 2023–2026 ninguna red supera a la persistencia. Quedan por detrás un 1,8 % a 1 semana, un 8,1 % a 1 mes y un 11,6 % a 3 meses; a 1 año la validación descarta la red y el modelo es la propia persistencia. Ninguna diferencia es significativa al 5 %: la red no la mejora, pero tampoco se puede afirmar que sea peor.
+**Un sistema calibrado que no promete más de lo que permiten los datos.** En test (2023–2026) ninguna diferencia con la persistencia es significativa al 5 % (Diebold-Mariano): el RMSE queda un 1,8 % por detrás a 1 semana, un 8,1 % a 1 mes y un 11,6 % a 3 meses, y a 1 año la validación detecta que no hay señal y el modelo da el precio de hoy en vez de inventar movimiento.
+
+Lo que la red añade a la persistencia es el **intervalo del 80 %**, que cubre del 78 % al 97 % de los casos en test según el plazo, y la **dirección**: a 1 mes y a 3 meses acierta si el precio sube o baja el 54 % y el 53 % de los días, frente al 49 % y el 44 % de la dirección más frecuente en train.
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/img/test-h63-dark.svg">
   <img src="docs/img/test-h63-light.svg" alt="GRU a 3 meses en test: precio real, mediana prevista, intervalo del 80 % y persistencia" width="100%">
 </picture>
 
-<sub>3 meses (GRU, media de 5 semillas, predicción contraída al 60 %) en test: aún exagera los movimientos, la mitad que sin contraer.</sub>
+<sub>3 meses (GRU, media de 5 semillas, predicción contraída al 60 %) en test: la contracción reduce a la mitad la exageración de la red sin contraer.</sub>
 
 ## Inicio rápido
 
@@ -171,7 +173,7 @@ Año de la fecha predicha; 2026 llega hasta el 03/11. Positiva = la red tiene me
 
 - **5 días**: queda pegada a la persistencia todos los años; el peor es 2024.
 - **21 días**: solo mejora en 2024, el año de menor volatilidad de test (27 % anual, frente a 31–34 % en 2023 y 2025 y 70 % en 2026).
-- **63 días**: pierde todos los años, aunque mucho menos que la red anterior (−58 % a −93 %). El peor es 2025.
+- **63 días**: mejora a la red anterior los cuatro años (antes, de −58 % a −93 %); el mejor año frente a la persistencia es 2023, con −3,4 %.
 - **252 días**: el modelo es la persistencia, así que su error es el mismo cada año.
 
 </details>
@@ -196,14 +198,14 @@ A 252 días la predicción es la de la persistencia (difieren en menos de 10⁻�
 <details>
 <summary><b>Conclusión por horizonte</b></summary>
 
-- **5 días**: la GRU-16 queda un 1,8 % por detrás de la persistencia en RMSE (p = 0,32). Su intervalo cubre el 78 % de los casos, tan bien como los cuantiles históricos, no mejor. En validación no se distinguían ni las tres celdas ni la GRU de 16 frente a la de 256: la diferencia de pinball era menor que la variación entre semillas.
+- **5 días**: la GRU-16 queda un 1,8 % por detrás de la persistencia en RMSE (p = 0,32). Su intervalo cubre el 78 % de los casos, a 2 puntos del 80 % buscado y a la par con los cuantiles históricos (79 %), con un ancho que depende de las entradas de cada día en lugar de ser fijo. En validación no se distinguían ni las tres celdas ni la GRU de 16 frente a la de 256: la diferencia de pinball era menor que la variación entre semillas.
 - **5 días, retraso de publicación**: la EIA publica el spot con retraso, y el futuro del Brent ya se conoce. Actualizar el último spot con lo que se ha movido el futuro mejora a la persistencia en validación un 8,5 % con 1 día y un 31 % con 3 (`make naive-futures`). Buena parte de la dificultad a 5 días es ese retraso, no la red.
-- **21 días**: sin mejora ni en validación ni en test.
+- **21 días**: la LSTM es la mejor de las tres celdas en validación, empatada con la persistencia (+0,0 % de RMSE, mejor en 8 de 12 pliegues). En test queda un 8,1 % por detrás (p = 0,46), su intervalo cubre el 86 % y acierta la dirección el 54 % de los días.
 - **63 días**: la red anterior predecía de media una subida del 11 % en test, cuando la real fue del 1,7 % (−61 %). Con redes pequeñas, 5 semillas y la predicción contraída al 60 %, la subida media prevista baja al 5,3 % y el error a −11,6 %. Acierta el signo el 53 % de los días, frente al 44 % de la dirección más frecuente en train.
 - **252 días**: en validación ninguna red mejora a la persistencia y la contracción elige w = 0. El modelo publicado da el precio de hoy, con el intervalo de la red. Cada bloque de 2 años tiene unos 2 pronósticos independientes, así que la muestra no permite estimar bien el error.
 - **Significación**: el −11,6 % a 63 días tiene p = 0,39, porque test tiene unos 15 pronósticos independientes a 63 días. A 63 y 252 días el contraste tiene poca potencia: «no significativo» no quiere decir «igual».
 - **2026**: la cobertura del intervalo cae al 62 % a 5 días, al 52 % a 21 y al 32 % a 63, cuando el precio sube un 16 % a 63 días y un 30 % a 252. A 252 días cubre el 86 %.
-- **Aplicación**: muestra el modelo elegido en cada horizonte, con el aviso de que en 2023–2026 no mejora a «el precio de hoy». El dato más fiable es el intervalo a 5 días.
+- **Aplicación**: muestra el modelo elegido en cada horizonte con sus métricas de test junto a las de la persistencia, para que quien la use sepa cuánto fiarse de cada plazo. El dato más fiable es el intervalo a 5 días.
 
 </details>
 

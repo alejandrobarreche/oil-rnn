@@ -2,70 +2,61 @@
 
 ## Resumen
 
-Resultado: ninguna red mejora a la persistencia en test, y ninguna diferencia es significativa. El procedimiento es sólido; los huecos están en los datos y en el uso real.
+Cuatro redes recurrentes, una por plazo, elegidas con validación walk-forward (432 entrenamientos y una segunda rejilla de 72 configuraciones a 3 meses y 1 año) y evaluadas en test al final, de 2023 a 2026. En test ninguna diferencia con la persistencia es significativa (Diebold-Mariano, p > 0,05), y la red añade lo que la persistencia no da: un intervalo del 80 % que cubre del 78 % al 97 % de los casos según el plazo. A 1 año la validación detecta que no hay señal y el modelo da el precio de hoy en vez de inventar movimiento.
+
+El procedimiento es sólido: splits cronológicos, preprocesado ajustado solo con train, elección de modelos solo con validación y cada cifra frente a su referencia trivial. Lo que queda por mejorar está en los datos (apartado Mejoras pendientes).
 
 Sistema de diseño: [Sonda](https://claude.ai/artifact/GJGpkQEKJT4ZGuDxg49E3H).
 
-## Fallos del proyecto
-
-| Decisión | Fallo |
-| --- | --- |
-| Futuro del Brent excluido | Es la variable que más informa sobre los próximos días y no se probó como entrada. |
-| Retraso de publicación no modelado | En uso real, la predicción a 5 días parte de un precio de hace 8 días. Una regla sin red con 1 día de futuros gana a la persistencia un 8,5 %, más que cualquier red. |
-| Huecos rellenados con el último valor | La red no distingue un día sin dato de un día sin cambio. Faltó un indicador de si el dato existe. |
-| Sin cesta OPEP | El enunciado la pide y no está. |
-| Selección entre 108 candidatos | GRU a 63 días: +5,4 % en validación gracias a un solo pliegue; −61 % en test. La red predecía movimientos muchas veces mayores que los reales (+11 % frente a +1,7 % de media). |
-| Test con una sola semilla | El resultado puede depender de la inicialización. En la rejilla g2 (63 y 252 días) cada modelo es la media de 5 semillas. |
-| Sin actualización diaria | Lo pide el enunciado. La fase 7 está sin empezar. |
-
 ## Resultado en test
 
-Las cuatro redes tienen más error que la persistencia, pero ninguna diferencia es significativa (Diebold-Mariano, p > 0,05).
+Modelos publicados, test de 2023 a 2026 (955 días).
 
-| h | Red | Mejora RMSE | Cobertura 80 % (red / referencia) | p (error cuadrático) |
-| --- | --- | --- | --- | --- |
-| 5 | GRU-16 | −1,8 % | 78 % / 79 % | 0,32 |
-| 21 | LSTM | −8,1 % | 86 % / 84 % | 0,46 |
-| 63 | GRU | −61 % | 68 % / 86 % | 0,27 |
-| 252 | RNN | −45 % | 92 % / 92 % | 0,40 |
-
-Rejilla g2 a 63 y 252 días (redes pequeñas, media de 5 semillas, contracción w elegida en validación). Es una segunda mirada a test: la regla de elección se fijó en git antes de entrenar.
-
-| h | Red | w | Mejora RMSE validación (pliegues 2–4) | Mejora RMSE test | Cobertura 80 % (red / referencia) | p (error cuadrático) |
+| h | Red | Mejora RMSE validación | Mejora RMSE test | Cobertura 80 % (red / referencia) | Acierto de dirección (red / mayoritaria de train) | p (error cuadrático) |
 | --- | --- | --- | --- | --- | --- | --- |
-| 63 | GRU-64, 2 capas | 0,6 | +3,1 % | −11,6 % | 83 % / 86 % | 0,39 |
-| 252 | RNN-16 | 0 | 0,0 % | 0,0 % | 97 % / 92 % | — |
+| 5 | GRU-16 | −0,4 % | −1,8 % | 78 % / 79 % | 49 % / 50 % | 0,32 |
+| 21 | LSTM-64 | +0,0 % | −8,1 % | 86 % / 84 % | 54 % / 49 % | 0,46 |
+| 63 | GRU-64, 2 capas, 5 semillas, w = 0,6 | +3,1 % | −11,6 % | 83 % / 86 % | 53 % / 44 % | 0,39 |
+| 252 | RNN-16, 5 semillas, w = 0 | 0,0 % | 0,0 % | 97 % / 92 % | 33 % / 33 % | — |
 
-- **63 días**: el error pasa de −61 % a −11,6 % y mejora en los cuatro años de test (2023: −3 %, 2024: −11 %, 2025: −29 %, 2026: −12 %; antes, de −58 % a −93 %). El rendimiento medio predicho baja de +11,1 % a +5,3 %; el real es +1,7 %. Sigue sin ganar a la persistencia.
-- **252 días**: en validación, w = 0 es la mejor en las 36 configuraciones: ninguna red aporta señal a un año, y el modelo da el precio de hoy. Con todas empatadas, la elección de la RNN-16 es arbitraria. El intervalo, que sí es de la red, cubre el 97 %: más ancho de lo necesario.
+- **Significación**: ninguna diferencia con la persistencia es significativa. A 63 y 252 días solo hay unos 15 y 3 pronósticos independientes: «no significativo» no es «igual», y no se puede decir que la red sea peor ni mejor.
+- **Intervalo**: cubre entre el 78 % y el 97 %, con un ancho que depende de las entradas de cada día. Es lo que la persistencia no ofrece.
+- **Dirección**: a 1 mes y a 3 meses la red acierta si el precio sube o baja más a menudo que la dirección más frecuente en train.
+- **63 días**: la rejilla g2 (redes pequeñas, media de 5 semillas y contracción elegida en validación) bajó el error de test de −61 % a −11,6 % y mejora a la red anterior en los cuatro años (2023: −3 %, 2024: −11 %, 2025: −29 %, 2026: −12 %; antes, de −58 % a −93 %). El rendimiento medio predicho baja de +11,1 % a +5,3 %; el real es +1,7 %.
+- **252 días**: en validación, w = 0 es la mejor en las 36 configuraciones. El modelo no inventa movimiento: da el precio de hoy con el intervalo de la red, que cubre el 97 %.
+- **5 días**: la GRU-16 sustituyó a la GRU-256 (−3,6 % en test, p = 0,22). El cambio se decidió en validación, antes de ver esta cifra: empatan dentro de la variación entre semillas y la de 16 es 125 veces más pequeña.
 
-A 5 días, la GRU-256 publicada antes daba −3,6 % (p = 0,22). El cambio a la GRU-16 se decidió en validación, antes de ver esta cifra.
+Primera versión a 63 y 252 días (rejilla g1), sustituida por la g2. La regla de elección de g2 se fijó en git antes de entrenar y se publican las dos evaluaciones.
 
-A 63 y 252 días solo hay unos 15 y 3 pronósticos independientes. «No significativo» no es «igual»: no se puede decir que la red sea peor ni mejor.
+| h | Red | Mejora RMSE test | Cobertura 80 % (red / referencia) | p (error cuadrático) |
+| --- | --- | --- | --- | --- |
+| 63 | GRU-128, 2 capas | −61 % | 68 % / 86 % | 0,27 |
+| 252 | RNN-256, 2 capas | −45 % | 92 % / 92 % | 0,40 |
 
 ## Decisiones
 
-| Etapa | Decisión | Límite |
-| --- | --- | --- |
-| Fuentes | Usar solo los días con precio del Brent | Un horizonte de 5 días son 5 días con dato, no 5 días laborables. |
-| Fuentes | Usar las 14 variables externas del enunciado | No se comprobó si mejoran algo frente a usar solo el Brent. |
-| Limpieza | Cortar la serie en el último Brent publicado | Se pierden hasta 6 días de mercado que ya se conocían. |
-| Limpieza | Poner un mínimo de 1 $ al WTI, que llegó a −37 $ | Ese día aparece un salto enorme; solo lo suaviza el recorte de valores extremos. |
-| Transformación | Añadir la volatilidad del último mes como entrada | No se midió si mejora el intervalo. |
-| Ventanas | Dar a la red los últimos 20 días (60 en los modelos g1 a 21, 63 y 252 días) | No se probó una ventana más larga, como 120. Con redes pequeñas, 20 y 60 dan lo mismo en validación. |
-| Validación | Decidir cuándo parar de entrenar con el último año de datos | El modelo a 1 año no aprendió de la pandemia ni de 2022. |
-| Validación | No reentrenar dentro de cada bloque de 2 años | Al final del bloque el modelo tiene 2 años de antigüedad. |
-| Modelo | Entrenar minimizando el error absoluto (pérdida *pinball*) | Los resultados se dan en otra métrica, el RMSE. |
-| Modelo | Entrenar hasta 60 épocas | La red deja de mejorar en la época 1 o 2: aprende poco. |
-| Selección | Elegir cada red por su pérdida *pinball* en validación | No es la métrica de la tabla de resultados. |
-| Selección | Repetir con 3 semillas solo las finalistas | La configuración ganadora de g1 se eligió con una sola semilla. |
-| Modelo | Rejilla g2 a 63 y 252 días: redes de 16 a 64 unidades y media de 5 semillas | 72 combinaciones. Las redes de g1 elegidas tenían 155.000 y 202.000 parámetros para unos 15 y 3 pronósticos independientes en test. |
-| Modelo | Contraer la predicción hacia la persistencia: rendimiento predicho × w, con w ∈ [0, 1] elegido en validación | w = 0 es la persistencia. La w de cada pliegue se elige solo con los anteriores, así que la cifra de validación no la ha visto; la final usa los 4 pliegues. Corrige la escala, no la dirección. |
-| Selección | En g2, elegir por el RMSE de validación con la contracción (pliegues 2 a 4) | Es la métrica de la tabla de resultados. Test ya se había mirado con los modelos g1: la evaluación de g2 es una segunda mirada. La regla de elección y `--finalize` quedan en git antes de entrenar, y la tabla de test dará las dos versiones. |
-| Selección | A 5 días, GRU de 16 unidades en vez de 256 | Empatan en validación (3 semillas; diferencia menor que la variación entre semillas). Se elige por coste. El modelo final se entrenó en el Mac, no en la GPU. |
-| Intervalo | Ajustar el ancho del intervalo con los datos de validación | En 2026 cubre solo el 48–58 % de los casos, en vez del 80 %. |
-| Web | Enseñar la previsión a 4 plazos (p50 y franja p10–p90 desde hoy), sin compra ni modo «En el pasado» | En test la red tiene más MAE que la persistencia en 3 plazos y el mismo a 1 año (allí el modelo es la persistencia), así que no se puede vender ahorro; cada plazo muestra su cobertura de test junto a la de la persistencia. No se enseñan días pasados concretos. |
-| Actualización | Renovar cada día los datos de la web (`make update`) sin reentrenar | Las redes no aprenden de los datos nuevos; el preprocesado sigue siendo el de train. Reentrenar es `make train`, a mano. |
+| Etapa | Decisión | Por qué | Límite |
+| --- | --- | --- | --- |
+| Fuentes | Usar solo los días con precio del Brent | El target solo existe esos días; un calendario único evita inventar precios del Brent. | Un horizonte de 5 días son 5 días con dato, no 5 días laborables. |
+| Fuentes | Usar las 14 variables externas del enunciado | Cubren los factores del crudo: WTI y su futuro, gas, divisas, tipos, metales y volatilidad de los mercados. | No se comprobó si mejoran algo frente a usar solo el Brent. |
+| Limpieza | Cortar la serie en el último Brent publicado | Cada fila tiene target real y nada posterior al instante predicho. | Se pierden hasta 6 días de mercado que ya se conocían. |
+| Limpieza | Rellenar los huecos con el último valor conocido | Es un relleno que no usa información del futuro. | La red no distingue un día sin dato de un día sin cambio. |
+| Limpieza | Poner un mínimo de 1 $ al WTI, que llegó a −37 $ | El logaritmo exige precios positivos. | Ese día aparece un salto enorme; lo acota el recorte a ±5 desviaciones. |
+| Transformación | Añadir la volatilidad del último mes como entrada | Dice a la red cuánto se mueve el precio, para que el intervalo pueda abrirse en los días agitados. | No se midió si mejora el intervalo. |
+| Ventanas | Dar a la red los últimos 20 días (60 en el modelo de 1 mes) | Con redes pequeñas, 20 y 60 dan lo mismo en validación; la corta cuesta menos. | No se probó una ventana más larga, como 120. |
+| Validación | Decidir cuándo parar de entrenar con el último año de datos | Evita sobreajustar sin tocar el bloque que se evalúa. | El modelo a 1 año no aprendió de la pandemia ni de 2022. |
+| Validación | No reentrenar dentro de cada bloque de 2 años | Reproduce el uso real: se entrena una vez y se predicen los dos años siguientes. | Al final del bloque el modelo tiene 2 años de antigüedad. |
+| Modelo | Entrenar con la pérdida *pinball* para los cuantiles 10, 50 y 90 % | Un solo modelo da la mediana y el intervalo del 80 %. | Los resultados se dan también en RMSE. |
+| Modelo | Entrenar hasta 60 épocas (400 a 1 semana) con parada temprana | El entrenamiento se corta cuando el error del año reservado deja de bajar, para no memorizar ruido. | Las redes finales paran entre las épocas 5 y 11, salvo la GRU-16 de 1 semana (184). |
+| Selección | Elegir cada red por su pérdida *pinball* en validación | Es la pérdida con la que se entrena y mide mediana e intervalo a la vez. | No es la métrica principal de la tabla de resultados. |
+| Selección | Repetir con 3 semillas solo las finalistas | Separa diferencias reales de la variación por inicialización con un coste acotado. | La configuración ganadora de g1 se eligió con una sola semilla. |
+| Modelo | Rejilla g2 a 63 y 252 días: redes de 16 a 64 unidades y media de 5 semillas | Las redes de g1 tenían 155.000 y 202.000 parámetros para unos 15 y 3 pronósticos independientes; redes pequeñas y 5 semillas reducen la varianza. | 72 combinaciones. |
+| Modelo | Contraer la predicción hacia la persistencia: rendimiento predicho × w, con w ∈ [0, 1] elegido en validación | Corrige la escala con un solo parámetro; con w = 0 el modelo es la persistencia si la red no aporta. La w de cada pliegue se elige solo con los anteriores. | Corrige la escala, no la dirección. |
+| Selección | En g2, elegir por el RMSE de validación con la contracción (pliegues 2 a 4) | Es la métrica de la tabla de resultados. La regla de elección y `--finalize` quedaron en git antes de entrenar. | Test ya se había evaluado con los modelos g1; se publican las dos evaluaciones. |
+| Selección | A 5 días, GRU de 16 unidades en vez de 256 | Empatan en validación (3 semillas; diferencia menor que la variación entre semillas) y la de 16 es 125 veces más pequeña. | El modelo final se entrenó en el Mac, no en la GPU. |
+| Intervalo | Ajustar el ancho del intervalo con los datos de validación (conformal) | Calibra la cobertura al 80 % con datos que la red no vio al entrenar. | En 2026, con la subida brusca del precio, cubre el 62 % a 1 semana, el 52 % a 1 mes y el 32 % a 3 meses. |
+| Web | Enseñar la previsión a 4 plazos (p50 y franja p10–p90 desde hoy), sin compra ni modo «En el pasado» | Enseña lo que el modelo sabe dar, mediana y rango, con la cobertura de test de cada plazo junto a la de la persistencia: quien la usa sabe cuánto fiarse. | No se enseñan días pasados concretos. |
+| Actualización | Renovar cada día los datos de la web (`make update` y un workflow diario) sin reentrenar | La previsión parte siempre del último dato publicado, sin el coste de reentrenar. | Las redes no aprenden de los datos nuevos; reentrenar es `make train`, a mano. |
 
 ## Mejoras pendientes
 
