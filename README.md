@@ -5,6 +5,9 @@
 **Predicción del precio del Brent con redes neuronales recurrentes.**
 
 [![Abrir la aplicación](https://img.shields.io/badge/Abrir_la_aplicación-1f6feb?style=for-the-badge&logo=googlechrome&logoColor=white)](https://alejandrobarreche.github.io/oil-rnn/)
+[![El estudio](https://img.shields.io/badge/El_estudio-0760ab?style=for-the-badge&logo=googlechrome&logoColor=white)](https://alejandrobarreche.github.io/oil-rnn/brent/)
+[![Modelos en Hugging Face](https://img.shields.io/badge/Modelos-Hugging_Face-ffd21e?style=for-the-badge&logo=huggingface&logoColor=black)](https://huggingface.co/alejandrobarreche/oil-rnn)
+[![Presentación](https://img.shields.io/badge/Presentación-PDF-d1242f?style=for-the-badge&logo=adobeacrobatreader&logoColor=white)](docs/entrega/presentacion-brent.pdf)
 [![Guía de uso](https://img.shields.io/badge/Guía_de_uso-2da44e?style=for-the-badge&logo=readthedocs&logoColor=white)](docs/USAGE.md)
 [![Decisiones](https://img.shields.io/badge/Decisiones-8250df?style=for-the-badge&logo=bookstack&logoColor=white)](docs/DECISIONES.md)
 [![Bibliografía](https://img.shields.io/badge/Bibliografía-b08800?style=for-the-badge)](docs/references.bib)

@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>oil-rnn · Enlaces</title>
+<!-- Fuente de docs/entrega/enlaces.pdf. Se regenera con Chrome:
+     "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome" --headless --no-pdf-header-footer \
+       --print-to-pdf=docs/entrega/enlaces.pdf docs/entrega/enlaces.html -->
+<style>
+  @page { size: A4; margin: 0; }
+  :root { --blue: #0760ab; --ink: #14233a; --soft: #5a6b82; --line: #dfe6ef; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { width: 210mm; height: 297mm; background: #fff; }
+  body {
+    font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+    color: var(--ink);
+    -webkit-print-color-adjust: exact; print-color-adjust: exact;
+    position: relative; overflow: hidden;
+  }
+  .hero {
+    position: absolute; inset: 0 0 auto 0; height: 100mm;
+    background: var(--blue);
+    clip-path: polygon(0 0, 100% 0, 100% 58%, 0 100%);
+  }
+  .hero-text { position: absolute; top: 22mm; left: 20mm; right: 20mm; color: #fff; }
+  .kicker { font-size: 10.5pt; letter-spacing: .02em; opacity: .9; }
+  h1 { font-size: 30pt; line-height: 1.12; font-weight: 700; margin-top: 5mm; }
+  .sub { font-size: 12.5pt; margin-top: 4mm; opacity: .95; }
+  .by { font-size: 10pt; margin-top: 9mm; line-height: 1.5; }
+  .by b { font-weight: 700; }
+
+  .links { position: absolute; top: 104mm; left: 20mm; right: 20mm; list-style: none; }
+  .links li {
+    display: grid; grid-template-columns: 16mm 1fr; align-items: baseline;
+    padding: 4.6mm 0; border-top: 0.3mm solid var(--line);
+  }
+  .links li:last-child { border-bottom: 0.3mm solid var(--line); }
+  .n { font-size: 20pt; font-weight: 700; color: var(--blue); }
+  .label { font-size: 14pt; font-weight: 700; }
+  .what { font-size: 10.5pt; color: var(--soft); margin-top: 1.2mm; line-height: 1.4; }
+  .url {
+    display: inline-block; margin-top: 2mm; font-size: 10.5pt; font-weight: 600;
+    color: var(--blue); text-decoration: none; word-break: break-all;
+  }
+  .url::after { content: "  →"; }
+
+  footer {
+    position: absolute; left: 20mm; right: 20mm; bottom: 12mm;
+    display: flex; justify-content: space-between; align-items: center;
+    font-size: 9pt; color: var(--soft);
+  }
+  footer img { height: 9mm; }
+</style>
+</head>
+<body>
+  <div class="hero"></div>
+  <div class="hero-text">
+    <p class="kicker">Aprendizaje Automático · Caso de uso II</p>
+    <h1>Previsión del precio del Brent<br>con redes recurrentes</h1>
+    <p class="sub">RNN, LSTM y GRU a 1 semana, 1 mes, 3 meses y 1 año</p>
+    <p class="by"><b>Alejandro Barreche</b><br>20 de noviembre de 2026</p>
+  </div>
+
+  <ul class="links">
+    <li>
+      <span class="n">01</span>
+      <div>
+        <p class="label">Aplicación</p>
+        <p class="what">La previsión del Brent con su intervalo del 80 %, en el navegador y sin servidor.</p>
+        <a class="url" href="https://alejandrobarreche.github.io/oil-rnn/">alejandrobarreche.github.io/oil-rnn</a>
+      </div>
+    </li>
+    <li>
+      <span class="n">02</span>
+      <div>
+        <p class="label">El estudio</p>
+        <p class="what">Cómo se hicieron las cuatro redes: datos, validación y resultados.</p>
+        <a class="url" href="https://alejandrobarreche.github.io/oil-rnn/brent/">alejandrobarreche.github.io/oil-rnn/brent</a>
+      </div>
+    </li>
+    <li>
+      <span class="n">03</span>
+      <div>
+        <p class="label">Código</p>
+        <p class="what">Descarga de datos, comparativa de las tres redes y aplicación.</p>
+        <a class="url" href="https://github.com/alejandrobarreche/oil-rnn">github.com/alejandrobarreche/oil-rnn</a>
+      </div>
+    </li>
+    <li>
+      <span class="n">04</span>
+      <div>
+        <p class="label">Modelos</p>
+        <p class="what">Pesos PyTorch y ONNX de los cuatro horizontes, con sus métricas de test.</p>
+        <a class="url" href="https://huggingface.co/alejandrobarreche/oil-rnn">huggingface.co/alejandrobarreche/oil-rnn</a>
+      </div>
+    </li>
+    <li>
+      <span class="n">05</span>
+      <div>
+        <p class="label">Presentación</p>
+        <p class="what">Problema, solución, comparativa de las redes, demostración y propuesta de valor.</p>
+        <a class="url" href="https://github.com/alejandrobarreche/oil-rnn/blob/main/docs/entrega/presentacion-brent.pdf">github.com/alejandrobarreche/oil-rnn · docs/entrega</a>
+      </div>
+    </li>
+  </ul>
+
+  <footer>
+    <span>Precio spot del Brent · EIA, DCOILBRENTEU</span>
+    <img alt="Universidad Alfonso X el Sabio" src="data:image/png;base64,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">
+  </footer>
+</body>
+</html>
