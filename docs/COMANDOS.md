@@ -675,9 +675,9 @@ make web-dev
 
 ## 29. Mac y Windows GPU · 20/11/2026 · ⏳: publicar los modelos en Hugging Face
 
-- **Por qué**: subir los cuatro modelos de `web.models` (ONNX y pesos PyTorch) a un repositorio público `<usuario>/oil-rnn`. Los pesos de h = 5 están en el Mac; los de 21, 63 y 252, en el Windows, así que cada máquina sube los suyos.
+- **Por qué**: subir los cuatro modelos de `web.models` (ONNX y pesos PyTorch) a un repositorio público `alejandrobarreche/oil-rnn`. Los pesos de h = 5 están en el Mac; los de 21, 63 y 252, en el Windows, así que cada máquina sube los suyos.
 - **Comprobado por Claude**: `make test` y `make lint` pasan; `--dry-run` en el Mac con `HORIZONS=5` arma 8 archivos (README, `onnx/h5.onnx`, `manifest.json` y `pytorch/h5/`). No se ha subido nada.
-- **Token**: en huggingface.co/settings/tokens, uno de tipo *Write*. `hf auth login` lo pide una vez por máquina.
+- **Token**: uno de tipo *Write* (huggingface.co/settings/tokens) en `HF_TOKEN` del `.env` de cada máquina. El repositorio lo crea `make hub-upload` si no existe.
 
 **Mac** (primero: actualiza `poetry.lock` con la dependencia nueva):
 
@@ -686,9 +686,8 @@ git pull --rebase
 conda activate oil-rnn
 make lock
 make hub-install
-hf auth login
-make hub-upload HF_REPO=<usuario>/oil-rnn HORIZONS=5 ARGS=--dry-run
-make hub-upload HF_REPO=<usuario>/oil-rnn HORIZONS=5
+make hub-upload HF_REPO=alejandrobarreche/oil-rnn HORIZONS=5 ARGS=--dry-run
+make hub-upload HF_REPO=alejandrobarreche/oil-rnn HORIZONS=5
 ```
 
 **Windows GPU** (después de que Claude haga commit de `poetry.lock` y lo subas con `git push`):
@@ -697,9 +696,8 @@ make hub-upload HF_REPO=<usuario>/oil-rnn HORIZONS=5
 git pull --rebase
 conda activate oil-rnn
 make hub-install
-hf auth login
-make hub-upload HF_REPO=<usuario>/oil-rnn HORIZONS=21,63,252 ARGS=--dry-run
-make hub-upload HF_REPO=<usuario>/oil-rnn HORIZONS=21,63,252
+make hub-upload HF_REPO=alejandrobarreche/oil-rnn HORIZONS=21,63,252 ARGS=--dry-run
+make hub-upload HF_REPO=alejandrobarreche/oil-rnn HORIZONS=21,63,252
 ```
 
 - **No hagas `git push` antes de que `poetry.lock` esté en un commit**: `pyproject.toml` ya tiene el grupo `hub` y la CI fallaría con el lock antiguo.
