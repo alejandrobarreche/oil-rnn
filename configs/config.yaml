@@ -100,8 +100,8 @@ web:                             # make export-web: modelo de cada horizonte (de
   models:
     5: 20261117-094043_final-gru16-h5_mac    # GRU-16, ventana 20 (docs/COMANDOS.md, entradas 20–21)
     21: 20261112-125257_final-lstm-h21_omen-pc
-    63: 20261112-125335_final-gru-h63_omen-pc
-    252: 20261112-125438_final-rnn-h252_omen-pc
+    63: 20261120-143852_g2final-gru-h63_omen-pc    # GRU-64, 5 semillas, w = 0,6 (rejilla g2, docs/COMANDOS.md, entrada 26)
+    252: 20261120-143938_g2final-rnn-h252_omen-pc  # w = 0: la persistencia, con el intervalo de la red
   # Sucesos del ciclo económico que marca el histórico: fecha y precio salen de los datos (máximo
   # o mínimo del tramo); las causas son las que da el enunciado (docs/assignment), sin otras fuentes.
   events:

@@ -3,7 +3,7 @@
 **Finalidad**: registro de los comandos que el usuario ejecuta en cada máquina, con su resultado.
 **Cuándo usarlo**: cada vez que Claude da un comando al usuario y cuando el usuario devuelve la salida.
 **Resultado**: mensajes en orden cronológico, cada uno con máquina, estado, bloques para copiar y resultado.
-**Estado**: todos ✅.
+**Estado**: ⏳ la 27.
 
 ## 0. Antes de empezar: cómo se lee y se escribe este chat
 
@@ -623,3 +623,34 @@ git push
 
 - **Qué pasarle a Claude**: la salida de `make compare ARGS="--grid g2"` y las métricas que imprime el paso 2.
 - **Resultado (20/11)**: 72 runs g2 y 2 finales, subidos en `597ba82`. 63 días: GRU-64 de 2 capas, w = 0,6, +3,1 % en validación y −11,6 % en test (antes −61 %), cobertura 83 %. 252 días: w = 0 en todas las configuraciones, el modelo es la persistencia (0,0 % en test, antes −45 %).
+
+## 27. Windows GPU · 20/11/2026 · ⏳: publicar los modelos g2 a 63 y 252 días en la web (Release `model-v3`)
+
+- **Qué hace**: descarga los ONNX de `model-v2` (5 y 21 días, que no cambian, para que coincidan con el hash del manifiesto), exporta solo 63 y 252 días con los pesos de esta máquina, regenera los datos de la web y de la página explicativa, comprueba la paridad Python ↔ TypeScript y publica los cuatro ONNX como Release `model-v3`.
+- **Comprobado por Claude**: `web.models` apunta a los dos runs `g2final`; `make test` y `make lint` pasan; una red de 5 miembros con contracción se exporta a ONNX igual que PyTorch. La exportación no se ha ejecutado.
+- **Duración estimada**: 2–3 min, más la subida de la Release.
+
+```powershell
+git pull --rebase
+conda activate oil-rnn
+gh auth status
+gh release download model-v2 --repo alejandrobarreche/oil-rnn --pattern "h*.onnx" --dir web/public/model --clobber
+make export-web RELEASE=model-v3 HORIZONS=63,252
+make export-explain
+make web-test
+make web-release RELEASE=model-v3
+```
+
+- **Antes de subirlo, mira la web** con `make web-dev`: a 3 meses la franja ya no debe marcar +79 %; a 1 año la línea es plana (el precio de hoy) con su franja.
+- **Para subirlo**:
+
+```powershell
+git add web/public/model/manifest.json web/public/model/examples.json web/public/data web/public/brent
+git commit -m "feat(web): modelos g2 a 63 y 252 días (Release model-v3)"
+git pull --rebase
+git push
+```
+
+- **Si `gh auth status` dice que no hay sesión**: `gh auth login` y repite.
+- **Qué pasarle a Claude**: la salida de `make export-web` y `make web-test`, y un aviso cuando esté subido.
+
