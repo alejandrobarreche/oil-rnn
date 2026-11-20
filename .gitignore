@@ -60,3 +60,6 @@ mlruns/
 # ── Web ──
 /web/node_modules/
 /web/dist/
+
+# ── Plantillas de presentación (binarios de terceros) ──
+docs/presentation/*.pptx
