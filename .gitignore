@@ -4,6 +4,20 @@
 .vscode/
 .mcp.json
 
+# ── Asistentes de IA: instrucciones y configuración locales, fuera del repo ──
+CLAUDE.md
+CLAUDE.local.md
+AGENTS.md
+GEMINI.md
+.claude/
+.agents/
+.impeccable/
+.cursor/
+.cursorrules
+.windsurfrules
+.github/copilot-instructions.md
+skills-lock.json
+
 # ── Python ──
 __pycache__/
 *.py[cod]
