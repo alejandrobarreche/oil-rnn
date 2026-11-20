@@ -702,4 +702,4 @@ make hub-upload HF_REPO=alejandrobarreche/oil-rnn HORIZONS=21,63,252
 
 - **No hagas `git push` antes de que `poetry.lock` esté en un commit**: `pyproject.toml` ya tiene el grupo `hub` y la CI fallaría con el lock antiguo.
 - **Qué pasarle a Claude**: la salida de `make lock` (Claude hace commit de `poetry.lock`), la de cada `make hub-upload` y la URL del repositorio en Hugging Face, para enlazarlo en el README.
-
+- **Resultado Mac (20/11)**: `make lock` y `make hub-install` sin errores (huggingface-hub 2.4.0); repositorio `alejandrobarreche/oil-rnn` creado y h = 5 subido (8 archivos, commit `20f1303` en Hugging Face). Falta el Windows.
